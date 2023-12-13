@@ -8,8 +8,11 @@ Indicator (KPI) metrics that measure and document the behaviour of the simulatio
 
 # Installation
 
-Gelato is a [Maven project](https://maven.apache.org/), so you need to have Maven installed locally.
+## Prerequisites
+- JDK >= 17 (start [here](https://www.oracle.com/java/technologies/downloads/))
+- [Maven](https://maven.apache.org/)
 
+## Building
 To compile everything, run all unit tests, and build a runnable "fat jar" file that includes all
 the necessary dependencies:
 
@@ -22,7 +25,7 @@ version number and the latest git commit level - `gelato-1.0-SNAPSHOT-92b26e8-di
 jar in the example below:
 
 ```shell
- ls -talh target
+ls -talh target
 
 total 48
 -rw-r--r--@  1 mickyfitz  staff   4.0K 13 Dec 15:17 gelato-1.0-SNAPSHOT-92b26e8-dirty.jar
