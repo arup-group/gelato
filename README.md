@@ -13,7 +13,7 @@ Indicator (KPI) metrics that measure and document the behaviour of the simulatio
 - [Maven](https://maven.apache.org/)
 
 ## Building
-To compile everything, run all unit tests, and build a runnable "fat jar" file that includes all
+To compile everything, run all unit tests, and build a runnable jar file that includes all
 the necessary dependencies:
 
 ```shell
@@ -21,14 +21,14 @@ mvn clean package
 ```
 
 This will generate a new jar file in the `target` directory that is named according to the Gelato
-version number and the latest git commit level - `gelato-1.0-SNAPSHOT-92b26e8-dirty.jar` is the runnable
+version number and the latest git commit level - `gelato-1.0-SNAPSHOT-92b26e8.jar` is the runnable
 jar in the example below:
 
 ```shell
 ls -talh target
 
 total 48
--rw-r--r--@  1 mickyfitz  staff   4.0K 13 Dec 15:17 gelato-1.0-SNAPSHOT-92b26e8-dirty.jar
+-rw-r--r--@  1 mickyfitz  staff   4.0K 13 Dec 15:17 gelato-1.0-SNAPSHOT-92b26e8.jar
 drwxr-xr-x@ 12 mickyfitz  staff   384B 13 Dec 15:17 .
 -rw-r--r--@  1 mickyfitz  staff   3.6K 13 Dec 15:17 gelato-1.0-SNAPSHOT.jar
 drwxr-xr-x@  3 mickyfitz  staff    96B 13 Dec 15:17 maven-archiver
@@ -48,7 +48,7 @@ drwxr-xr-x@ 15 mickyfitz  staff   480B 13 Dec 15:17 ..
 You can run the tool from the command line, via the jar file:
 
 ```shell
-java -jar target/gelato-1.0-SNAPSHOT-92b26e8-dirty.jar
+java -jar target/gelato-1.0-SNAPSHOT-92b26e8.jar
 
 Making KPI metrics...
 ```

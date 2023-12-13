@@ -23,7 +23,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <maven.compiler.release>17</maven.compiler.release>
-        <main.class>com.arup.cml.kpi.matsim.KpiGenerator</main.class>
+        <main.class>com.arup.cml.kpi.matsim.run.KpiGenerator</main.class>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
     </properties>
