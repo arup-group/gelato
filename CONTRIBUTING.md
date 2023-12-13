@@ -44,19 +44,21 @@ process ran. If possible, provide set of data on which the problem can be recrea
 
 ## Contributing Code - Pull Request Process
 
-To find beginner-friendly issues you may want to work on, look [here](https://github.com/arup-group/gelato/contribute).
+To find beginner-friendly issues to work on, look
+[here](https://github.com/arup-group/gelato/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first+issue%22).
 
-1. All new work is done in a branch taken from `main`, details can be found here:
+1. All new work is done in a "feature branch" taken from `main`, details can be found here:
 [feature branch workflow](https://www.atlassian.com/git/tutorials/comparing-workflows/feature-branch-workflow)
 
 2. Ensure your work is covered by unit tests to the required percentage level.
 
-3. Submit your Pull Request (see [GitHub Docs on Creating a Pull Request](https://docs.github.com/en/free-pro-team@latest/github/collaborating-with-issues-and-pull-requests/creating-a-pull-request)),
+3. Submit your Pull Request (
+[instructions](https://docs.github.com/en/free-pro-team@latest/github/collaborating-with-issues-and-pull-requests/creating-a-pull-request))
 describing the feature, link to any relevant GitHub issues and request review from at
 least two developers. (Take a look at latest commits to find out which developers you should request review from)
 
-4. You may merge the Pull Request in once you have the sign-off of two reviewers, or if you
-do not have permission to do merge, request one of the reviewers to merge it for you.
+4. You may merge the Pull Request once you have the sign-off of two reviewers, or if you
+do not have permission to merge, request one of the reviewers to merge it for you.
 
 ## Attribution
 
