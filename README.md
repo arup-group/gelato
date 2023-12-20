@@ -1,3 +1,5 @@
+![DailyCIbadge](https://github.com/arup-group/gelato/actions/workflows/ci.yml/badge.svg)
+
 # Gelato (working title)
 
 A command-line post-processing tool to turn MATSim ABM outputs into KPI metrics.
