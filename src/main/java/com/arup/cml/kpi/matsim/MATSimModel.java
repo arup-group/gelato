@@ -34,8 +34,7 @@ public class MATSimModel implements DataModel {
         addEventsHandler(linkLogHandler);
 
         processEvents();
-        Table table = linkLogHandler.getLinkLog();
-        table.write().csv("./linkLog_tablesaw.csv");
+        linkLogHandler.write(".");
         log.info("done");
     }
 
