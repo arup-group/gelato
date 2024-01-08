@@ -12,6 +12,7 @@ import org.matsim.core.events.handler.EventHandler;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import tech.tablesaw.api.Table;
 
 
 public class MATSimModel implements DataModel {
@@ -33,7 +34,8 @@ public class MATSimModel implements DataModel {
         addEventsHandler(linkLogHandler);
 
         processEvents();
-        linkLogHandler.toCsv();
+        Table table = linkLogHandler.getLinkLog();
+        table.write().csv("./linkLog_tablesaw.csv");
         log.info("done");
     }
 

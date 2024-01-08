@@ -3,38 +3,66 @@ package com.arup.cml.kpi.matsim.handlers;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.events.*;
 import org.matsim.api.core.v01.events.handler.*;
+import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.vehicles.Vehicle;
+import tech.tablesaw.api.*;
 
 //import tech.tablesaw.DoubleColoumn;
 
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.IntStream;
 
 public class LinkLogHandler implements VehicleEntersTrafficEventHandler, VehicleLeavesTrafficEventHandler,
         PersonEntersVehicleEventHandler, PersonLeavesVehicleEventHandler,
         LinkEnterEventHandler, LinkLeaveEventHandler {
-    private final Map<Long, Map<Object, Object>> linkLog = new HashMap<>();
-    private final Map<Id<Vehicle>, Long> vehicleLatestLog = new HashMap<>();
-    private final Map<Long, ArrayList<Id<Person>>> vehicleOccupants = new HashMap<Long, ArrayList<Id<Person>>>();
+    private final Map<Integer, Map<Object, Object>> linkLog = new HashMap<>();
+    private final ArrayList<String> vehicleIDColumn = new ArrayList<String>();
+    private final ArrayList<String> linkIDColumn = new ArrayList<String>();
+    private final ArrayList<Double> startTimeColumn = new ArrayList<Double>();
+    private final ArrayList<Double> endTimeColumn = new ArrayList<Double>();
+    private final ArrayList<Integer> numberOfPeopleColumn = new ArrayList<Integer>();
+
+    private final Map<Id<Vehicle>, Integer> vehicleLatestLog = new HashMap<>();
+    private final Map<Integer, ArrayList<Id<Person>>> vehicleOccupants = new HashMap<Integer, ArrayList<Id<Person>>>();
     private final Map<Id<Vehicle>, ArrayList<Id<Person>>> vehicleLatestOccupants = new HashMap<>();
-    private long index = 0;
+    private int index = 0;
+
+    private void newLinkLogEntry(Id<Vehicle> vehicleID, Id<Link> linkID, double startTime) {
+        vehicleIDColumn.add(vehicleID.toString());
+        linkIDColumn.add(linkID.toString());
+        startTimeColumn.add(startTime);
+        // end time is not known yet, a placeholder in the ordered list is saved
+        endTimeColumn.add((double) -1);
+        ArrayList<Id<Person>> currentOccupants = vehicleLatestOccupants.get(vehicleID);
+        numberOfPeopleColumn.add(currentOccupants.size());
+    }
+
+    private void updateEndTimeInLinkLog(Id<Vehicle> vehicleID, double endTime) {
+        int latestStateIndex = this.vehicleLatestLog.get(vehicleID);
+        endTimeColumn.set(latestStateIndex, endTime);
+    }
+
+    public Table getLinkLog() {
+        return Table.create("Link Log")
+                .addColumns(
+                        IntColumn.create("index", IntStream.range(0, index).toArray()),
+                        StringColumn.create("linkID", linkIDColumn),
+                        StringColumn.create("vehicleID", vehicleIDColumn),
+                        DoubleColumn.create("startTime", startTimeColumn),
+                        DoubleColumn.create("endTime", endTimeColumn),
+                        DoubleColumn.create("numberOfPeople", numberOfPeopleColumn)
+                );
+    }
 
     @Override
     public void handleEvent(VehicleEntersTrafficEvent event) {
-        Map<Object, Object> log = new HashMap<>();
-        log.put("vehicleID", event.getVehicleId());
-        log.put("linkID", event.getLinkId().toString());
-        log.put("startTime", event.getTime());
-        ArrayList<Id<Person>> currentOccupants = this.vehicleLatestOccupants.get(event.getVehicleId());
-        log.put("numberOfPeople", currentOccupants.size());
-        log.put("people", currentOccupants.clone());
-        this.linkLog.put(
-                index,
-                log
-        );
-        this.vehicleOccupants.put(
+        newLinkLogEntry(event.getVehicleId(), event.getLinkId(), event.getTime());
+
+        ArrayList<Id<Person>> currentOccupants = vehicleLatestOccupants.get(event.getVehicleId());
+        vehicleOccupants.put(
                 index,
                 (ArrayList<Id<Person>>) currentOccupants.clone()
         );
@@ -44,9 +72,7 @@ public class LinkLogHandler implements VehicleEntersTrafficEventHandler, Vehicle
 
     @Override
     public void handleEvent(VehicleLeavesTrafficEvent event) {
-        long latestStateIndex = this.vehicleLatestLog.get(event.getVehicleId());
-        Map<Object, Object> log = this.linkLog.get(latestStateIndex);
-        log.put("endTime", event.getTime());
+        updateEndTimeInLinkLog(event.getVehicleId(), event.getTime());
     }
 
     @Override
@@ -71,17 +97,9 @@ public class LinkLogHandler implements VehicleEntersTrafficEventHandler, Vehicle
 
     @Override
     public void handleEvent(LinkEnterEvent event) {
-        Map<Object, Object> log = new HashMap<>();
-        log.put("vehicleID", event.getVehicleId());
-        log.put("linkID", event.getLinkId().toString());
-        log.put("startTime", event.getTime());
-        ArrayList<Id<Person>> currentOccupants = this.vehicleLatestOccupants.get(event.getVehicleId());
-        log.put("numberOfPeople", currentOccupants.size());
-        log.put("people", currentOccupants.clone());
-        this.linkLog.put(
-                index,
-                log
-        );
+        newLinkLogEntry(event.getVehicleId(), event.getLinkId(), event.getTime());
+
+        ArrayList<Id<Person>> currentOccupants = vehicleLatestOccupants.get(event.getVehicleId());
         this.vehicleOccupants.put(
                 index,
                 (ArrayList<Id<Person>>) currentOccupants.clone()
@@ -92,68 +110,6 @@ public class LinkLogHandler implements VehicleEntersTrafficEventHandler, Vehicle
 
     @Override
     public void handleEvent(LinkLeaveEvent event) {
-        long latestStateIndex = this.vehicleLatestLog.get(event.getVehicleId());
-        Map<Object, Object> log = this.linkLog.get(latestStateIndex);
-        log.put("endTime", event.getTime());
-    }
-
-    public void toCsv() {
-        FileWriter fileWriter = null;
-
-        final String COMMA_DELIMITER = ",";
-        final String NEW_LINE_SEPARATOR = "\n";
-        final String FILE_HEADER = "id,vehicleID,linkID,startTime,endTime,numberOfPeople,people";
-
-        try {
-            fileWriter = new FileWriter("./linkLog.csv");
-
-            // Write the CSV file header
-            fileWriter.append(FILE_HEADER.toString());
-            // Add a new line separator after the header
-            fileWriter.append(NEW_LINE_SEPARATOR);
-
-            // Write user data to the CSV file
-            for (var linkLogEntry : this.linkLog.entrySet()) {
-                index = linkLogEntry.getKey();
-                fileWriter.append(String.valueOf(index));
-                fileWriter.append(COMMA_DELIMITER);
-                Map<Object, Object> linkLog = linkLogEntry.getValue();
-                fileWriter.append(String.valueOf(linkLog.get("vehicleID")));
-                fileWriter.append(COMMA_DELIMITER);
-                fileWriter.append(String.valueOf(linkLog.get("linkID")));
-                fileWriter.append(COMMA_DELIMITER);
-                fileWriter.append(String.valueOf(linkLog.get("startTime")));
-                fileWriter.append(COMMA_DELIMITER);
-                fileWriter.append(String.valueOf(linkLog.get("endTime")));
-                fileWriter.append(COMMA_DELIMITER);
-                fileWriter.append(String.valueOf(linkLog.get("numberOfPeople")));
-                fileWriter.append(COMMA_DELIMITER);
-                if (this.vehicleOccupants.containsKey(index)) {
-                    ArrayList<Id<Person>> ppl = (ArrayList<Id<Person>>) linkLog.get("people");
-                    StringBuilder pplString = new StringBuilder();
-                    for (Iterator<Id<Person>> it = ppl.iterator(); it.hasNext(); ) {
-                        Id<Person> id = it.next();
-                        pplString.append(id.toString()).append(":");
-                    }
-                    fileWriter.append(pplString.toString());
-                } else {
-                    fileWriter.append("None");
-                }
-                fileWriter.append(NEW_LINE_SEPARATOR);
-            }
-        } catch (IOException e) {
-            System.out.println("Error in CsvFileWriter !!!");
-            e.printStackTrace();
-        } finally {
-
-            try {
-                fileWriter.flush();
-                fileWriter.close();
-            } catch (IOException e) {
-                System.out.println("Error while flushing/closing fileWriter !!!");
-                e.printStackTrace();
-            }
-
-        }
+        updateEndTimeInLinkLog(event.getVehicleId(), event.getTime());
     }
 }
