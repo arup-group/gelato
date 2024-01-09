@@ -7,8 +7,9 @@ import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.vehicles.Vehicle;
 import tech.tablesaw.api.*;
+
 import java.util.*;
-import java.util.stream.IntStream;
+import java.util.stream.LongStream;
 
 public class LinkLogHandler implements VehicleEntersTrafficEventHandler, VehicleLeavesTrafficEventHandler,
         PersonEntersVehicleEventHandler, PersonLeavesVehicleEventHandler,
@@ -22,10 +23,10 @@ public class LinkLogHandler implements VehicleEntersTrafficEventHandler, Vehicle
     private final ArrayList<Integer> numberOfPeopleColumn = new ArrayList<>();
 
     // points to the index of the most recent reference of that vehicle ID in the Link Log
-    private final Map<Id<Vehicle>, Integer> vehicleLatestLogIndex = new HashMap<>();
+    private final Map<Id<Vehicle>, Long> vehicleLatestLogIndex = new HashMap<>();
 
     // arrays to collect agent IDs that are inside the vehicle in reference to the Link Log entries
-    private final ArrayList<Integer> linkLogIndexColumn = new ArrayList<>();
+    private final ArrayList<Long> linkLogIndexColumn = new ArrayList<>();
     private final ArrayList<String> agentIDColumn = new ArrayList<>();
 
     // to be replaced by table
@@ -35,7 +36,7 @@ public class LinkLogHandler implements VehicleEntersTrafficEventHandler, Vehicle
     private final Map<Id<Vehicle>, ArrayList<Id<Person>>> vehicleLatestOccupants = new HashMap<>();
 
     // Link Log entry index
-    private int index = 0;
+    private long index = 0;
 
     private void newLinkLogEntry(Id<Vehicle> vehicleID, Id<Link> linkID, double startTime) {
         vehicleIDColumn.add(vehicleID.toString());
@@ -51,7 +52,7 @@ public class LinkLogHandler implements VehicleEntersTrafficEventHandler, Vehicle
 
     private void newVehicleOccupantsEntry(Id<Vehicle> vehicleID) {
         ArrayList<Id<Person>> currentOccupants = vehicleLatestOccupants.get(vehicleID);
-        for (Id<Person> personID: currentOccupants) {
+        for (Id<Person> personID : currentOccupants) {
             linkLogIndexColumn.add(index);
             agentIDColumn.add(personID.toString());
         }
@@ -59,14 +60,15 @@ public class LinkLogHandler implements VehicleEntersTrafficEventHandler, Vehicle
     }
 
     private void updateEndTimeInLinkLog(Id<Vehicle> vehicleID, double endTime) {
-        int latestStateIndex = this.vehicleLatestLogIndex.get(vehicleID);
-        endTimeColumn.set(latestStateIndex, endTime);
+        long latestStateIndex = this.vehicleLatestLogIndex.get(vehicleID);
+        // TODO: this cast to int is undesirable but seems impossible to set at non int index of array
+        endTimeColumn.set((int) latestStateIndex, endTime);
     }
 
     public Table getLinkLog() {
         return Table.create("Link Log")
                 .addColumns(
-                        IntColumn.create("index", IntStream.range(0, index).toArray()),
+                        LongColumn.create("index", LongStream.range(0, index).toArray()),
                         StringColumn.create("linkID", linkIDColumn),
                         StringColumn.create("vehicleID", vehicleIDColumn),
                         DoubleColumn.create("startTime", startTimeColumn),
@@ -78,14 +80,16 @@ public class LinkLogHandler implements VehicleEntersTrafficEventHandler, Vehicle
     public Table getVehicleOccupancy() {
         return Table.create("Vehicle Occupancy")
                 .addColumns(
+                        // TODO: This should be LongColumn (reference to index LongColumn of "Link Log" table)
+                        // but can't get it to work with LongColumn constructor as ArrayList<Long>
                         DoubleColumn.create("linkLogIndex", linkLogIndexColumn),
                         StringColumn.create("agentId", agentIDColumn)
                 );
     }
 
     public void write(String outputDir) {
-        getLinkLog().write().csv(outputDir + "/linkLog.csv");
-        getVehicleOccupancy().write().csv(outputDir + "/vehicleOccupancy.csv");
+        getLinkLog().write().csv(String.format("%s/linkLog.csv", outputDir));
+        getVehicleOccupancy().write().csv(String.format("%s/vehicleOccupancy.csv", outputDir));
     }
 
     @Override
