@@ -29,9 +29,6 @@ public class LinkLogHandler implements VehicleEntersTrafficEventHandler, Vehicle
     private final ArrayList<Long> linkLogIndexColumn = new ArrayList<>();
     private final ArrayList<String> agentIDColumn = new ArrayList<>();
 
-    // to be replaced by table
-    private final Map<Integer, ArrayList<Id<Person>>> vehicleOccupants = new HashMap<Integer, ArrayList<Id<Person>>>();
-
     // tracks the most recent occupants of a vehicle
     private final Map<Id<Vehicle>, ArrayList<Id<Person>>> vehicleLatestOccupants = new HashMap<>();
 
