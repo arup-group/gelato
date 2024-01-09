@@ -40,26 +40,29 @@ public class LinkLogHandler implements VehicleEntersTrafficEventHandler, Vehicle
         linkIDColumn.add(linkID.toString());
         startTimeColumn.add(startTime);
         // end time is not known yet, a placeholder in the ordered list is saved
-        endTimeColumn.add((double) -1);
-        ArrayList<Id<Person>> currentOccupants = vehicleLatestOccupants.get(vehicleID);
-        numberOfPeopleColumn.add(currentOccupants.size());
-        newVehicleOccupantsEntry(vehicleID);
+        endTimeColumn.add(-1.0);
+        numberOfPeopleColumn.add(-1);
+        vehicleLatestLogIndex.put(vehicleID, index);
         index++;
     }
 
-    private void newVehicleOccupantsEntry(Id<Vehicle> vehicleID) {
+    private void newVehicleOccupantsEntry(Id<Vehicle> vehicleID, long idx) {
         ArrayList<Id<Person>> currentOccupants = vehicleLatestOccupants.get(vehicleID);
         for (Id<Person> personID : currentOccupants) {
-            linkLogIndexColumn.add(index);
+            linkLogIndexColumn.add(idx);
             agentIDColumn.add(personID.toString());
         }
-        vehicleLatestLogIndex.put(vehicleID, index);
     }
 
-    private void updateEndTimeInLinkLog(Id<Vehicle> vehicleID, double endTime) {
+    private void updateLinkLogEntry(Id<Vehicle> vehicleID, double endTime) {
         long latestStateIndex = this.vehicleLatestLogIndex.get(vehicleID);
         // TODO: this cast to int is undesirable but seems impossible to set at non int index of array
+        // update end time
         endTimeColumn.set((int) latestStateIndex, endTime);
+        // update vehicle occupants
+        ArrayList<Id<Person>> currentOccupants = vehicleLatestOccupants.get(vehicleID);
+        numberOfPeopleColumn.set((int) latestStateIndex, currentOccupants.size());
+        newVehicleOccupantsEntry(vehicleID, latestStateIndex);
     }
 
     public Table getLinkLog() {
@@ -96,7 +99,7 @@ public class LinkLogHandler implements VehicleEntersTrafficEventHandler, Vehicle
 
     @Override
     public void handleEvent(VehicleLeavesTrafficEvent event) {
-        updateEndTimeInLinkLog(event.getVehicleId(), event.getTime());
+        updateLinkLogEntry(event.getVehicleId(), event.getTime());
     }
 
     @Override
@@ -126,6 +129,6 @@ public class LinkLogHandler implements VehicleEntersTrafficEventHandler, Vehicle
 
     @Override
     public void handleEvent(LinkLeaveEvent event) {
-        updateEndTimeInLinkLog(event.getVehicleId(), event.getTime());
+        updateLinkLogEntry(event.getVehicleId(), event.getTime());
     }
 }
