@@ -94,7 +94,7 @@ public class TestLinkLogHandlerWithMultipleAgents {
     }
 
     @Test
-    public void testExpectedDataInLinkLogTable() {
+    public void linkLogTableHasExpectedData() {
         TableHelpers.assertTableDataEqual(
                 linkLogHandler.getLinkLog(),
                 Table.create("Link Log")
@@ -111,7 +111,7 @@ public class TestLinkLogHandlerWithMultipleAgents {
     }
 
     @Test
-    public void testExpectedDataInVehicleOccupancyTable() {
+    public void vehicleOccupancyTableHasExpectedData() {
         TableHelpers.assertTableDataEqual(
                 linkLogHandler.getVehicleOccupancy(),
                 Table.create("Vehicle Occupancy")
