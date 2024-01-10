@@ -26,6 +26,7 @@ public class LinkLogHandler implements VehicleEntersTrafficEventHandler, Vehicle
     private final Map<Id<Vehicle>, Long> vehicleLatestLogIndex = new HashMap<>();
 
     // arrays to collect agent IDs that are inside the vehicle in reference to the Link Log entries
+    // these will form columns of the Vehicle Occupancy table, it shows who is in the vehicle at a point in the Link Log
     private final ArrayList<Long> linkLogIndexColumn = new ArrayList<>();
     private final ArrayList<String> agentIDColumn = new ArrayList<>();
 
@@ -41,6 +42,7 @@ public class LinkLogHandler implements VehicleEntersTrafficEventHandler, Vehicle
         startTimeColumn.add(startTime);
         // end time is not known yet, a placeholder in the ordered list is saved
         endTimeColumn.add(-1.0);
+        // placeholder for people in the vehicle as well - someone might enter the vehicle before it leaves the link
         numberOfPeopleColumn.add(-1);
         vehicleLatestLogIndex.put(vehicleID, index);
         index++;
