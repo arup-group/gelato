@@ -103,6 +103,7 @@ public class TestLinkLogHandlerWithMultipleAgents {
                                 StringColumn.create("linkID",
                                         "start_link", "gerry_link_board", "fitz_link_board", "gerry_link_alight", "fitz_link_alight",  "end_link"),
                                 StringColumn.create("vehicleID", Collections.nCopies(6, "party_bus")),
+                                StringColumn.create("mode", Collections.nCopies(6, "bus")),
                                 DoubleColumn.create("startTime", new Double[]{0.0, 5.0, 10.0, 15.0, 20.0, 25.0}),
                                 DoubleColumn.create("endTime", new Double[]{5.0, 10.0, 15.0, 20.0, 25.0, 30.0}),
                                 DoubleColumn.create("numberOfPeople", new Double[]{1.0, 2.0, 3.0, 2.0, 1.0, 1.0})

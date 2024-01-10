@@ -18,6 +18,7 @@ public class LinkLogHandler implements VehicleEntersTrafficEventHandler, Vehicle
     // arrays to collect Link Log data, each will form a column of the Link Log
     private final ArrayList<String> vehicleIDColumn = new ArrayList<>();
     private final ArrayList<String> linkIDColumn = new ArrayList<>();
+    private final ArrayList<String> modeColumn = new ArrayList<>();
     private final ArrayList<Double> startTimeColumn = new ArrayList<>();
     private final ArrayList<Double> endTimeColumn = new ArrayList<>();
     private final ArrayList<Integer> numberOfPeopleColumn = new ArrayList<>();
@@ -36,9 +37,10 @@ public class LinkLogHandler implements VehicleEntersTrafficEventHandler, Vehicle
     // Link Log entry index
     private long index = 0;
 
-    private void newLinkLogEntry(Id<Vehicle> vehicleID, Id<Link> linkID, double startTime) {
+    private void newLinkLogEntry(Id<Vehicle> vehicleID, Id<Link> linkID, String mode, double startTime) {
         vehicleIDColumn.add(vehicleID.toString());
         linkIDColumn.add(linkID.toString());
+        modeColumn.add(mode);
         startTimeColumn.add(startTime);
         // end time is not known yet, a placeholder in the ordered list is saved
         endTimeColumn.add(-1.0);
@@ -73,6 +75,7 @@ public class LinkLogHandler implements VehicleEntersTrafficEventHandler, Vehicle
                         LongColumn.create("index", LongStream.range(0, index).toArray()),
                         StringColumn.create("linkID", linkIDColumn),
                         StringColumn.create("vehicleID", vehicleIDColumn),
+                        StringColumn.create("mode", modeColumn),
                         DoubleColumn.create("startTime", startTimeColumn),
                         DoubleColumn.create("endTime", endTimeColumn),
                         DoubleColumn.create("numberOfPeople", numberOfPeopleColumn)
@@ -96,7 +99,7 @@ public class LinkLogHandler implements VehicleEntersTrafficEventHandler, Vehicle
 
     @Override
     public void handleEvent(VehicleEntersTrafficEvent event) {
-        newLinkLogEntry(event.getVehicleId(), event.getLinkId(), event.getTime());
+        newLinkLogEntry(event.getVehicleId(), event.getLinkId(), event.getNetworkMode(), event.getTime());
     }
 
     @Override
@@ -107,26 +110,30 @@ public class LinkLogHandler implements VehicleEntersTrafficEventHandler, Vehicle
     @Override
     public void handleEvent(PersonEntersVehicleEvent event) {
         Id<Vehicle> vehicle = event.getVehicleId();
-        if (this.vehicleLatestOccupants.containsKey(vehicle)) {
-            ArrayList<Id<Person>> latestOccupants = this.vehicleLatestOccupants.get(vehicle);
+        if (vehicleLatestOccupants.containsKey(vehicle)) {
+            ArrayList<Id<Person>> latestOccupants = vehicleLatestOccupants.get(vehicle);
             latestOccupants.add(event.getPersonId());
         } else {
             ArrayList<Id<Person>> latestOccupants = new ArrayList<>();
             latestOccupants.add(event.getPersonId());
-            this.vehicleLatestOccupants.put(vehicle, latestOccupants);
+            vehicleLatestOccupants.put(vehicle, latestOccupants);
         }
     }
 
     @Override
     public void handleEvent(PersonLeavesVehicleEvent event) {
         Id<Vehicle> vehicle = event.getVehicleId();
-        ArrayList<Id<Person>> latestOccupants = this.vehicleLatestOccupants.get(vehicle);
+        ArrayList<Id<Person>> latestOccupants = vehicleLatestOccupants.get(vehicle);
         latestOccupants.remove(event.getPersonId());
     }
 
     @Override
     public void handleEvent(LinkEnterEvent event) {
-        newLinkLogEntry(event.getVehicleId(), event.getLinkId(), event.getTime());
+        Id<Vehicle> vehicleID = event.getVehicleId();
+        // this event does not hold mode information, we take it from previous record of this vehicle
+        long latestStateIndex = vehicleLatestLogIndex.get(vehicleID);
+        String mode = modeColumn.get((int) latestStateIndex);
+        newLinkLogEntry(vehicleID,  event.getLinkId(),  mode, event.getTime());
     }
 
     @Override

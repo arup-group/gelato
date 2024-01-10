@@ -14,6 +14,7 @@ import tech.tablesaw.api.LongColumn;
 import tech.tablesaw.api.StringColumn;
 import tech.tablesaw.api.Table;
 
+import java.util.Collections;
 import java.util.stream.LongStream;
 
 
@@ -57,6 +58,7 @@ public class TestLinkLogHandlerWithSimpleData {
                                 LongColumn.create("index", LongStream.range(0, 2).toArray()),
                                 StringColumn.create("linkID", "link_A_B", "link_B_A"),
                                 StringColumn.create("vehicleID", "gerry_wheels", "gerry_wheels"),
+                                StringColumn.create("mode", Collections.nCopies(2, "car")),
                                 DoubleColumn.create("startTime", new Double[]{0.0, 6.0}),
                                 DoubleColumn.create("endTime", new Double[]{5.0, 10.0}),
                                 DoubleColumn.create("numberOfPeople", new Double[]{1.0, 1.0})
