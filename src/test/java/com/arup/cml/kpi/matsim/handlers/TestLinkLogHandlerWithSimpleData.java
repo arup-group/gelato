@@ -50,7 +50,7 @@ public class TestLinkLogHandlerWithSimpleData {
 
     @Test
     public void testExpectedDataInLinkLogTable() {
-        TableHelpers.assertTableColumns(
+        TableHelpers.assertTableDataEqual(
                 linkLogHandler.getLinkLog(),
                 Table.create("Link Log")
                         .addColumns(
@@ -66,7 +66,7 @@ public class TestLinkLogHandlerWithSimpleData {
 
     @Test
     public void testExpectedDataInVehicleOccupancyTable() {
-        TableHelpers.assertTableColumns(
+        TableHelpers.assertTableDataEqual(
                 linkLogHandler.getVehicleOccupancy(),
                 Table.create("Vehicle Occupancy")
                         .addColumns(
