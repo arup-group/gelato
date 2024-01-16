@@ -61,7 +61,6 @@ public class LinkLogHandler implements VehicleEntersTrafficEventHandler, Vehicle
 
     private void updateLinkLogEntry(Id<Vehicle> vehicleID, double endTime) {
         long latestStateIndex = this.vehicleLatestLogIndex.get(vehicleID);
-        // TODO: this cast to int is undesirable but seems impossible to set at non int index of array
         // update end time
         endTimeColumn.put(latestStateIndex, endTime);
         // update vehicle occupants
