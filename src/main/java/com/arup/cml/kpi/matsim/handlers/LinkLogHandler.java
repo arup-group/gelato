@@ -1,6 +1,5 @@
 package com.arup.cml.kpi.matsim.handlers;
 
-import it.unimi.dsi.fastutil.Hash;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.events.*;
 import org.matsim.api.core.v01.events.handler.*;
