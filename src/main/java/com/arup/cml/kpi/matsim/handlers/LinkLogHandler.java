@@ -1,5 +1,6 @@
 package com.arup.cml.kpi.matsim.handlers;
 
+import it.unimi.dsi.fastutil.Hash;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.events.*;
 import org.matsim.api.core.v01.events.handler.*;
@@ -18,10 +19,10 @@ public class LinkLogHandler implements VehicleEntersTrafficEventHandler, Vehicle
     // arrays to collect Link Log data, each will form a column of the Link Log
     private final ArrayList<String> vehicleIDColumn = new ArrayList<>();
     private final ArrayList<String> linkIDColumn = new ArrayList<>();
-    private final ArrayList<String> modeColumn = new ArrayList<>();
+    private final LinkedHashMap<Long, String> modeColumn = new LinkedHashMap<>();
     private final ArrayList<Double> startTimeColumn = new ArrayList<>();
-    private final ArrayList<Double> endTimeColumn = new ArrayList<>();
-    private final ArrayList<Integer> numberOfPeopleColumn = new ArrayList<>();
+    private final LinkedHashMap<Long, Double> endTimeColumn = new LinkedHashMap<>();
+    private final LinkedHashMap<Long, Integer> numberOfPeopleColumn = new LinkedHashMap<>();
 
     // points to the index of the most recent reference of that vehicle ID in the Link Log
     private final Map<Id<Vehicle>, Long> vehicleLatestLogIndex = new HashMap<>();
@@ -40,12 +41,12 @@ public class LinkLogHandler implements VehicleEntersTrafficEventHandler, Vehicle
     private void newLinkLogEntry(Id<Vehicle> vehicleID, Id<Link> linkID, String mode, double startTime) {
         vehicleIDColumn.add(vehicleID.toString());
         linkIDColumn.add(linkID.toString());
-        modeColumn.add(mode);
+        modeColumn.put(index, mode);
         startTimeColumn.add(startTime);
         // end time is not known yet, a placeholder in the ordered list is saved
-        endTimeColumn.add(-1.0);
+        endTimeColumn.put(index, -1.0);
         // placeholder for people in the vehicle as well - someone might enter the vehicle before it leaves the link
-        numberOfPeopleColumn.add(-1);
+        numberOfPeopleColumn.put(index, -1);
         vehicleLatestLogIndex.put(vehicleID, index);
         index++;
     }
@@ -62,10 +63,10 @@ public class LinkLogHandler implements VehicleEntersTrafficEventHandler, Vehicle
         long latestStateIndex = this.vehicleLatestLogIndex.get(vehicleID);
         // TODO: this cast to int is undesirable but seems impossible to set at non int index of array
         // update end time
-        endTimeColumn.set((int) latestStateIndex, endTime);
+        endTimeColumn.put(latestStateIndex, endTime);
         // update vehicle occupants
         ArrayList<Id<Person>> currentOccupants = vehicleLatestOccupants.get(vehicleID);
-        numberOfPeopleColumn.set((int) latestStateIndex, currentOccupants.size());
+        numberOfPeopleColumn.put(latestStateIndex, currentOccupants.size());
         newVehicleOccupantsEntry(vehicleID, latestStateIndex);
     }
 
@@ -75,10 +76,10 @@ public class LinkLogHandler implements VehicleEntersTrafficEventHandler, Vehicle
                         LongColumn.create("index", LongStream.range(0, index).toArray()),
                         StringColumn.create("linkID", linkIDColumn),
                         StringColumn.create("vehicleID", vehicleIDColumn),
-                        StringColumn.create("mode", modeColumn),
+                        StringColumn.create("mode", modeColumn.values()),
                         DoubleColumn.create("startTime", startTimeColumn),
-                        DoubleColumn.create("endTime", endTimeColumn),
-                        DoubleColumn.create("numberOfPeople", numberOfPeopleColumn)
+                        DoubleColumn.create("endTime", endTimeColumn.values()),
+                        DoubleColumn.create("numberOfPeople", numberOfPeopleColumn.values())
                 );
     }
 
@@ -132,7 +133,7 @@ public class LinkLogHandler implements VehicleEntersTrafficEventHandler, Vehicle
         Id<Vehicle> vehicleID = event.getVehicleId();
         // this event does not hold mode information, we take it from previous record of this vehicle
         long latestStateIndex = vehicleLatestLogIndex.get(vehicleID);
-        String mode = modeColumn.get((int) latestStateIndex);
+        String mode = modeColumn.get(latestStateIndex);
         newLinkLogEntry(vehicleID,  event.getLinkId(),  mode, event.getTime());
     }
 
