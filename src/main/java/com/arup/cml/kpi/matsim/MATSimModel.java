@@ -2,21 +2,24 @@ package com.arup.cml.kpi.matsim;
 
 import com.arup.cml.kpi.DataModel;
 import com.arup.cml.kpi.matsim.handlers.LinkLogHandler;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
+import org.matsim.core.config.groups.*;
 import org.matsim.core.events.EventsUtils;
 import org.matsim.core.events.MatsimEventsReader;
 import org.matsim.core.scenario.ScenarioUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.matsim.pt.config.TransitConfigGroup;
 import tech.tablesaw.api.DoubleColumn;
 import tech.tablesaw.api.StringColumn;
 import tech.tablesaw.api.Table;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 
 public class MATSimModel implements DataModel {
@@ -26,18 +29,25 @@ public class MATSimModel implements DataModel {
     private final Scenario scenario;
     private final EventsManager eventsManager;
 
+    private final String[] necessaryConfigGroups = new String[]{
+            GlobalConfigGroup.GROUP_NAME,
+            PlansConfigGroup.GROUP_NAME,
+            FacilitiesConfigGroup.GROUP_NAME,
+            HouseholdsConfigGroup.GROUP_NAME,
+            TransitConfigGroup.GROUP_NAME,
+            VehiclesConfigGroup.GROUP_NAME,
+            NetworkConfigGroup.GROUP_NAME
+    };
+
     private final Table linkLog;
     private final Table vehicleOccupancy;
     private Table networkLinks;
     private Table networkLinkModes;
 
     public MATSimModel(String matsimInputConfig, String matsimOutputDir) {
-
         // there will be other stuff read for a matsim model if the KPIs require
         this.matsimOutputDir = matsimOutputDir;
-        Config config = ConfigUtils.loadConfig(
-                String.format(matsimInputConfig)
-        );
+        Config config = getConfig(matsimInputConfig);
         this.scenario = ScenarioUtils.loadScenario(config);
         createNetworkLinkTables();
 
@@ -51,6 +61,34 @@ public class MATSimModel implements DataModel {
         this.vehicleOccupancy = linkLogHandler.getVehicleOccupancy();
 
         log.info("Finished processing MATSim outputs");
+    }
+
+    private Config getConfig(String matsimInputConfig) {
+        Config config = ConfigUtils.createConfig();
+        ArrayList<String> configGroups = new ArrayList<>(config.getModules().keySet());
+        for (String module : configGroups) {
+            if (Arrays.asList(necessaryConfigGroups).contains(module)) {
+                System.out.println("Config group " + module + " is read as is");
+            } else {
+                config.removeModule(module);
+                config.addModule(new RelaxedReflectiveConfigGroup(module));
+            }
+        }
+        ConfigUtils.loadConfig(
+                config, String.format(matsimInputConfig)
+        );
+        setOutputFilePaths(config);
+        return config;
+    }
+
+    private void setOutputFilePaths(Config config) {
+        config.getModules().get("network").addParam("inputNetworkFile", String.format("%s/output_network.xml.gz", this.matsimOutputDir));
+        config.getModules().get("transit").addParam("transitScheduleFile", String.format("%s/output_transitSchedule.xml.gz", this.matsimOutputDir));
+        config.getModules().get("transit").addParam("vehiclesFile", String.format("%s/output_transitVehicles.xml.gz", this.matsimOutputDir));
+        config.getModules().get("plans").addParam("inputPlansFile", String.format("%s/output_plans.xml.gz", this.matsimOutputDir));
+        config.getModules().get("households").addParam("inputFile", String.format("%s/output_households.xml.gz", this.matsimOutputDir));
+        config.getModules().get("facilities").addParam("inputFacilitiesFile", String.format("%s/output_facilities.xml.gz", this.matsimOutputDir));
+        config.getModules().get("vehicles").addParam("vehiclesFile", String.format("%s/output_vehicles.xml.gz", this.matsimOutputDir));
     }
 
     public void processEvents() {

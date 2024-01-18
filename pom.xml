@@ -48,7 +48,7 @@
         <dependency>
             <groupId>org.matsim</groupId>
             <artifactId>matsim</artifactId>
-            <version>16.0-PR2899</version>
+            <version>16.0-PR3032</version>
         </dependency>
 
         <dependency>
