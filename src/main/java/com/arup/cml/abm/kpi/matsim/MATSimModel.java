@@ -8,7 +8,9 @@ import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.config.Config;
+import org.matsim.core.config.ConfigGroup;
 import org.matsim.core.config.ConfigUtils;
+import org.matsim.core.config.ReflectiveConfigGroup;
 import org.matsim.core.config.groups.*;
 import org.matsim.core.events.EventsUtils;
 import org.matsim.core.events.MatsimEventsReader;
@@ -18,8 +20,7 @@ import tech.tablesaw.api.DoubleColumn;
 import tech.tablesaw.api.StringColumn;
 import tech.tablesaw.api.Table;
 
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 
 
 public class MATSimModel implements DataModel {
@@ -28,16 +29,15 @@ public class MATSimModel implements DataModel {
     private final String matsimOutputDir;
     private final Scenario scenario;
     private final EventsManager eventsManager;
-
-    private final String[] necessaryConfigGroups = new String[]{
-            GlobalConfigGroup.GROUP_NAME,
-            PlansConfigGroup.GROUP_NAME,
-            FacilitiesConfigGroup.GROUP_NAME,
-            HouseholdsConfigGroup.GROUP_NAME,
-            TransitConfigGroup.GROUP_NAME,
-            VehiclesConfigGroup.GROUP_NAME,
-            NetworkConfigGroup.GROUP_NAME
-    };
+    private final Set<String> necessaryConfigGroups = new HashSet<>(Arrays.asList(
+        GlobalConfigGroup.GROUP_NAME,
+        PlansConfigGroup.GROUP_NAME,
+        FacilitiesConfigGroup.GROUP_NAME,
+        HouseholdsConfigGroup.GROUP_NAME,
+        TransitConfigGroup.GROUP_NAME,
+        VehiclesConfigGroup.GROUP_NAME,
+        NetworkConfigGroup.GROUP_NAME
+    ));
 
     private final Table linkLog;
     private final Table vehicleOccupancy;
@@ -65,18 +65,28 @@ public class MATSimModel implements DataModel {
 
     private Config getConfig(String matsimInputConfig) {
         Config config = ConfigUtils.createConfig();
-        ArrayList<String> configGroups = new ArrayList<>(config.getModules().keySet());
-        for (String module : configGroups) {
-            if (Arrays.asList(necessaryConfigGroups).contains(module)) {
+//        TreeMap<String, ConfigGroup> configuredModules = config.getModules();
+//        for (ConfigGroup module : configuredModules.values().stream().toList()){
+//            for (Map.Entry<String, String> entry : module.getParams().entrySet()) {
+//                System.out.println((entry.getKey() + "," + entry.getValue()));
+//            }
+//        }
+
+        TreeMap<String, ConfigGroup> configuredModules = config.getModules();
+        for (ConfigGroup module : configuredModules.values().stream().toList()) {
+            if (necessaryConfigGroups.contains(module.getName())) {
                 System.out.println("Config group " + module + " is read as is");
             } else {
-                config.removeModule(module);
-                config.addModule(new RelaxedReflectiveConfigGroup(module));
+                ReflectiveConfigGroup relaxedModule =
+                        new ReflectiveConfigGroup(module.getName(),true) {};
+//                for (Map.Entry<String, String> entry : module.getParams().entrySet()) {
+//                    relaxedModule.addParam(entry.getKey(), entry.getValue());
+//                }
+                config.removeModule(module.getName());
+                config.addModule(relaxedModule);
             }
         }
-        ConfigUtils.loadConfig(
-                config, String.format(matsimInputConfig)
-        );
+        ConfigUtils.loadConfig(config, String.format(matsimInputConfig));
         setOutputFilePaths(config);
         return config;
     }
