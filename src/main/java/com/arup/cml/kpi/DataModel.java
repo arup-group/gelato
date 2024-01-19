@@ -8,8 +8,13 @@ public interface DataModel {
 
     Table getVehicleOccupancy();
 
+    Table getLegs();
+
     Table getNetworkLinks();
 
     Table getNetworkLinkModes();
+
+    Table getScheduleStops();
+
     void write(String outputDir);
 }

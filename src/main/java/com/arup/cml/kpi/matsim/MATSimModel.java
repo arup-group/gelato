@@ -13,10 +13,14 @@ import org.matsim.core.config.groups.*;
 import org.matsim.core.events.EventsUtils;
 import org.matsim.core.events.MatsimEventsReader;
 import org.matsim.core.scenario.ScenarioUtils;
+import org.matsim.core.utils.io.IOUtils;
 import org.matsim.pt.config.TransitConfigGroup;
+import org.matsim.pt.transitSchedule.api.TransitSchedule;
+import tech.tablesaw.api.BooleanColumn;
 import tech.tablesaw.api.DoubleColumn;
 import tech.tablesaw.api.StringColumn;
 import tech.tablesaw.api.Table;
+import tech.tablesaw.io.csv.CsvReadOptions;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -41,15 +45,20 @@ public class MATSimModel implements DataModel {
 
     private final Table linkLog;
     private final Table vehicleOccupancy;
+    private Table legs;
     private Table networkLinks;
     private Table networkLinkModes;
+    private Table scheduleStops;
 
     public MATSimModel(String matsimInputConfig, String matsimOutputDir) {
         // there will be other stuff read for a matsim model if the KPIs require
         this.matsimOutputDir = matsimOutputDir;
         Config config = getConfig(matsimInputConfig);
         this.scenario = ScenarioUtils.loadScenario(config);
+
+        readLegs();
         createNetworkLinkTables();
+        createScheduleStopTables();
 
         this.eventsManager = EventsUtils.createEventsManager();
         LinkLogHandler linkLogHandler = new LinkLogHandler();
@@ -95,6 +104,24 @@ public class MATSimModel implements DataModel {
         // hardcoded name for events output file for now
         String outputEventsFile = String.format("%s/output_events.xml.gz", matsimOutputDir);
         new MatsimEventsReader(this.eventsManager).readFile(outputEventsFile);
+    }
+
+    private void readLegs() {
+        log.info("Reading Legs Table");
+        legs = Table.read().usingOptions(
+                getMatsimCsvReadOptions(
+                        String.format("%s/output_legs.csv.gz", matsimOutputDir)
+                )
+        );
+        legs.setName("legs");
+    }
+
+    private CsvReadOptions getMatsimCsvReadOptions(String path) {
+        CsvReadOptions.Builder builder =
+                CsvReadOptions.builder(
+                                IOUtils.getInputStream(IOUtils.resolveFileOrResource(path)))
+                        .separator(';');
+        return builder.build();
     }
 
     private void createNetworkLinkTables() {
@@ -152,6 +179,41 @@ public class MATSimModel implements DataModel {
                 );
     }
 
+    private void createScheduleStopTables() {
+        log.info("Creating Schedule Stop Tables");
+        TransitSchedule schedule = scenario.getTransitSchedule();
+
+        // Network Links Table Columns
+        StringColumn stopIDColumn = StringColumn.create("stopID");
+        DoubleColumn xColumn = DoubleColumn.create("x");
+        DoubleColumn yColumn = DoubleColumn.create("y");
+        StringColumn nameColumn = StringColumn.create("name");
+        StringColumn linkIdColumn = StringColumn.create("linkID");
+        BooleanColumn isBlockingColumn = BooleanColumn.create("isBlocking");
+
+        schedule.getFacilities().forEach((id, stop) -> {
+            String stopId = id.toString();
+
+            // Schedule Stop Table data
+            stopIDColumn.append(stopId);
+            xColumn.append(stop.getCoord().getX());
+            yColumn.append(stop.getCoord().getY());
+            nameColumn.append(stop.getName());
+            linkIdColumn.append(stop.getLinkId().toString());
+            isBlockingColumn.append(stop.getIsBlockingLane());
+        });
+
+        scheduleStops = Table.create("Network Links")
+                .addColumns(
+                        stopIDColumn,
+                        xColumn,
+                        yColumn,
+                        nameColumn,
+                        linkIdColumn,
+                        isBlockingColumn
+                );
+    }
+
     @Override
     public Table getLinkLog() {
         return linkLog;
@@ -160,6 +222,11 @@ public class MATSimModel implements DataModel {
     @Override
     public Table getVehicleOccupancy() {
         return vehicleOccupancy;
+    }
+
+    @Override
+    public Table getLegs() {
+        return legs;
     }
 
     @Override
@@ -173,10 +240,16 @@ public class MATSimModel implements DataModel {
     }
 
     @Override
+    public Table getScheduleStops() {
+        return scheduleStops;
+    }
+
+    @Override
     public void write(String outputDir) {
         linkLog.write().csv(String.format("%s/linkLog.csv", outputDir));
         vehicleOccupancy.write().csv(String.format("%s/vehicleOccupancy.csv", outputDir));
         networkLinks.write().csv(String.format("%s/networkLinks.csv", outputDir));
         networkLinkModes.write().csv(String.format("%s/networkLinkModes.csv", outputDir));
+        scheduleStops.write().csv(String.format("%s/scheduleStops.csv", outputDir));
     }
 }

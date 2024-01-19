@@ -1,5 +1,6 @@
 package com.arup.cml.kpi;
 
+import tech.tablesaw.api.IntColumn;
 import tech.tablesaw.api.StringColumn;
 import tech.tablesaw.api.Table;
 
@@ -12,6 +13,68 @@ public class KPIDomainModel {
     public KPIDomainModel(DataModel dataModel, String outputDir) {
         this.dataModel = dataModel;
         this.outputDir = outputDir;
+    }
+
+    public Table ptWaitTime() {
+        System.out.println("Computing - PT Wait Time KPI");
+        Table legs = dataModel.getLegs();
+        Table scheduleStops = dataModel.getScheduleStops();
+
+        // pull out legs with stop waits
+        legs = legs.where(
+                legs.stringColumn("access_stop_id").isNotMissing()
+        );
+
+        // put in hour bins
+        IntColumn wait_time_seconds = IntColumn.create("wait_time_seconds");
+        legs.timeColumn("wait_time")
+                .forEach(time -> wait_time_seconds.append(
+                        time.toSecondOfDay()
+                ));
+        legs.addColumns(wait_time_seconds);
+
+        // average wait by mode
+        // ***** current req
+//        Table intermediate =
+//                legs
+//                        .summarize("wait_time_seconds", mean)
+//                        .by("mode")
+//                        .setName("Average wait time at stops by mode");
+//        intermediate.write().csv(String.format("%s/pt_wait_time.csv", outputDir));
+
+        // put in hour bins
+        StringColumn hour = StringColumn.create("hour");
+        legs.timeColumn("dep_time")
+                .forEach(time -> hour.append(
+                        String.valueOf(time.getHour())
+                ));
+        legs.addColumns(hour);
+
+        // ***** more balanced than req
+        Table intermediate =
+                legs
+                        .summarize("wait_time_seconds", mean)
+                        .by("mode", "access_stop_id", "hour")
+                        .setName("Average wait time at stops by mode");
+        intermediate.write().csv(String.format("%s/pt_wait_time.csv", outputDir));
+
+        // kpi output
+        // ***** more balanced than req
+        Table kpi =
+                legs
+                        .where(legs.stringColumn("hour").asDoubleColumn().isGreaterThanOrEqualTo(7)
+                                .and(legs.stringColumn("hour").asDoubleColumn().isLessThanOrEqualTo(9)))
+                        .summarize("wait_time_seconds", mean)
+                        .by("mode")
+                        .setName("PT Wait Time KPI");
+        // ***** current req
+//        double kpi =
+//                legs
+//                        .where(legs.stringColumn("hour").asDoubleColumn().isGreaterThanOrEqualTo(7)
+//                                .and(legs.stringColumn("hour").asDoubleColumn().isLessThanOrEqualTo(9)))
+//                        .intColumn("wait_time_seconds")
+//                        .mean();
+        return kpi;
     }
 
     public Table congestion() {
@@ -57,14 +120,10 @@ public class KPIDomainModel {
         // intermediate output data
         Table intermediate =
                 linkLog
-                    .summarize("delayRatio", mean)
-                    .by("linkID", "mode", "hour");
+                        .summarize("delayRatio", mean)
+                        .by("linkID", "mode", "hour")
+                        .setName("Average Delay Ratio on each link by mode and hour of the day");
         intermediate.write().csv(String.format("%s/congestion.csv", outputDir));
-
-        linkLog.where(
-                linkLog.stringColumn("hour").asDoubleColumn().isGreaterThanOrEqualTo(7)
-                        .and(linkLog.stringColumn("hour").asDoubleColumn().isLessThanOrEqualTo(9))
-        );
 
         // kpi output
         Table kpi =
@@ -74,7 +133,7 @@ public class KPIDomainModel {
                         .summarize("delayRatio", mean)
                         .by("mode")
                         .setName("Congestion KPI");
-        kpi.write().csv(String.format("%s/kpi.csv", outputDir));
+        kpi.write().csv(String.format("%s/kpi_congestion.csv", outputDir));
 
         return kpi;
     }
