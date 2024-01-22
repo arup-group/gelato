@@ -82,6 +82,7 @@ public class KPIDomainModel {
         System.out.println("Computing KPI - Modal Split");
         Table trips = dataModel.getTrips();
 
+        // percentages of trips by dominant (by distance) modes
         Table kpi = trips.xTabPercents("longest_distance_mode");
         kpi.doubleColumn("Percents").setPrintFormatter(NumberColumnFormatter.percent(2));
         return kpi;
@@ -92,15 +93,23 @@ public class KPIDomainModel {
         Table linkLog = dataModel.getLinkLog();
         Table vehicles = dataModel.getVehicles();
 
+        // drop vehicles that aborted their journey
         linkLog = linkLog
                 .dropWhere(
                         linkLog.doubleColumn("numberOfPeople").isEqualTo(-1)
                 );
+
+        // replace the network mode of the vehicle - PT vehicles default their network mode to car if not specified
+        // also adds capacity of the vehicle
         linkLog.removeColumns("mode");
         linkLog = linkLog
                 .joinOn("vehicleID")
                 .inner(vehicles.selectColumns("vehicleID", "mode", "capacity"));
+        // TODO add empty vehicles?
 
+        long numberOfVehicles = linkLog.selectColumns("vehicleID").dropDuplicateRows().stream().count();
+
+        // average by mode
         Table averageOccupancyPerMode =
                 linkLog
                         .summarize("numberOfPeople", "capacity", mean)
@@ -111,7 +120,6 @@ public class KPIDomainModel {
                         .selectColumns("vehicleID","mode")
                         .dropDuplicateRows()
                         .countBy("mode"));
-        long numberOfVehicles = linkLog.selectColumns("vehicleID").dropDuplicateRows().stream().count();
 
         averageOccupancyPerMode.addColumns(
                 averageOccupancyPerMode
@@ -119,9 +127,11 @@ public class KPIDomainModel {
                         .divide(averageOccupancyPerMode.doubleColumn("Mean [capacity]"))
                         .multiply(averageOccupancyPerMode.intColumn("Count"))
         );
+        // current req - per mode computation
         double pm = averageOccupancyPerMode.doubleColumn("Mean [numberOfPeople] / Mean [capacity] * Count").sum();
         pm = pm / numberOfVehicles;
 
+        // average by vehicle
         Table averageOccupancyPerVehicle =
                 linkLog
                         .summarize("numberOfPeople", "capacity", mean)
