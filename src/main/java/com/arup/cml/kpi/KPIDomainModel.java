@@ -3,6 +3,7 @@ package com.arup.cml.kpi;
 import tech.tablesaw.api.IntColumn;
 import tech.tablesaw.api.StringColumn;
 import tech.tablesaw.api.Table;
+import tech.tablesaw.columns.numbers.NumberColumnFormatter;
 
 import static tech.tablesaw.aggregate.AggregateFunctions.mean;
 
@@ -82,13 +83,7 @@ public class KPIDomainModel {
         Table trips = dataModel.getTrips();
 
         Table kpi = trips.xTabPercents("longest_distance_mode");
-        kpi.replaceColumn(
-                kpi.doubleColumn("Percents")
-                        .multiply(10000)
-                        .round()
-                        .divide(100)
-                        .setName("Percents")
-        );
+        kpi.doubleColumn("Percents").setPrintFormatter(NumberColumnFormatter.percent(2));
         return kpi;
     }
 
