@@ -35,7 +35,9 @@ public class KpiGenerator implements Runnable {
         MATSimModel matsimModel = new MATSimModel(matsimConfigFile, matsimOutputDirectory);
         matsimModel.write(outputDir);
         KPIDomainModel domainModel = new KPIDomainModel(matsimModel, outputDir);
-        System.out.println(domainModel.ptWaitTime());
+        System.out.println(domainModel.ptWaitTime().print());
+        System.out.println(domainModel.modalSplit().print());
         System.out.println(domainModel.congestion().print());
+
     }
 }

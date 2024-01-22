@@ -46,6 +46,7 @@ public class MATSimModel implements DataModel {
     private final Table linkLog;
     private final Table vehicleOccupancy;
     private Table legs;
+    private Table trips;
     private Table networkLinks;
     private Table networkLinkModes;
     private Table scheduleStops;
@@ -57,6 +58,7 @@ public class MATSimModel implements DataModel {
         this.scenario = ScenarioUtils.loadScenario(config);
 
         readLegs();
+        readTrips();
         createNetworkLinkTables();
         createScheduleStopTables();
 
@@ -113,7 +115,17 @@ public class MATSimModel implements DataModel {
                         String.format("%s/output_legs.csv.gz", matsimOutputDir)
                 )
         );
-        legs.setName("legs");
+        legs.setName("Legs");
+    }
+
+    private void readTrips() {
+        log.info("Reading Trips Table");
+        trips = Table.read().usingOptions(
+                getMatsimCsvReadOptions(
+                        String.format("%s/output_trips.csv.gz", matsimOutputDir)
+                )
+        );
+        trips.setName("Trips");
     }
 
     private CsvReadOptions getMatsimCsvReadOptions(String path) {
@@ -227,6 +239,11 @@ public class MATSimModel implements DataModel {
     @Override
     public Table getLegs() {
         return legs;
+    }
+
+    @Override
+    public Table getTrips() {
+        return trips;
     }
 
     @Override

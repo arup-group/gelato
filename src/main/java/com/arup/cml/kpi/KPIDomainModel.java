@@ -16,9 +16,8 @@ public class KPIDomainModel {
     }
 
     public Table ptWaitTime() {
-        System.out.println("Computing - PT Wait Time KPI");
+        System.out.println("Computing KPI - PT Wait Time");
         Table legs = dataModel.getLegs();
-        Table scheduleStops = dataModel.getScheduleStops();
 
         // pull out legs with stop waits
         legs = legs.where(
@@ -66,7 +65,7 @@ public class KPIDomainModel {
                                 .and(legs.stringColumn("hour").asDoubleColumn().isLessThanOrEqualTo(9)))
                         .summarize("wait_time_seconds", mean)
                         .by("mode")
-                        .setName("PT Wait Time KPI");
+                        .setName("PT Wait Time");
         // ***** current req
 //        double kpi =
 //                legs
@@ -77,8 +76,23 @@ public class KPIDomainModel {
         return kpi;
     }
 
+    public Table modalSplit() {
+        System.out.println("Computing KPI - Modal Split");
+        Table trips = dataModel.getTrips();
+
+        Table kpi = trips.xTabPercents("longest_distance_mode");
+        kpi.replaceColumn(
+                kpi.doubleColumn("Percents")
+                        .multiply(10000)
+                        .round()
+                        .divide(100)
+                        .setName("Percents")
+        );
+        return kpi;
+    }
+
     public Table congestion() {
-        System.out.println("Computing - Congestion KPI");
+        System.out.println("Computing KPI - Congestion");
         Table linkLog = dataModel.getLinkLog();
         Table networkLinks = dataModel.getNetworkLinks();
 
@@ -132,7 +146,7 @@ public class KPIDomainModel {
                                 .and(linkLog.stringColumn("hour").asDoubleColumn().isLessThanOrEqualTo(9)))
                         .summarize("delayRatio", mean)
                         .by("mode")
-                        .setName("Congestion KPI");
+                        .setName("Congestion");
         kpi.write().csv(String.format("%s/kpi_congestion.csv", outputDir));
 
         return kpi;

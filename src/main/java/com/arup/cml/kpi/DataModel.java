@@ -10,6 +10,8 @@ public interface DataModel {
 
     Table getLegs();
 
+    Table getTrips();
+
     Table getNetworkLinks();
 
     Table getNetworkLinkModes();
