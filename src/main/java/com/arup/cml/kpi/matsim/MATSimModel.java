@@ -16,10 +16,9 @@ import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.io.IOUtils;
 import org.matsim.pt.config.TransitConfigGroup;
 import org.matsim.pt.transitSchedule.api.TransitSchedule;
-import tech.tablesaw.api.BooleanColumn;
-import tech.tablesaw.api.DoubleColumn;
-import tech.tablesaw.api.StringColumn;
-import tech.tablesaw.api.Table;
+import org.matsim.vehicles.Vehicle;
+import org.matsim.vehicles.Vehicles;
+import tech.tablesaw.api.*;
 import tech.tablesaw.io.csv.CsvReadOptions;
 
 import java.util.ArrayList;
@@ -45,11 +44,13 @@ public class MATSimModel implements DataModel {
 
     private final Table linkLog;
     private final Table vehicleOccupancy;
+    private Table vehicles;
     private Table legs;
     private Table trips;
     private Table networkLinks;
     private Table networkLinkModes;
     private Table scheduleStops;
+    private Table scheduleRoutes;
 
     public MATSimModel(String matsimInputConfig, String matsimOutputDir) {
         // there will be other stuff read for a matsim model if the KPIs require
@@ -59,8 +60,9 @@ public class MATSimModel implements DataModel {
 
         readLegs();
         readTrips();
+        createVehicleTables();
         createNetworkLinkTables();
-        createScheduleStopTables();
+        createTransitTables();
 
         this.eventsManager = EventsUtils.createEventsManager();
         LinkLogHandler linkLogHandler = new LinkLogHandler();
@@ -136,6 +138,38 @@ public class MATSimModel implements DataModel {
         return builder.build();
     }
 
+    private void createVehicleTables() {
+        log.info("Creating Vehicle Table");
+        StringColumn vehicleIDColumn = StringColumn.create("vehicleID");
+        StringColumn modeColumn = StringColumn.create("mode");
+        IntColumn capacityColumn = IntColumn.create("capacity");
+
+
+        Vehicles civilianVehicles = scenario.getVehicles();
+        civilianVehicles.getVehicles().forEach((id, vehicle) -> {
+            vehicleIDColumn.append(id.toString());
+            modeColumn.append(vehicle.getType().getNetworkMode());
+            capacityColumn.append(
+                    vehicle.getType().getCapacity().getSeats() + vehicle.getType().getCapacity().getStandingRoom()
+            );
+        });
+
+        // transit vehicles can report network mode as car which is useless, we want the vehicles to have the
+        // transit route modes
+//        Vehicles transitVehicles = scenario.getTransitVehicles();
+//        transitVehicles.getVehicles().forEach((id, vehicle) -> {
+//            vehicleIDColumn.append(id.toString());
+//            modeColumn.append(vehicle.getType().getNetworkMode());
+//        });
+
+        vehicles = Table.create("Vehicles")
+            .addColumns(
+                    vehicleIDColumn,
+                    modeColumn,
+                    capacityColumn
+            );
+    }
+
     private void createNetworkLinkTables() {
         log.info("Creating Network Link Tables");
         Network network = scenario.getNetwork();
@@ -191,11 +225,12 @@ public class MATSimModel implements DataModel {
                 );
     }
 
-    private void createScheduleStopTables() {
-        log.info("Creating Schedule Stop Tables");
+    private void createTransitTables() {
+        log.info("Creating Transit Tables");
         TransitSchedule schedule = scenario.getTransitSchedule();
 
-        // Network Links Table Columns
+        log.info("Creating Schedule Stop Table");
+        // Schedule Stop Table Columns
         StringColumn stopIDColumn = StringColumn.create("stopID");
         DoubleColumn xColumn = DoubleColumn.create("x");
         DoubleColumn yColumn = DoubleColumn.create("y");
@@ -215,7 +250,7 @@ public class MATSimModel implements DataModel {
             isBlockingColumn.append(stop.getIsBlockingLane());
         });
 
-        scheduleStops = Table.create("Network Links")
+        scheduleStops = Table.create("Schedule Stops")
                 .addColumns(
                         stopIDColumn,
                         xColumn,
@@ -223,6 +258,39 @@ public class MATSimModel implements DataModel {
                         nameColumn,
                         linkIdColumn,
                         isBlockingColumn
+                );
+
+        StringColumn lineIDColumn = StringColumn.create("transitLineID");
+        StringColumn routeIDColumn = StringColumn.create("routeID");
+        StringColumn modeColumn = StringColumn.create("mode");
+
+        StringColumn vehicleIDColumn = vehicles.stringColumn("vehicleID");
+        StringColumn vehicleModeColumn = vehicles.stringColumn("mode");
+        IntColumn capacityColumn = vehicles.intColumn("capacity");
+        Vehicles transitVehicles = scenario.getTransitVehicles();
+        log.info("Creating Schedule Transit Tables");
+        schedule.getTransitLines().forEach((lineId, transitLine) -> {
+            transitLine.getRoutes().forEach((routeId, route) -> {
+                lineIDColumn.append(lineId.toString());
+                routeIDColumn.append(routeId.toString());
+                modeColumn.append(route.getTransportMode());
+
+                route.getDepartures().forEach((departureId, departure) -> {
+                    vehicleModeColumn.append(route.getTransportMode());
+                    Vehicle vehicle = transitVehicles.getVehicles().get(departure.getVehicleId());
+                    vehicleIDColumn.append(vehicle.getId().toString());
+                    capacityColumn.append(
+                            vehicle.getType().getCapacity().getSeats() + vehicle.getType().getCapacity().getStandingRoom()
+                    );
+                });
+            });
+        });
+
+        scheduleRoutes = Table.create("Schedule Routes")
+                .addColumns(
+                        lineIDColumn,
+                        routeIDColumn,
+                        modeColumn
                 );
     }
 
@@ -247,6 +315,11 @@ public class MATSimModel implements DataModel {
     }
 
     @Override
+    public Table getVehicles() {
+        return vehicles;
+    }
+
+    @Override
     public Table getNetworkLinks() {
         return networkLinks;
     }
@@ -259,6 +332,11 @@ public class MATSimModel implements DataModel {
     @Override
     public Table getScheduleStops() {
         return scheduleStops;
+    }
+
+    @Override
+    public Table getScheduleRoutes() {
+        return scheduleRoutes;
     }
 
     @Override

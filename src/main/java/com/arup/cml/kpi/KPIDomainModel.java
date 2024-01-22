@@ -66,6 +66,7 @@ public class KPIDomainModel {
                         .summarize("wait_time_seconds", mean)
                         .by("mode")
                         .setName("PT Wait Time");
+        // TODO discuss this KPIs requirements / outputs
         // ***** current req
 //        double kpi =
 //                legs
@@ -89,6 +90,72 @@ public class KPIDomainModel {
                         .setName("Percents")
         );
         return kpi;
+    }
+
+    public Table occupancyRate() {
+        System.out.println("Computing KPI - Occupancy Rate");
+        Table linkLog = dataModel.getLinkLog();
+        Table vehicles = dataModel.getVehicles();
+
+        linkLog = linkLog
+                .dropWhere(
+                        linkLog.doubleColumn("numberOfPeople").isEqualTo(-1)
+                );
+        linkLog.removeColumns("mode");
+        linkLog = linkLog
+                .joinOn("vehicleID")
+                .inner(vehicles.selectColumns("vehicleID", "mode", "capacity"));
+
+        Table averageOccupancyPerMode =
+                linkLog
+                        .summarize("numberOfPeople", "capacity", mean)
+                        .by("mode");
+        averageOccupancyPerMode = averageOccupancyPerMode
+                .joinOn("mode")
+                .inner(linkLog
+                        .selectColumns("vehicleID","mode")
+                        .dropDuplicateRows()
+                        .countBy("mode"));
+        long numberOfVehicles = linkLog.selectColumns("vehicleID").dropDuplicateRows().stream().count();
+
+        averageOccupancyPerMode.addColumns(
+                averageOccupancyPerMode
+                        .doubleColumn("Mean [numberOfPeople]")
+                        .divide(averageOccupancyPerMode.doubleColumn("Mean [capacity]"))
+                        .multiply(averageOccupancyPerMode.intColumn("Count"))
+        );
+        double pm = averageOccupancyPerMode.doubleColumn("Mean [numberOfPeople] / Mean [capacity] * Count").sum();
+        pm = pm / numberOfVehicles;
+
+        Table averageOccupancyPerVehicle =
+                linkLog
+                        .summarize("numberOfPeople", "capacity", mean)
+                        .by("vehicleID");
+        averageOccupancyPerVehicle.addColumns(
+                averageOccupancyPerVehicle
+                        .doubleColumn("Mean [numberOfPeople]")
+                        .divide(averageOccupancyPerVehicle.doubleColumn("Mean [capacity]"))
+        );
+        double pv = averageOccupancyPerVehicle.doubleColumn("Mean [numberOfPeople] / Mean [capacity]").sum();
+        pv = pv / numberOfVehicles;
+
+        // TODO decide which approach this should be, get intermediate results too
+        return averageOccupancyPerVehicle;
+    }
+
+    public Table vehicleKM() {
+        System.out.println("Computing KPI - Vehicle KM");
+        return Table.create("Vehicle KM");
+    }
+
+    public Table speed() {
+        System.out.println("Computing KPI - Speed");
+        return Table.create("Speed");
+    }
+
+    public Table GHG() {
+        System.out.println("Computing KPI - GHG");
+        return Table.create("GHG");
     }
 
     public Table congestion() {

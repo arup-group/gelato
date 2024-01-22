@@ -46,6 +46,7 @@ public class LinkLogHandler implements VehicleEntersTrafficEventHandler, Vehicle
         endTimeColumn.put(index, -1.0);
         // placeholder for people in the vehicle as well - someone might enter the vehicle before it leaves the link
         numberOfPeopleColumn.put(index, -1);
+        // todo label aborted vehicles that retain -1 placeholder values
         vehicleLatestLogIndex.put(vehicleID, index);
         index++;
     }

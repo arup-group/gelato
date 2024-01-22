@@ -12,11 +12,15 @@ public interface DataModel {
 
     Table getTrips();
 
+    Table getVehicles();
+
     Table getNetworkLinks();
 
     Table getNetworkLinkModes();
 
     Table getScheduleStops();
+
+    Table getScheduleRoutes();
 
     void write(String outputDir);
 }
