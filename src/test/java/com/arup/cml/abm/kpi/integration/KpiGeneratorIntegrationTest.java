@@ -24,12 +24,13 @@ public class KpiGeneratorIntegrationTest {
         CommandLine cmd = new CommandLine(new KpiGenerator());
         cmd.setOut(new PrintWriter(new StringWriter()));
         Path resourceDirectory = Paths.get("src","test","resources");
+        String testDataDirRoot = String.format("%s/integration-test-data/smol-matsim-outputs/", resourceDirectory);
 
         int exitCode = cmd.execute(
                 "-mc",
-                String.format("%s/integration-test-data/smol-matsim-outputs/output_config.xml", resourceDirectory),
+                String.format("%s/output_config.xml", testDataDirRoot),
                 "-mo",
-                String.format("%s/integration-test-data/smol-matsim-outputs", resourceDirectory),
+                testDataDirRoot,
                 "-o",
                 appOutputDir.getRoot().getAbsolutePath()
         );
@@ -38,9 +39,7 @@ public class KpiGeneratorIntegrationTest {
         String[] outputFilesList = appOutputDir.getRoot().list();
         assertThat(outputFilesList).hasSize(6).as("Check number of output files created");
         assertThat(outputFilesList).contains("kpi.csv").as("Check KPI CSV file exists");
-        File expectedKpiFile =
-                new File(String.format("%s/integration-test-data/smol-matsim-outputs/expected-kpi.csv",
-                        resourceDirectory));
+        File expectedKpiFile = new File(String.format("%s/expected-kpi.csv", testDataDirRoot));
         assertThat(new File(String.format("%s/kpi.csv", appOutputDir.getRoot())))
                 .hasSameTextualContentAs(expectedKpiFile)
                 .as("Check calculated KPI data");
