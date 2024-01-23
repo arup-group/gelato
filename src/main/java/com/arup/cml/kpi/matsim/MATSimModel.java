@@ -162,11 +162,15 @@ public class MATSimModel implements DataModel {
 //            modeColumn.append(vehicle.getType().getNetworkMode());
 //        });
 
+        // TODO: add reading DRT vehicles if output found
+
         vehicles = Table.create("Vehicles")
             .addColumns(
                     vehicleIDColumn,
                     modeColumn,
-                    capacityColumn
+                    capacityColumn,
+                    StringColumn.create("PTLineID"),
+                    StringColumn.create("PTRouteID")
             );
     }
 
@@ -264,9 +268,6 @@ public class MATSimModel implements DataModel {
         StringColumn routeIDColumn = StringColumn.create("routeID");
         StringColumn modeColumn = StringColumn.create("mode");
 
-        StringColumn vehicleIDColumn = vehicles.stringColumn("vehicleID");
-        StringColumn vehicleModeColumn = vehicles.stringColumn("mode");
-        IntColumn capacityColumn = vehicles.intColumn("capacity");
         Vehicles transitVehicles = scenario.getTransitVehicles();
         log.info("Creating Schedule Transit Tables");
         schedule.getTransitLines().forEach((lineId, transitLine) -> {
@@ -276,10 +277,14 @@ public class MATSimModel implements DataModel {
                 modeColumn.append(route.getTransportMode());
 
                 route.getDepartures().forEach((departureId, departure) -> {
-                    vehicleModeColumn.append(route.getTransportMode());
+                    // TODO consider a separate 'departures' table, which partially appends to vehicles
+                    vehicles.stringColumn("PTLineID").append(lineId.toString());
+                    vehicles.stringColumn("PTRouteID").append(routeId.toString());
+                    vehicles.stringColumn("mode").append(route.getTransportMode());
+
                     Vehicle vehicle = transitVehicles.getVehicles().get(departure.getVehicleId());
-                    vehicleIDColumn.append(vehicle.getId().toString());
-                    capacityColumn.append(
+                    vehicles.stringColumn("vehicleID").append(vehicle.getId().toString());
+                    vehicles.intColumn("capacity").append(
                             vehicle.getType().getCapacity().getSeats() + vehicle.getType().getCapacity().getStandingRoom()
                     );
                 });

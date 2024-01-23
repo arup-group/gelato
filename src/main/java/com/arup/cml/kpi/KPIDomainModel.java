@@ -6,6 +6,7 @@ import tech.tablesaw.api.Table;
 import tech.tablesaw.columns.numbers.NumberColumnFormatter;
 
 import static tech.tablesaw.aggregate.AggregateFunctions.mean;
+import static tech.tablesaw.aggregate.AggregateFunctions.sum;
 
 public class KPIDomainModel {
     public DataModel dataModel;
@@ -75,7 +76,7 @@ public class KPIDomainModel {
 //                                .and(legs.stringColumn("hour").asDoubleColumn().isLessThanOrEqualTo(9)))
 //                        .intColumn("wait_time_seconds")
 //                        .mean();
-        return kpi;
+        return kpi.setName("PT Wait Time");
     }
 
     public Table modalSplit() {
@@ -85,7 +86,7 @@ public class KPIDomainModel {
         // percentages of trips by dominant (by distance) modes
         Table kpi = trips.xTabPercents("longest_distance_mode");
         kpi.doubleColumn("Percents").setPrintFormatter(NumberColumnFormatter.percent(2));
-        return kpi;
+        return kpi.setName("Modal Split");
     }
 
     public Table occupancyRate() {
@@ -145,12 +146,50 @@ public class KPIDomainModel {
         pv = pv / numberOfVehicles;
 
         // TODO decide which approach this should be, get intermediate results too
-        return averageOccupancyPerVehicle;
+        return averageOccupancyPerMode.setName("Occupancy Rate");
     }
 
-    public Table vehicleKM() {
+    public double vehicleKM() {
         System.out.println("Computing KPI - Vehicle KM");
-        return Table.create("Vehicle KM");
+        Table linkLog = dataModel.getLinkLog();
+        Table vehicles = dataModel.getVehicles();
+        Table networkLinks = dataModel.getNetworkLinks();
+
+        linkLog = linkLog
+                .joinOn("linkID")
+                .inner(networkLinks.selectColumns("linkID", "length"));
+
+        Table kpi = linkLog
+                .summarize("length", sum)
+                .by("vehicleID")
+                .setName("Vehicle KM");
+        kpi.addColumns(
+                kpi
+                        .doubleColumn("Sum [length]")
+                        .divide(100)
+                        .setName("distance_km")
+        );
+
+        kpi = kpi
+                .joinOn("vehicleID")
+                .inner(vehicles.selectColumns("vehicleID", "mode", "PTLineID", "PTRouteID"));
+
+        // to get to a passenger-km metric the easiest way is to go through legs
+//        Table legs = dataModel.getLegs();
+//        vehicles.stringColumn("vehicleID").setName("vehicle_id");
+//        legs = legs
+//                .joinOn("vehicle_id")
+//                .inner(vehicles.selectColumns("vehicle_id", "PTLineID", "PTRouteID"));
+//        Table kpi = legs.selectColumns(
+//                "person", "trip_id", "dep_time", "trav_time",
+//                "distance", "mode", "vehicle_id", "PTLineID", "PTRouteID");
+
+        // suggestion as intermediate output, might be too aggregated though
+//        Table intermediate = kpi
+//                .summarize("distance_km", sum)
+//                .by("mode");
+
+        return kpi.doubleColumn("distance_km").sum();
     }
 
     public Table speed() {
@@ -217,10 +256,9 @@ public class KPIDomainModel {
                         .where(linkLog.stringColumn("hour").asDoubleColumn().isGreaterThanOrEqualTo(7)
                                 .and(linkLog.stringColumn("hour").asDoubleColumn().isLessThanOrEqualTo(9)))
                         .summarize("delayRatio", mean)
-                        .by("mode")
-                        .setName("Congestion");
+                        .by("mode");
         kpi.write().csv(String.format("%s/kpi_congestion.csv", outputDir));
 
-        return kpi;
+        return kpi.setName("Congestion");
     }
 }

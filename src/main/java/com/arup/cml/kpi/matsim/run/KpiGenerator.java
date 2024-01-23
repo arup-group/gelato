@@ -38,6 +38,7 @@ public class KpiGenerator implements Runnable {
         System.out.println(domainModel.ptWaitTime().print());
         System.out.println(domainModel.modalSplit().print());
         System.out.println(domainModel.occupancyRate().print());
+        System.out.println(domainModel.vehicleKM());
         System.out.println(domainModel.congestion().print());
 
     }
