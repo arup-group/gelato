@@ -43,6 +43,6 @@ public class KpiGeneratorIntegrationTest {
                         resourceDirectory));
         assertThat(new File(String.format("%s/kpi.csv", appOutputDir.getRoot())))
                 .hasSameTextualContentAs(expectedKpiFile)
-                .as("Check KPI data");
+                .as("Check calculated KPI data");
     }
 }
