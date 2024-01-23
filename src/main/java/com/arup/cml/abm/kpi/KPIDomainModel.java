@@ -1,7 +1,6 @@
 package com.arup.cml.abm.kpi;
 
 import tech.tablesaw.api.IntColumn;
-import tech.tablesaw.api.StringColumn;
 import tech.tablesaw.api.Table;
 
 import static tech.tablesaw.aggregate.AggregateFunctions.mean;
