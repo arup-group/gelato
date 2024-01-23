@@ -1,10 +1,11 @@
-package com.arup.cml.kpi.matsim.run;
+package com.arup.cml.abm.kpi.matsim.run;
 
-import com.arup.cml.kpi.KPIDomainModel;
+import com.arup.cml.abm.kpi.KPIDomainModel;
+import com.arup.cml.abm.kpi.matsim.MATSimModel;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
-import com.arup.cml.kpi.matsim.MATSimModel;
+
 import java.io.File;
 
 @Command(name = "KpiGenerator", version = "1.0-SNAPSHOT", mixinStandardHelpOptions = true)

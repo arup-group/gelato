@@ -1,4 +1,4 @@
-package com.arup.cml.kpi.matsim;
+package com.arup.cml.abm.kpi.matsim;
 
 
 import org.junit.Test;
