@@ -7,9 +7,6 @@ import org.junit.rules.TemporaryFolder;
 import picocli.CommandLine;
 
 import java.io.File;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -21,12 +18,10 @@ public class KpiGeneratorIntegrationTest {
 
     @Test
     public void testApp() throws Exception {
-        CommandLine cmd = new CommandLine(new KpiGenerator());
-        cmd.setOut(new PrintWriter(new StringWriter()));
-        Path resourceDirectory = Paths.get("src","test","resources");
-        String testDataDirRoot = String.format("%s/integration-test-data/smol-matsim-outputs/", resourceDirectory);
+        String testDataDirRoot = String.format("%s/integration-test-data/smol-matsim-outputs/",
+                Paths.get("src","test","resources"));
 
-        int exitCode = cmd.execute(
+        int exitCode = new CommandLine(new KpiGenerator()).execute(
                 "-mc",
                 String.format("%s/output_config.xml", testDataDirRoot),
                 "-mo",
