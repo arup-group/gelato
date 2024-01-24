@@ -78,10 +78,7 @@ public class MATSimModel implements DataModel {
                 System.out.println("Config group " + module + " is read as is");
             } else {
                 ReflectiveConfigGroup relaxedModule =
-                        new ReflectiveConfigGroup(module.getName(),true) {};
-//                for (Map.Entry<String, String> entry : module.getParams().entrySet()) {
-//                    relaxedModule.addParam(entry.getKey(), entry.getValue());
-//                }
+                        new ReflectiveConfigGroup(module.getName(), true) {};
                 config.removeModule(module.getName());
                 config.addModule(relaxedModule);
             }
