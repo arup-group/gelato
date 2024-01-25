@@ -42,6 +42,11 @@ public class MatsimKpiGenerator implements Runnable {
                 matsimConfigFile
         );
 
+        // We're not using a dependency injection framework, but we *are* programming
+        // in a dependency injection style (explicit dependencies passed into
+        // constructors) and then creating and wiring together the objects in the
+        // object graph "manually" here. Switching to a DI framework in future should
+        // be pretty straightforward if we need to.
         MatsimUtils matsimUtils = new MatsimUtils(matsimOutputDirectory, matsimConfigFile);
         KpiCalculator kpiCalculator = new TablesawKpiCalculator(matsimUtils.getMatsimNetwork());
         MatsimLinkLogHandler matsimLinkLogHandler = new MatsimLinkLogHandler(kpiCalculator);
