@@ -32,7 +32,7 @@ public class MatsimKpiGenerator implements Runnable {
     private Path matsimOutputDirectory;
 
     @Option(names = "-o", description = "Sets the output directory. Defaults to stdout", required = true)
-    private String outputDir;
+    private Path outputDir;
 
     public static void main(String[] args) {
         int exitCode = new CommandLine(new MatsimKpiGenerator()).execute(args);
@@ -55,6 +55,7 @@ public class MatsimKpiGenerator implements Runnable {
         String outputEventsFile = String.format("%s/output_events.xml.gz", matsimOutputDirectory);
         System.out.printf("Streaming MATSim events from %s%n", outputEventsFile);
         new MatsimEventsReader(eventsManager).readFile(outputEventsFile);
+
         Map<String, AtomicInteger> eventsSeen = matsimLinkLogHandler.getEventCounts();
         Integer eventCount = eventsSeen.values()
                 .stream()
@@ -69,8 +70,6 @@ public class MatsimKpiGenerator implements Runnable {
             // swallow
         }
 
-        // get the network link info from the matsim outputs and pass it into the calculator
-
-        kpiCalculator.writeCongestionKpi(Path.of(format("%s/congestion-kpi.csv", outputDir)));
+        kpiCalculator.writeCongestionKpi(outputDir);
     }
 }

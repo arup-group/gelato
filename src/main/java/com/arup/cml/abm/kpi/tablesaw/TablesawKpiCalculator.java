@@ -5,10 +5,7 @@ import com.arup.cml.abm.kpi.matsim.MATSimModel;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.network.Network;
-import tech.tablesaw.api.DoubleColumn;
-import tech.tablesaw.api.LongColumn;
-import tech.tablesaw.api.StringColumn;
-import tech.tablesaw.api.Table;
+import tech.tablesaw.api.*;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -16,6 +13,8 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.LongStream;
+
+import static tech.tablesaw.aggregate.AggregateFunctions.mean;
 
 public class TablesawKpiCalculator implements KpiCalculator {
 
@@ -55,6 +54,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
 
     public TablesawKpiCalculator(Network network) {
         this.network = network;
+        createNetworkLinkTables(network);
     }
 
     @Override
@@ -94,8 +94,62 @@ public class TablesawKpiCalculator implements KpiCalculator {
     }
 
     @Override
-    public void writeCongestionKpi(Path directory) {
-        System.out.printf("Writing Congestion KPIs to %s", directory);
+    public void writeCongestionKpi(Path outputDirectory) {
+        System.out.printf("Writing Congestion KPIs to %s", outputDirectory);
+        System.out.println("Computing - Congestion KPI");
+        Table linkLog = getLinkLog();
+
+        // compute travel time on links
+        linkLog.addColumns(
+                linkLog.doubleColumn("endTime")
+                        .subtract(linkLog.doubleColumn("startTime"))
+                        .setName("travelTime")
+        );
+
+        // compute free flow time on links (length / freespeed)
+        networkLinks.addColumns(
+                networkLinks.doubleColumn("length")
+                        .divide(networkLinks.doubleColumn("freespeed"))
+                        .setName("freeFlowTime")
+        );
+
+        // add freeflow time to link log
+        linkLog =
+                linkLog
+                        .joinOn("linkID")
+                        .inner(networkLinks.selectColumns("linkID", "freeFlowTime"));
+
+        // compute delay ratio
+        linkLog.addColumns(
+                linkLog.doubleColumn("travelTime")
+                        .divide(linkLog.doubleColumn("freeFlowTime"))
+                        .setName("delayRatio")
+        );
+
+        // put in hour bins
+        IntColumn hour = IntColumn.create("hour");
+        linkLog.doubleColumn("endTime")
+                .forEach(time -> hour.append(
+                        (int) Math.floor(time / (60 * 60))
+                ));
+        linkLog.addColumns(hour);
+
+        // intermediate output data
+        Table intermediate =
+                linkLog
+                        .summarize("delayRatio", mean)
+                        .by("linkID", "mode", "hour");
+        intermediate.write().csv(String.format("%s/congestion.csv", outputDirectory));
+
+        // kpi output
+        Table kpi =
+                linkLog
+                        .where(linkLog.intColumn("hour").isGreaterThanOrEqualTo(7)
+                                .and(linkLog.intColumn("hour").isLessThanOrEqualTo(9)))
+                        .summarize("delayRatio", mean)
+                        .by("mode")
+                        .setName("Congestion KPI");
+        kpi.write().csv(String.format("%s/kpi.csv", outputDirectory));
     }
 
     private void newLinkLogEntry(String vehicleID, String linkID, String mode, double startTime) {
@@ -204,5 +258,12 @@ public class TablesawKpiCalculator implements KpiCalculator {
                         StringColumn.create("linkID", modesLinkIDColumn),
                         StringColumn.create("mode", modesColumn)
                 );
+    }
+
+    private void writeIntermediateData(String outputDir) {
+        getLinkLog().write().csv(String.format("%s/linkLog.csv", outputDir));
+        getVehicleOccupancy().write().csv(String.format("%s/vehicleOccupancy.csv", outputDir));
+        networkLinks.write().csv(String.format("%s/networkLinks.csv", outputDir));
+        networkLinkModes.write().csv(String.format("%s/networkLinkModes.csv", outputDir));
     }
 }
