@@ -64,6 +64,7 @@ public class MatsimKpiGenerator implements Runnable {
                     writeValueAsString(eventsSeen));
         } catch (JsonProcessingException e) {
             // swallow, we're only trying to display event type counts
+            e.printStackTrace();
         }
 
         kpiCalculator.writeCongestionKpi(outputDir);

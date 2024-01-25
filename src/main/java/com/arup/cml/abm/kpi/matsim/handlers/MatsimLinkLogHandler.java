@@ -17,7 +17,6 @@ public class MatsimLinkLogHandler implements
         LinkLeaveEventHandler {
 
     private KpiCalculator kpiCalculator;
-    private int eventCount;
     private Map<String, AtomicInteger> eventCounts = new HashMap<>();
 
     public MatsimLinkLogHandler(KpiCalculator kpiCalculator) {

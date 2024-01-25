@@ -1,7 +1,6 @@
 package com.arup.cml.abm.kpi.tablesaw;
 
 import com.arup.cml.abm.kpi.KpiCalculator;
-import com.arup.cml.abm.kpi.matsim.MATSimModel;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.network.Network;
@@ -20,7 +19,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
 
     private static final Logger LOGGER = LogManager.getLogger(TablesawKpiCalculator.class);
 
-    private Map<String, String> vehicleModes = new HashMap<>();
+    private final Map<String, String> vehicleModes = new HashMap<>();
 
     // arrays to collect Link Log data, each will form a column of the Link Log
     private final ArrayList<String> vehicleIDColumn = new ArrayList<>();
@@ -45,15 +44,12 @@ public class TablesawKpiCalculator implements KpiCalculator {
     // Link Log entry index
     private long index = 0;
 
-    // TODO: 24/01/2024 replace this ASAP with a representation of the network
-    // that isn't from the MATSim API (a map, or dedicated domain object, or whatever)
-    private Network network;
-
     private Table networkLinks;
     private Table networkLinkModes;
 
     public TablesawKpiCalculator(Network network) {
-        this.network = network;
+        // TODO: 24/01/2024 replace this ASAP with a representation of the network
+        // that isn't from the MATSim API (a map, or dedicated domain object, or whatever)
         createNetworkLinkTables(network);
     }
 
@@ -149,6 +145,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
                         .by("mode")
                         .setName("Congestion KPI");
         kpi.write().csv(String.format("%s/kpi.csv", outputDirectory));
+        writeIntermediateData(outputDirectory);
     }
 
     private void newLinkLogEntry(String vehicleID, String linkID, String mode, double startTime) {
@@ -259,7 +256,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
                 );
     }
 
-    private void writeIntermediateData(String outputDir) {
+    private void writeIntermediateData(Path outputDir) {
         getLinkLog().write().csv(String.format("%s/linkLog.csv", outputDir));
         getVehicleOccupancy().write().csv(String.format("%s/vehicleOccupancy.csv", outputDir));
         networkLinks.write().csv(String.format("%s/networkLinks.csv", outputDir));
