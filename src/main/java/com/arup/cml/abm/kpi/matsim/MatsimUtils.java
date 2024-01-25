@@ -1,6 +1,5 @@
 package com.arup.cml.abm.kpi.matsim;
 
-import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigGroup;
@@ -17,18 +16,9 @@ import java.util.Set;
 import java.util.TreeMap;
 
 public class MatsimUtils {
-
     private Path matsimOutputDir;
     private Network matsimNetwork;
     private Config matsimConfig;
-    private Scenario matsimScenario;
-
-    public MatsimUtils(Path matsimOutputDir, Path matsimConfigFile) {
-        this.matsimOutputDir = matsimOutputDir;
-        this.matsimConfig = getConfig(matsimConfigFile.toString());
-        this.matsimScenario = ScenarioUtils.loadScenario(matsimConfig);
-        this.matsimNetwork = matsimScenario.getNetwork();
-    }
 
     private final Set<String> necessaryConfigGroups = new HashSet<>(Arrays.asList(
             GlobalConfigGroup.GROUP_NAME,
@@ -39,6 +29,12 @@ public class MatsimUtils {
             VehiclesConfigGroup.GROUP_NAME,
             NetworkConfigGroup.GROUP_NAME
     ));
+
+    public MatsimUtils(Path matsimOutputDir, Path matsimConfigFile) {
+        this.matsimOutputDir = matsimOutputDir;
+        this.matsimConfig = getConfig(matsimConfigFile.toString());
+        this.matsimNetwork = ScenarioUtils.loadScenario(matsimConfig).getNetwork();
+    }
 
     private Config getConfig(String matsimInputConfig) {
         Config config = ConfigUtils.createConfig();

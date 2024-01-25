@@ -220,7 +220,7 @@
   </dependencies>
   <properties>
     <maven.compiler.release>17</maven.compiler.release>
-    <main.class>com.arup.cml.abm.kpi.matsim.run.KpiGenerator</main.class>
+    <main.class>com.arup.cml.abm.kpi.matsim.run.MatsimKpiGenerator</main.class>
     <maven.compiler.source>17</maven.compiler.source>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <maven.compiler.target>17</maven.compiler.target>

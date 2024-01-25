@@ -16,7 +16,6 @@ import java.util.stream.LongStream;
 import static tech.tablesaw.aggregate.AggregateFunctions.mean;
 
 public class TablesawKpiCalculator implements KpiCalculator {
-
     private static final Logger LOGGER = LogManager.getLogger(TablesawKpiCalculator.class);
 
     private final Map<String, String> vehicleModes = new HashMap<>();
@@ -38,7 +37,6 @@ public class TablesawKpiCalculator implements KpiCalculator {
     private final ArrayList<String> agentIDColumn = new ArrayList<>();
 
     // tracks the most recent occupants of a vehicle 
-    // TODO: 24/01/2024 should this be a set?
     private final Map<String, ArrayList<String>> vehicleLatestOccupants = new HashMap<>();
 
     // Link Log entry index
@@ -86,7 +84,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
 
     @Override
     public void recordVehicleMode(String vehicleId, String mode) {
-        this.vehicleModes.put(vehicleId, mode);
+        vehicleModes.put(vehicleId, mode);
     }
 
     @Override

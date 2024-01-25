@@ -51,22 +51,24 @@ public class MatsimKpiGenerator implements Runnable {
         String eventsFile = String.format("%s/output_events.xml.gz", matsimOutputDirectory);
         System.out.printf("Streaming MATSim events from %s%n", eventsFile);
         new MatsimEventsReader(eventsManager).readFile(eventsFile);
+        summariseEventsHandled(eventsFile, matsimLinkLogHandler.getEventCounts());
 
-        Map<String, AtomicInteger> eventsSeen = matsimLinkLogHandler.getEventCounts();
-        Integer eventCount = eventsSeen.values()
+        kpiCalculator.writeCongestionKpi(outputDir);
+    }
+
+    private static void summariseEventsHandled(String eventsFilePath, Map<String, AtomicInteger> eventCounts) {
+        Integer eventCount = eventCounts.values()
                 .stream()
                 .mapToInt(AtomicInteger::intValue)
                 .sum();
-        System.out.printf("Recorded %,d relevant MATSim events from %s%n", eventCount, eventsFile);
+        System.out.printf("Recorded %,d relevant MATSim events from %s%n", eventCount, eventsFilePath);
         try {
             System.out.println(new ObjectMapper().
                     writerWithDefaultPrettyPrinter().
-                    writeValueAsString(eventsSeen));
+                    writeValueAsString(eventCounts));
         } catch (JsonProcessingException e) {
             // swallow, we're only trying to display event type counts
             e.printStackTrace();
         }
-
-        kpiCalculator.writeCongestionKpi(outputDir);
     }
 }

@@ -17,7 +17,7 @@ public class MatsimLinkLogHandler implements
         LinkLeaveEventHandler {
 
     private KpiCalculator kpiCalculator;
-    private Map<String, AtomicInteger> eventCounts = new HashMap<>();
+    private final Map<String, AtomicInteger> eventCounts = new HashMap<>();
 
     public MatsimLinkLogHandler(KpiCalculator kpiCalculator) {
         this.kpiCalculator = kpiCalculator;
@@ -89,7 +89,7 @@ public class MatsimLinkLogHandler implements
     }
 
     private void incrementEventCount(Event e) {
-        this.eventCounts.putIfAbsent(e.getEventType(), new AtomicInteger(0));
-        this.eventCounts.get(e.getEventType()).incrementAndGet();
+        eventCounts.putIfAbsent(e.getEventType(), new AtomicInteger(0));
+        eventCounts.get(e.getEventType()).incrementAndGet();
     }
 }
