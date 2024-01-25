@@ -1,10 +1,7 @@
 package com.arup.cml.abm.kpi.matsim.run;
 
-import com.arup.cml.abm.kpi.KPIDomainModel;
 import com.arup.cml.abm.kpi.KpiCalculator;
-import com.arup.cml.abm.kpi.matsim.MATSimModel;
 import com.arup.cml.abm.kpi.matsim.MatsimUtils;
-import com.arup.cml.abm.kpi.matsim.handlers.LinkLogHandler;
 import com.arup.cml.abm.kpi.matsim.handlers.MatsimLinkLogHandler;
 import com.arup.cml.abm.kpi.tablesaw.TablesawKpiCalculator;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -17,11 +14,8 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import static java.lang.String.format;
 
 @Command(name = "MatsimKpiGenerator", version = "1.0-SNAPSHOT", mixinStandardHelpOptions = true)
 public class MatsimKpiGenerator implements Runnable {
@@ -41,10 +35,12 @@ public class MatsimKpiGenerator implements Runnable {
 
     @Override
     public void run() {
-        System.out.printf("Writing KPI metrics to %s, generated from MATSim outputs at %s, using MATSim config %s%n",
+        System.out.printf(
+                "Writing KPI metrics to %s, generated from MATSim outputs at %s, using MATSim config %s%n",
                 outputDir,
                 matsimOutputDirectory,
-                matsimConfigFile);
+                matsimConfigFile
+        );
 
         MatsimUtils matsimUtils = new MatsimUtils(matsimOutputDirectory, matsimConfigFile);
         KpiCalculator kpiCalculator = new TablesawKpiCalculator(matsimUtils.getMatsimNetwork());
@@ -52,22 +48,22 @@ public class MatsimKpiGenerator implements Runnable {
         EventsManager eventsManager = EventsUtils.createEventsManager();
         eventsManager.addHandler(matsimLinkLogHandler);
 
-        String outputEventsFile = String.format("%s/output_events.xml.gz", matsimOutputDirectory);
-        System.out.printf("Streaming MATSim events from %s%n", outputEventsFile);
-        new MatsimEventsReader(eventsManager).readFile(outputEventsFile);
+        String eventsFile = String.format("%s/output_events.xml.gz", matsimOutputDirectory);
+        System.out.printf("Streaming MATSim events from %s%n", eventsFile);
+        new MatsimEventsReader(eventsManager).readFile(eventsFile);
 
         Map<String, AtomicInteger> eventsSeen = matsimLinkLogHandler.getEventCounts();
         Integer eventCount = eventsSeen.values()
                 .stream()
                 .mapToInt(AtomicInteger::intValue)
                 .sum();
-        System.out.printf("Recorded %,d relevant MATSim events from %s%n", eventCount, outputEventsFile);
+        System.out.printf("Recorded %,d relevant MATSim events from %s%n", eventCount, eventsFile);
         try {
             System.out.println(new ObjectMapper().
                     writerWithDefaultPrettyPrinter().
                     writeValueAsString(eventsSeen));
         } catch (JsonProcessingException e) {
-            // swallow
+            // swallow, we're only trying to display event type counts
         }
 
         kpiCalculator.writeCongestionKpi(outputDir);

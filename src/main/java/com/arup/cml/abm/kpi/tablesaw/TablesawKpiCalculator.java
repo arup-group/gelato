@@ -95,8 +95,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
 
     @Override
     public void writeCongestionKpi(Path outputDirectory) {
-        System.out.printf("Writing Congestion KPIs to %s", outputDirectory);
-        System.out.println("Computing - Congestion KPI");
+        System.out.printf("Writing Congestion KPIs to %s%n", outputDirectory);
         Table linkLog = getLinkLog();
 
         // compute travel time on links

@@ -40,7 +40,7 @@ public class MatsimUtils {
             NetworkConfigGroup.GROUP_NAME
     ));
 
-    public Config getConfig(String matsimInputConfig) {
+    private Config getConfig(String matsimInputConfig) {
         Config config = ConfigUtils.createConfig();
         TreeMap<String, ConfigGroup> configuredModules = config.getModules();
         for (ConfigGroup module : configuredModules.values().stream().toList()) {
