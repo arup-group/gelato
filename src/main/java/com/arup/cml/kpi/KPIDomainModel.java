@@ -235,10 +235,10 @@ public class KPIDomainModel {
         );
 
         // put in hour bins
-        StringColumn hour = StringColumn.create("hour");
+        IntColumn hour = IntColumn.create("hour");
         linkLog.doubleColumn("endTime")
                 .forEach(time -> hour.append(
-                        String.valueOf((int) Math.floor(time / (60 * 60)))
+                        (int) Math.floor(time / (60 * 60))
                 ));
         linkLog.addColumns(hour);
 
@@ -253,8 +253,8 @@ public class KPIDomainModel {
         // kpi output
         Table kpi =
                 linkLog
-                        .where(linkLog.stringColumn("hour").asDoubleColumn().isGreaterThanOrEqualTo(7)
-                                .and(linkLog.stringColumn("hour").asDoubleColumn().isLessThanOrEqualTo(9)))
+                        .where(linkLog.intColumn("hour").isGreaterThanOrEqualTo(7)
+                                .and(linkLog.intColumn("hour").isLessThanOrEqualTo(9)))
                         .summarize("delayRatio", mean)
                         .by("mode");
         kpi.write().csv(String.format("%s/kpi_congestion.csv", outputDir));
