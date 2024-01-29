@@ -39,7 +39,9 @@ public class MATSimModel implements DataModel {
             HouseholdsConfigGroup.GROUP_NAME,
             TransitConfigGroup.GROUP_NAME,
             VehiclesConfigGroup.GROUP_NAME,
-            NetworkConfigGroup.GROUP_NAME
+            NetworkConfigGroup.GROUP_NAME,
+            ScoringConfigGroup.GROUP_NAME,
+            ScenarioConfigGroup.GROUP_NAME
     };
 
     private final Table linkLog;
@@ -165,13 +167,13 @@ public class MATSimModel implements DataModel {
         // TODO: add reading DRT vehicles if output found
 
         vehicles = Table.create("Vehicles")
-            .addColumns(
-                    vehicleIDColumn,
-                    modeColumn,
-                    capacityColumn,
-                    StringColumn.create("PTLineID"),
-                    StringColumn.create("PTRouteID")
-            );
+                .addColumns(
+                        vehicleIDColumn,
+                        modeColumn,
+                        capacityColumn,
+                        StringColumn.create("PTLineID"),
+                        StringColumn.create("PTRouteID")
+                );
     }
 
     private void createNetworkLinkTables() {

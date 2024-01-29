@@ -1,14 +1,16 @@
 package com.arup.cml.kpi;
 
-import tech.tablesaw.api.IntColumn;
-import tech.tablesaw.api.StringColumn;
-import tech.tablesaw.api.Table;
+import com.arup.cml.kpi.matsim.MATSimModel;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import tech.tablesaw.api.*;
 import tech.tablesaw.columns.numbers.NumberColumnFormatter;
 
 import static tech.tablesaw.aggregate.AggregateFunctions.mean;
 import static tech.tablesaw.aggregate.AggregateFunctions.sum;
 
 public class KPIDomainModel {
+    private static final Logger log = LogManager.getLogger(MATSimModel.class);
     public DataModel dataModel;
     public String outputDir;
 
@@ -118,7 +120,7 @@ public class KPIDomainModel {
         averageOccupancyPerMode = averageOccupancyPerMode
                 .joinOn("mode")
                 .inner(linkLog
-                        .selectColumns("vehicleID","mode")
+                        .selectColumns("vehicleID", "mode")
                         .dropDuplicateRows()
                         .countBy("mode"));
 
@@ -206,6 +208,7 @@ public class KPIDomainModel {
         System.out.println("Computing KPI - Congestion");
         Table linkLog = dataModel.getLinkLog();
         Table networkLinks = dataModel.getNetworkLinks();
+        networkLinks = sanitiseInfiniteColumnValuesInTable(networkLinks, networkLinks.doubleColumn("freespeed"));
 
         // compute travel time on links
         linkLog.addColumns(
@@ -260,5 +263,17 @@ public class KPIDomainModel {
         kpi.write().csv(String.format("%s/kpi_congestion.csv", outputDir));
 
         return kpi.setName("Congestion");
+    }
+
+    private Table sanitiseInfiniteColumnValuesInTable(Table table, DoubleColumn column) {
+        Table infiniteValuesTable = table.where(column.eval(Double::isInfinite));
+        if (!infiniteValuesTable.isEmpty()) {
+            log.warn(("Table: `%s` has %d row(s) affected by infinite values in column: `%s`. " +
+                    "These rows will be dropped for this calculation.")
+                    .formatted(table.name(), infiniteValuesTable.rowCount(), column.name()));
+            return table.dropWhere(column.eval(Double::isInfinite));
+        } else {
+            return table;
+        }
     }
 }
