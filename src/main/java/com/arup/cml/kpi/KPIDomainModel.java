@@ -196,7 +196,47 @@ public class KPIDomainModel {
 
     public Table speed() {
         System.out.println("Computing KPI - Speed");
-        return Table.create("Speed");
+        Table linkLog = dataModel.getLinkLog();
+        Table networkLinks = dataModel.getNetworkLinks();
+        networkLinks = sanitiseInfiniteColumnValuesInTable(networkLinks, networkLinks.doubleColumn("length"));
+
+        // add length of links to log
+        linkLog =
+                linkLog
+                        .joinOn("linkID")
+                        .inner(networkLinks.selectColumns("linkID", "length"));
+
+        // compute time travelled
+        linkLog.addColumns(
+                linkLog.doubleColumn("endTime")
+                        .subtract(linkLog.doubleColumn("startTime"))
+                        .setName("travelTime")
+        );
+
+        // compute speed
+        linkLog.addColumns(
+                linkLog.doubleColumn("length")
+                        .divide(1000)
+                        .divide(
+                                linkLog.doubleColumn("travelTime")
+                                        .divide(60 * 60)
+                        )
+                        .setName("travelSpeedKMPH")
+        );
+
+        // put in hour bins
+        IntColumn hour = IntColumn.create("hour");
+        linkLog.doubleColumn("endTime")
+                .forEach(time -> hour.append(
+                        (int) Math.floor(time / (60 * 60))
+                ));
+        linkLog.addColumns(hour);
+
+        // average travelSpeedKMPH by link (rows) and hour (columns)
+        // TODO is it possible to order columns? atm sorted with integers as strings, not a timeline
+        return linkLog
+                .pivot("linkID", "hour", "travelSpeedKMPH", mean)
+                .setName("Speed");
     }
 
     public Table GHG() {
