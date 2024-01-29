@@ -19,6 +19,11 @@ public class KPIDomainModel {
         this.outputDir = outputDir;
     }
 
+    public Table affordability() {
+        System.out.println("Computing KPI - Affordability");
+        return Table.create("Affordability");
+    }
+
     public Table ptWaitTime() {
         System.out.println("Computing KPI - PT Wait Time");
         Table legs = dataModel.getLegs();
