@@ -1,6 +1,5 @@
-package com.arup.cml.kpi;
+package com.arup.cml.abm.kpi;
 
-import com.arup.cml.kpi.matsim.MATSimModel;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import tech.tablesaw.api.*;
@@ -10,7 +9,7 @@ import static tech.tablesaw.aggregate.AggregateFunctions.mean;
 import static tech.tablesaw.aggregate.AggregateFunctions.sum;
 
 public class KPIDomainModel {
-    private static final Logger log = LogManager.getLogger(MATSimModel.class);
+    private static final Logger log = LogManager.getLogger(KPIDomainModel.class);
     public DataModel dataModel;
     public String outputDir;
 

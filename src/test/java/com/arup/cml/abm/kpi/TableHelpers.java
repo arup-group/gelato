@@ -1,4 +1,4 @@
-package com.arup.cml.kpi;
+package com.arup.cml.abm.kpi;
 
 import tech.tablesaw.api.Table;
 import tech.tablesaw.columns.Column;

@@ -1,4 +1,4 @@
-package com.arup.cml.kpi.matsim.handlers;
+package com.arup.cml.abm.kpi.matsim.handlers;
 
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.events.*;
@@ -11,9 +11,13 @@ import tech.tablesaw.api.*;
 import java.util.*;
 import java.util.stream.LongStream;
 
-public class LinkLogHandler implements VehicleEntersTrafficEventHandler, VehicleLeavesTrafficEventHandler,
-        PersonEntersVehicleEventHandler, PersonLeavesVehicleEventHandler,
-        LinkEnterEventHandler, LinkLeaveEventHandler {
+public class LinkLogHandler implements
+        VehicleEntersTrafficEventHandler,
+        VehicleLeavesTrafficEventHandler,
+        PersonEntersVehicleEventHandler,
+        PersonLeavesVehicleEventHandler,
+        LinkEnterEventHandler,
+        LinkLeaveEventHandler {
 
     // arrays to collect Link Log data, each will form a column of the Link Log
     private final ArrayList<String> vehicleIDColumn = new ArrayList<>();
@@ -92,10 +96,10 @@ public class LinkLogHandler implements VehicleEntersTrafficEventHandler, Vehicle
                 );
     }
 
-    public void write(String outputDir) {
-        getLinkLog().write().csv(String.format("%s/linkLog.csv", outputDir));
-        getVehicleOccupancy().write().csv(String.format("%s/vehicleOccupancy.csv", outputDir));
-    }
+//    public void write(String outputDir) {
+//        getLinkLog().write().csv(String.format("%s/linkLog.csv", outputDir));
+//        getVehicleOccupancy().write().csv(String.format("%s/vehicleOccupancy.csv", outputDir));
+//    }
 
     @Override
     public void handleEvent(VehicleEntersTrafficEvent event) {
