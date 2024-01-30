@@ -48,7 +48,8 @@ public class MatsimKpiGenerator implements Runnable {
         // object graph "manually" here. Switching to a DI framework in future should
         // be pretty straightforward if we need to.
         MatsimUtils matsimUtils = new MatsimUtils(matsimOutputDirectory, matsimConfigFile);
-        KpiCalculator kpiCalculator = new TablesawKpiCalculator(matsimUtils.getMatsimNetwork());
+        KpiCalculator kpiCalculator = new TablesawKpiCalculator(
+                matsimUtils.getMatsimNetwork(), matsimUtils.getTransitSchedule(), matsimUtils.getMatsimVehicles());
         MatsimLinkLogHandler matsimLinkLogHandler = new MatsimLinkLogHandler(kpiCalculator);
         EventsManager eventsManager = EventsUtils.createEventsManager();
         eventsManager.addHandler(matsimLinkLogHandler);

@@ -4,8 +4,13 @@ import com.arup.cml.abm.kpi.KpiCalculator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.network.Network;
+import org.matsim.core.utils.io.IOUtils;
+import org.matsim.pt.transitSchedule.api.TransitSchedule;
+import org.matsim.vehicles.Vehicles;
 import tech.tablesaw.api.*;
+import tech.tablesaw.io.csv.CsvReadOptions;
 
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -44,11 +49,16 @@ public class TablesawKpiCalculator implements KpiCalculator {
 
     private Table networkLinks;
     private Table networkLinkModes;
+    private Table scheduleStops;
+    private Table scheduleRoutes;
+    private Table vehicles;
 
-    public TablesawKpiCalculator(Network network) {
+    public TablesawKpiCalculator(Network network, TransitSchedule schedule, Vehicles vehicles) {
         // TODO: 24/01/2024 replace this ASAP with a representation of the network
         // that isn't from the MATSim API (a map, or dedicated domain object, or whatever)
         createNetworkLinkTables(network);
+        createTransitTables(schedule);
+        createVehicleTable(vehicles);
     }
 
     @Override
@@ -252,6 +262,93 @@ public class TablesawKpiCalculator implements KpiCalculator {
                         StringColumn.create("linkID", modesLinkIDColumn),
                         StringColumn.create("mode", modesColumn)
                 );
+    }
+
+    private void createTransitTables(TransitSchedule schedule) {
+        LOGGER.info("Creating Transit Tables");
+        LOGGER.info("Creating Schedule Stop Table");
+        // Schedule Stop Table Columns
+        StringColumn stopIDColumn = StringColumn.create("stopID");
+        DoubleColumn xColumn = DoubleColumn.create("x");
+        DoubleColumn yColumn = DoubleColumn.create("y");
+        StringColumn nameColumn = StringColumn.create("name");
+        StringColumn linkIdColumn = StringColumn.create("linkID");
+        BooleanColumn isBlockingColumn = BooleanColumn.create("isBlocking");
+
+        schedule.getFacilities().forEach((id, stop) -> {
+            String stopId = id.toString();
+
+            // Schedule Stop Table data
+            stopIDColumn.append(stopId);
+            xColumn.append(stop.getCoord().getX());
+            yColumn.append(stop.getCoord().getY());
+            nameColumn.append(stop.getName());
+            linkIdColumn.append(stop.getLinkId().toString());
+            isBlockingColumn.append(stop.getIsBlockingLane());
+        });
+
+        scheduleStops = Table.create("Schedule Stops")
+                .addColumns(
+                        stopIDColumn,
+                        xColumn,
+                        yColumn,
+                        nameColumn,
+                        linkIdColumn,
+                        isBlockingColumn
+                );
+
+        StringColumn lineIDColumn = StringColumn.create("transitLineID");
+        StringColumn routeIDColumn = StringColumn.create("routeID");
+        StringColumn modeColumn = StringColumn.create("mode");
+
+        LOGGER.info("Creating Schedule Transit Tables");
+        schedule.getTransitLines().forEach((lineId, transitLine) -> {
+            transitLine.getRoutes().forEach((routeId, route) -> {
+                lineIDColumn.append(lineId.toString());
+                routeIDColumn.append(routeId.toString());
+                modeColumn.append(route.getTransportMode());
+            });
+        });
+
+        scheduleRoutes = Table.create("Schedule Routes")
+                .addColumns(
+                        lineIDColumn,
+                        routeIDColumn,
+                        modeColumn
+                );
+    }
+
+    private void createVehicleTable(Vehicles inputVehicles) {
+        LOGGER.info("Creating Vehicle Table");
+        StringColumn vehicleIDColumn = StringColumn.create("vehicleID");
+        StringColumn modeColumn = StringColumn.create("mode");
+        IntColumn capacityColumn = IntColumn.create("capacity");
+        StringColumn ptLineIDColumn = StringColumn.create("PTLineID");
+        StringColumn ptRouteIDColumn = StringColumn.create("PTRouteID");
+
+        inputVehicles.getVehicles().forEach((id, vehicle) -> {
+            vehicleIDColumn.append(id.toString());
+            modeColumn.append(vehicle.getType().getNetworkMode());
+            capacityColumn.append(
+                    vehicle.getType().getCapacity().getSeats() + vehicle.getType().getCapacity().getStandingRoom()
+            );
+            ptLineIDColumn.append(vehicle.getAttributes().getAttribute("PTLineID").toString());
+            ptRouteIDColumn.append(vehicle.getAttributes().getAttribute("PTRouteID").toString());
+        });
+
+        vehicles = Table.create("Vehicles")
+                .addColumns(
+                        vehicleIDColumn,
+                        modeColumn,
+                        capacityColumn,
+                        StringColumn.create("PTLineID"),
+                        StringColumn.create("PTRouteID")
+                );
+    }
+
+    public Table readCSVInputStream(InputStream inputStream) {
+        CsvReadOptions.Builder builder = CsvReadOptions.builder(inputStream).separator(';');
+        return Table.read().usingOptions(builder.build());
     }
 
     private void writeIntermediateData(Path outputDir) {
