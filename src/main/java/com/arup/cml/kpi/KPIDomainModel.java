@@ -96,7 +96,7 @@ public class KPIDomainModel {
         return kpi.setName("Modal Split");
     }
 
-    public Table occupancyRate() {
+    public double occupancyRate() {
         System.out.println("Computing KPI - Occupancy Rate");
         Table linkLog = dataModel.getLinkLog();
         Table vehicles = dataModel.getVehicles();
@@ -117,33 +117,12 @@ public class KPIDomainModel {
 
         long numberOfVehicles = linkLog.selectColumns("vehicleID").dropDuplicateRows().stream().count();
 
-        // average by mode
-        Table averageOccupancyPerMode =
-                linkLog
-                        .summarize("numberOfPeople", "capacity", mean)
-                        .by("mode");
-        averageOccupancyPerMode = averageOccupancyPerMode
-                .joinOn("mode")
-                .inner(linkLog
-                        .selectColumns("vehicleID", "mode")
-                        .dropDuplicateRows()
-                        .countBy("mode"));
-
-        averageOccupancyPerMode.addColumns(
-                averageOccupancyPerMode
-                        .doubleColumn("Mean [numberOfPeople]")
-                        .divide(averageOccupancyPerMode.doubleColumn("Mean [capacity]"))
-                        .multiply(averageOccupancyPerMode.intColumn("Count"))
-        );
-        // current req - per mode computation
-        double pm = averageOccupancyPerMode.doubleColumn("Mean [numberOfPeople] / Mean [capacity] * Count").sum();
-        pm = pm / numberOfVehicles;
-
         // average by vehicle
         Table averageOccupancyPerVehicle =
                 linkLog
                         .summarize("numberOfPeople", "capacity", mean)
-                        .by("vehicleID");
+                        .by("vehicleID")
+                        .setName("Occupancy Rate");
         averageOccupancyPerVehicle.addColumns(
                 averageOccupancyPerVehicle
                         .doubleColumn("Mean [numberOfPeople]")
@@ -152,8 +131,7 @@ public class KPIDomainModel {
         double pv = averageOccupancyPerVehicle.doubleColumn("Mean [numberOfPeople] / Mean [capacity]").sum();
         pv = pv / numberOfVehicles;
 
-        // TODO decide which approach this should be, get intermediate results too
-        return averageOccupancyPerMode.setName("Occupancy Rate");
+        return pv;
     }
 
     public double vehicleKM() {
