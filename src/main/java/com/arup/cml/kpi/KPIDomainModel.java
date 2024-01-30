@@ -217,6 +217,8 @@ public class KPIDomainModel {
 
         // average travelSpeedKMPH by link (rows) and hour (columns)
         // TODO is it possible to order columns? atm sorted with integers as strings, not a timeline
+        // TODO average over all links for each hour bin
+        // TODO missing data results in empty result
         return linkLog
                 .pivot("linkID", "hour", "travelSpeedKMPH", mean)
                 .setName("Speed");
