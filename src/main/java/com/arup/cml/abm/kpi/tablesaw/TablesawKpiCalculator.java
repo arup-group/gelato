@@ -41,11 +41,11 @@ public class TablesawKpiCalculator implements KpiCalculator {
     @Override
     public void writeCongestionKpi(Path outputDirectory) {
         System.out.printf("Writing Congestion KPIs to %s%n", outputDirectory);
-        Table linkLog = getLinkLogTable();
 
         // compute travel time on links
-        linkLog.addColumns(
-                linkLog.doubleColumn("endTime")
+        Table kpi =
+                linkLog.addColumns(
+                        linkLog.doubleColumn("endTime")
                         .subtract(linkLog.doubleColumn("startTime"))
                         .setName("travelTime")
         );
@@ -58,63 +58,43 @@ public class TablesawKpiCalculator implements KpiCalculator {
         );
 
         // add freeflow time to link log
-        linkLog =
-                linkLog
+        kpi =
+                kpi
                         .joinOn("linkID")
                         .inner(networkLinks.selectColumns("linkID", "freeFlowTime"));
 
         // compute delay ratio
-        linkLog.addColumns(
-                linkLog.doubleColumn("travelTime")
-                        .divide(linkLog.doubleColumn("freeFlowTime"))
+        kpi.addColumns(
+                kpi.doubleColumn("travelTime")
+                        .divide(kpi.doubleColumn("freeFlowTime"))
                         .setName("delayRatio")
         );
 
         // put in hour bins
         IntColumn hour = IntColumn.create("hour");
-        linkLog.doubleColumn("endTime")
+        kpi.doubleColumn("endTime")
                 .forEach(time -> hour.append(
                         (int) Math.floor(time / (60 * 60))
                 ));
-        linkLog.addColumns(hour);
+        kpi.addColumns(hour);
 
         // intermediate output data
         Table intermediate =
-                linkLog
+                kpi
                         .summarize("delayRatio", mean)
                         .by("linkID", "mode", "hour");
         intermediate.write().csv(String.format("%s/congestion.csv", outputDirectory));
 
         // kpi output
-        Table kpi =
-                linkLog
-                        .where(linkLog.intColumn("hour").isGreaterThanOrEqualTo(7)
-                                .and(linkLog.intColumn("hour").isLessThanOrEqualTo(9)))
+        kpi =
+                kpi
+                        .where(kpi.intColumn("hour").isGreaterThanOrEqualTo(7)
+                                .and(kpi.intColumn("hour").isLessThanOrEqualTo(9)))
                         .summarize("delayRatio", mean)
                         .by("mode")
                         .setName("Congestion KPI");
         kpi.write().csv(String.format("%s/kpi.csv", outputDirectory));
         writeIntermediateData(outputDirectory);
-    }
-
-    private Table getLinkLogTable() {
-        return linkLog;
-    }
-
-    private Table getLinkLogVehicleOccupancyTable() {
-        return linkLogVehicleOccupancy;
-    }
-
-    private Table getVehicles() {
-        return vehicles;
-    }
-
-    private Table getScheduleStops() {
-        return scheduleStops;
-    }
-
-    private Table getScheduleRoutes() {
-        return scheduleRoutes;
     }
 
     private void createNetworkLinkTables(Network network) {
@@ -329,9 +309,12 @@ public class TablesawKpiCalculator implements KpiCalculator {
     }
 
     private void writeIntermediateData(Path outputDir) {
-        getLinkLogTable().write().csv(String.format("%s/linkLog.csv", outputDir));
-        getLinkLogVehicleOccupancyTable().write().csv(String.format("%s/vehicleOccupancy.csv", outputDir));
+        linkLog.write().csv(String.format("%s/linkLog.csv", outputDir));
+        linkLogVehicleOccupancy.write().csv(String.format("%s/vehicleOccupancy.csv", outputDir));
         networkLinks.write().csv(String.format("%s/networkLinks.csv", outputDir));
         networkLinkModes.write().csv(String.format("%s/networkLinkModes.csv", outputDir));
+        scheduleStops.write().csv(String.format("%s/scheduleStops.csv", outputDir));
+        scheduleRoutes.write().csv(String.format("%s/scheduleRoutes.csv", outputDir));
+        vehicles.write().csv(String.format("%s/vehicles.csv", outputDir));
     }
 }
