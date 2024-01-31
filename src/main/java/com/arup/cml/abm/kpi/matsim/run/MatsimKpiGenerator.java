@@ -1,6 +1,7 @@
 package com.arup.cml.abm.kpi.matsim.run;
 
 import com.arup.cml.abm.kpi.KpiCalculator;
+import com.arup.cml.abm.kpi.data.LinkLog;
 import com.arup.cml.abm.kpi.matsim.MatsimUtils;
 import com.arup.cml.abm.kpi.matsim.handlers.MatsimLinkLogHandler;
 import com.arup.cml.abm.kpi.tablesaw.TablesawKpiCalculator;
@@ -48,9 +49,8 @@ public class MatsimKpiGenerator implements Runnable {
         // object graph "manually" here. Switching to a DI framework in future should
         // be pretty straightforward if we need to.
         MatsimUtils matsimUtils = new MatsimUtils(matsimOutputDirectory, matsimConfigFile);
-        KpiCalculator kpiCalculator = new TablesawKpiCalculator(
-                matsimUtils.getMatsimNetwork(), matsimUtils.getTransitSchedule(), matsimUtils.getMatsimVehicles());
-        MatsimLinkLogHandler matsimLinkLogHandler = new MatsimLinkLogHandler(kpiCalculator);
+        LinkLog linkLog = new LinkLog();
+        MatsimLinkLogHandler matsimLinkLogHandler = new MatsimLinkLogHandler(linkLog);
         EventsManager eventsManager = EventsUtils.createEventsManager();
         eventsManager.addHandler(matsimLinkLogHandler);
 
@@ -58,6 +58,9 @@ public class MatsimKpiGenerator implements Runnable {
         System.out.printf("Streaming MATSim events from %s%n", eventsFile);
         new MatsimEventsReader(eventsManager).readFile(eventsFile);
         summariseEventsHandled(eventsFile, matsimLinkLogHandler.getEventCounts());
+
+        KpiCalculator kpiCalculator = new TablesawKpiCalculator(
+                matsimUtils.getMatsimNetwork(), matsimUtils.getTransitSchedule(), matsimUtils.getMatsimVehicles(), linkLog);
 
         kpiCalculator.writeCongestionKpi(outputDir);
     }

@@ -1,6 +1,6 @@
 package com.arup.cml.abm.kpi.matsim.handlers;
 
-import com.arup.cml.abm.kpi.KpiCalculator;
+import com.arup.cml.abm.kpi.data.LinkLog;
 import org.matsim.api.core.v01.events.*;
 import org.matsim.api.core.v01.events.handler.*;
 
@@ -16,17 +16,17 @@ public class MatsimLinkLogHandler implements
         LinkEnterEventHandler,
         LinkLeaveEventHandler {
 
-    private KpiCalculator kpiCalculator;
+    private LinkLog linkLog;
     private final Map<String, AtomicInteger> eventCounts = new HashMap<>();
 
-    public MatsimLinkLogHandler(KpiCalculator kpiCalculator) {
-        this.kpiCalculator = kpiCalculator;
+    public MatsimLinkLogHandler(LinkLog linkLog) {
+        this.linkLog = linkLog;
     }
 
     @Override
     public void handleEvent(LinkEnterEvent event) {
         incrementEventCount(event);
-        kpiCalculator.linkEntered(
+        linkLog.newLinkLogEntry(
                 event.getVehicleId().toString(),
                 event.getLinkId().toString(),
                 event.getTime()
@@ -36,9 +36,8 @@ public class MatsimLinkLogHandler implements
     @Override
     public void handleEvent(LinkLeaveEvent event) {
         incrementEventCount(event);
-        kpiCalculator.linkExited(
+        linkLog.updateLinkLogEntry(
                 event.getVehicleId().toString(),
-                event.getLinkId().toString(),
                 event.getTime()
         );
     }
@@ -46,7 +45,7 @@ public class MatsimLinkLogHandler implements
     @Override
     public void handleEvent(PersonEntersVehicleEvent event) {
         incrementEventCount(event);
-        kpiCalculator.vehicleEntered(
+        linkLog.personBoardsVehicle(
                 event.getVehicleId().toString(),
                 event.getPersonId().toString()
         );
@@ -55,7 +54,7 @@ public class MatsimLinkLogHandler implements
     @Override
     public void handleEvent(PersonLeavesVehicleEvent event) {
         incrementEventCount(event);
-        kpiCalculator.vehicleExited(
+        linkLog.personAlightsVehicle(
                 event.getVehicleId().toString(),
                 event.getPersonId().toString()
         );
@@ -64,10 +63,8 @@ public class MatsimLinkLogHandler implements
     @Override
     public void handleEvent(VehicleEntersTrafficEvent event) {
         incrementEventCount(event);
-        // this is the earliest event we will see for this vehicle, and includes the
-        // mode, which is missing from subsequent link events, so we must grab it now
-        kpiCalculator.recordVehicleMode(event.getVehicleId().toString(), event.getNetworkMode());
-        kpiCalculator.linkEntered(
+        linkLog.recordVehicleMode(event.getVehicleId().toString(), event.getNetworkMode());
+        linkLog.newLinkLogEntry(
                 event.getVehicleId().toString(),
                 event.getLinkId().toString(),
                 event.getTime()
@@ -77,9 +74,8 @@ public class MatsimLinkLogHandler implements
     @Override
     public void handleEvent(VehicleLeavesTrafficEvent event) {
         incrementEventCount(event);
-        kpiCalculator.linkExited(
+        linkLog.updateLinkLogEntry(
                 event.getVehicleId().toString(),
-                event.getLinkId().toString(),
                 event.getTime()
         );
     }

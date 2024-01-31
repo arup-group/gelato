@@ -3,8 +3,8 @@ package com.arup.cml.abm.kpi.tablesaw;
 import com.arup.cml.abm.kpi.KpiCalculator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import com.arup.cml.abm.kpi.data.LinkLog;
 import org.matsim.api.core.v01.network.Network;
-import org.matsim.core.utils.io.IOUtils;
 import org.matsim.pt.transitSchedule.api.TransitSchedule;
 import org.matsim.vehicles.Vehicles;
 import tech.tablesaw.api.*;
@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.stream.LongStream;
+import java.util.Objects;
 
 import static tech.tablesaw.aggregate.AggregateFunctions.mean;
 
@@ -53,12 +53,16 @@ public class TablesawKpiCalculator implements KpiCalculator {
     private Table scheduleRoutes;
     private Table vehicles;
 
-    public TablesawKpiCalculator(Network network, TransitSchedule schedule, Vehicles vehicles) {
+    private Table linkLog;
+    private Table linkLogVehicleOccupancy;
+
+    public TablesawKpiCalculator(Network network, TransitSchedule schedule, Vehicles vehicles, LinkLog linkLog) {
         // TODO: 24/01/2024 replace this ASAP with a representation of the network
         // that isn't from the MATSim API (a map, or dedicated domain object, or whatever)
         createNetworkLinkTables(network);
         createTransitTables(schedule);
         createVehicleTable(vehicles);
+        createLinkLogTables(linkLog);
     }
 
     @Override
@@ -100,7 +104,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
     @Override
     public void writeCongestionKpi(Path outputDirectory) {
         System.out.printf("Writing Congestion KPIs to %s%n", outputDirectory);
-        Table linkLog = getLinkLog();
+        Table linkLog = getLinkLogTable();
 
         // compute travel time on links
         linkLog.addColumns(
@@ -187,27 +191,12 @@ public class TablesawKpiCalculator implements KpiCalculator {
         newVehicleOccupantsEntry(vehicleID, latestStateIndex);
     }
 
-    private Table getLinkLog() {
-        return Table.create("Link Log")
-                .addColumns(
-                        LongColumn.create("index", LongStream.range(0, index).toArray()),
-                        StringColumn.create("linkID", linkIDColumn),
-                        StringColumn.create("vehicleID", vehicleIDColumn),
-                        StringColumn.create("mode", modeColumn.values()),
-                        DoubleColumn.create("startTime", startTimeColumn),
-                        DoubleColumn.create("endTime", endTimeColumn.values()),
-                        DoubleColumn.create("numberOfPeople", numberOfPeopleColumn.values())
-                );
+    private Table getLinkLogTable() {
+        return linkLog;
     }
 
-    private Table getVehicleOccupancy() {
-        return Table.create("Vehicle Occupancy")
-                .addColumns(
-                        // TODO: This should be LongColumn (reference to index LongColumn of "Link Log" table)
-                        // but can't get it to work with LongColumn constructor as ArrayList<Long>
-                        DoubleColumn.create("linkLogIndex", linkLogIndexColumn),
-                        StringColumn.create("agentId", agentIDColumn)
-                );
+    private Table getLinkLogVehicleOccupancyTable() {
+        return linkLogVehicleOccupancy;
     }
 
     private void createNetworkLinkTables(Network network) {
@@ -332,8 +321,18 @@ public class TablesawKpiCalculator implements KpiCalculator {
             capacityColumn.append(
                     vehicle.getType().getCapacity().getSeats() + vehicle.getType().getCapacity().getStandingRoom()
             );
-            ptLineIDColumn.append(vehicle.getAttributes().getAttribute("PTLineID").toString());
-            ptRouteIDColumn.append(vehicle.getAttributes().getAttribute("PTRouteID").toString());
+
+            ptLineIDColumn.append(
+                    Objects.requireNonNullElse(
+                            vehicle.getAttributes().getAttribute("PTLineID"),
+                            "Null"
+                    ).toString());
+            ptRouteIDColumn.append(
+                    Objects.requireNonNullElse(
+                            vehicle.getAttributes().getAttribute("PTRouteID"),
+                            "Null"
+                    ).toString());
+//            ptRouteIDColumn.append(vehicle.getAttributes().getAttribute("PTRouteID").toString());
         });
 
         vehicles = Table.create("Vehicles")
@@ -346,14 +345,74 @@ public class TablesawKpiCalculator implements KpiCalculator {
                 );
     }
 
+    private void createLinkLogTables(LinkLog _linkLog) {
+        LOGGER.info("Creating Link Log Table");
+        LongColumn indexColumn = LongColumn.create("index");
+        StringColumn linkIDColumn = StringColumn.create("linkID");
+        StringColumn vehicleIDColumn = StringColumn.create("vehicleID");
+        StringColumn modeColumn = StringColumn.create("mode");
+        DoubleColumn startTimeColumn = DoubleColumn.create("startTime");
+        DoubleColumn endTimeColumn = DoubleColumn.create("endTime");
+        IntColumn numberOfPeopleColumn = IntColumn.create("numberOfPeople");
+
+        int missingValues = 0;
+        for (Map.Entry<Long, Map<String, Object>> entry : _linkLog.getLinkLogData().rowMap().entrySet()) {
+            indexColumn.append(entry.getKey());
+            linkIDColumn.append(entry.getValue().get("linkID").toString());
+            vehicleIDColumn.append(entry.getValue().get("vehicleID").toString());
+            modeColumn.append(entry.getValue().get("mode").toString());
+            startTimeColumn.append((Double) entry.getValue().get("startTime"));
+            if (entry.getValue().containsKey("endTime")) {
+                endTimeColumn.append((Double) entry.getValue().get("endTime"));
+                numberOfPeopleColumn.append((Integer) entry.getValue().get("numberOfPeople"));
+            } else {
+                if (missingValues == 0) {
+                    LOGGER.warn("A missing `endTime` was encountered. This message is showed only once.");
+                }
+                missingValues++;
+            }
+            if (missingValues > 0) {
+                LOGGER.warn(String.format(
+                        "%d missing `endTime` data points were encountered - some vehicles were stuck and did not complete their journey",
+                        missingValues
+                ));
+            }
+        }
+        linkLog = Table.create("Link Log")
+                .addColumns(
+                        indexColumn,
+                        linkIDColumn,
+                        vehicleIDColumn,
+                        modeColumn,
+                        startTimeColumn,
+                        endTimeColumn,
+                        numberOfPeopleColumn
+                );
+        // todo fix modes with vehicle table
+
+        LOGGER.info("Creating Link Log Vehicle Occupancy Table");
+        LongColumn linkLogIndexColumn = LongColumn.create("linkLogIndex");
+        StringColumn agentIDColumn = StringColumn.create("agentId");
+
+        for (Map.Entry<Long, Map<String, Object>> entry : _linkLog.getVehicleOccupantsData().rowMap().entrySet()) {
+            linkLogIndexColumn.append(entry.getKey());
+            agentIDColumn.append(entry.getValue().get("agentId").toString());
+        }
+        linkLogVehicleOccupancy = Table.create("Vehicle Occupancy")
+                .addColumns(
+                        linkLogIndexColumn,
+                        agentIDColumn
+                );
+    }
+
     public Table readCSVInputStream(InputStream inputStream) {
         CsvReadOptions.Builder builder = CsvReadOptions.builder(inputStream).separator(';');
         return Table.read().usingOptions(builder.build());
     }
 
     private void writeIntermediateData(Path outputDir) {
-        getLinkLog().write().csv(String.format("%s/linkLog.csv", outputDir));
-        getVehicleOccupancy().write().csv(String.format("%s/vehicleOccupancy.csv", outputDir));
+        getLinkLogTable().write().csv(String.format("%s/linkLog.csv", outputDir));
+        getLinkLogVehicleOccupancyTable().write().csv(String.format("%s/vehicleOccupancy.csv", outputDir));
         networkLinks.write().csv(String.format("%s/networkLinks.csv", outputDir));
         networkLinkModes.write().csv(String.format("%s/networkLinkModes.csv", outputDir));
     }
