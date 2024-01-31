@@ -13,8 +13,6 @@ import tech.tablesaw.io.csv.CsvReadOptions;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 
@@ -22,31 +20,6 @@ import static tech.tablesaw.aggregate.AggregateFunctions.mean;
 
 public class TablesawKpiCalculator implements KpiCalculator {
     private static final Logger LOGGER = LogManager.getLogger(TablesawKpiCalculator.class);
-
-    private final Map<String, String> vehicleModes = new HashMap<>();
-
-    // arrays to collect Link Log data, each will form a column of the Link Log
-    private final ArrayList<String> vehicleIDColumn = new ArrayList<>();
-    private final ArrayList<String> linkIDColumn = new ArrayList<>();
-    private final LinkedHashMap<Long, String> modeColumn = new LinkedHashMap<>();
-    private final ArrayList<Double> startTimeColumn = new ArrayList<>();
-    private final LinkedHashMap<Long, Double> endTimeColumn = new LinkedHashMap<>();
-    private final LinkedHashMap<Long, Integer> numberOfPeopleColumn = new LinkedHashMap<>();
-
-    // points to the index of the most recent reference of that vehicle ID in the Link Log
-    private final Map<String, Long> vehicleLatestLogIndex = new HashMap<>();
-
-    // arrays to collect agent IDs that are inside the vehicle in reference to the Link Log entries
-    // these will form columns of the Vehicle Occupancy table, it shows who is in the vehicle at a point in the Link Log
-    private final ArrayList<Long> linkLogIndexColumn = new ArrayList<>();
-    private final ArrayList<String> agentIDColumn = new ArrayList<>();
-
-    // tracks the most recent occupants of a vehicle 
-    private final Map<String, ArrayList<String>> vehicleLatestOccupants = new HashMap<>();
-
-    // Link Log entry index
-    private long index = 0;
-
     private Table networkLinks;
     private Table networkLinkModes;
     private Table scheduleStops;
@@ -63,42 +36,6 @@ public class TablesawKpiCalculator implements KpiCalculator {
         createTransitTables(schedule);
         createVehicleTable(vehicles);
         createLinkLogTables(linkLog);
-    }
-
-    @Override
-    public void linkEntered(String vehicleId, String linkId, double timestamp) {
-        newLinkLogEntry(
-                vehicleId,
-                linkId,
-                vehicleModes.getOrDefault(vehicleId, "unknown"),
-                timestamp
-        );
-    }
-
-    @Override
-    public void linkExited(String vehicleId, String linkId, double timestamp) {
-        updateLinkLogEntry(vehicleId, timestamp);
-    }
-
-    @Override
-    public void vehicleEntered(String vehicleId, String personId) {
-        if (vehicleLatestOccupants.containsKey(vehicleId)) {
-            vehicleLatestOccupants.get(vehicleId).add(personId);
-        } else {
-            ArrayList<String> latestOccupants = new ArrayList<>();
-            latestOccupants.add(personId);
-            vehicleLatestOccupants.put(vehicleId, latestOccupants);
-        }
-    }
-
-    @Override
-    public void vehicleExited(String vehicleId, String personId) {
-        vehicleLatestOccupants.get(vehicleId).remove(personId);
-    }
-
-    @Override
-    public void recordVehicleMode(String vehicleId, String mode) {
-        vehicleModes.put(vehicleId, mode);
     }
 
     @Override
@@ -160,43 +97,24 @@ public class TablesawKpiCalculator implements KpiCalculator {
         writeIntermediateData(outputDirectory);
     }
 
-    private void newLinkLogEntry(String vehicleID, String linkID, String mode, double startTime) {
-        vehicleIDColumn.add(vehicleID);
-        linkIDColumn.add(linkID.toString());
-        modeColumn.put(index, mode);
-        startTimeColumn.add(startTime);
-        // end time is not known yet, a placeholder in the ordered list is saved
-        endTimeColumn.put(index, -1.0);
-        // placeholder for people in the vehicle as well - someone might enter the vehicle before it leaves the link
-        numberOfPeopleColumn.put(index, -1);
-        vehicleLatestLogIndex.put(vehicleID, index);
-        index++;
-    }
-
-    private void newVehicleOccupantsEntry(String vehicleID, long idx) {
-        ArrayList<String> currentOccupants = vehicleLatestOccupants.get(vehicleID);
-        for (String personID : currentOccupants) {
-            linkLogIndexColumn.add(idx);
-            agentIDColumn.add(personID.toString());
-        }
-    }
-
-    private void updateLinkLogEntry(String vehicleID, double endTime) {
-        long latestStateIndex = this.vehicleLatestLogIndex.get(vehicleID);
-        // update end time
-        endTimeColumn.put(latestStateIndex, endTime);
-        // update vehicle occupants
-        ArrayList<String> currentOccupants = vehicleLatestOccupants.get(vehicleID);
-        numberOfPeopleColumn.put(latestStateIndex, currentOccupants.size());
-        newVehicleOccupantsEntry(vehicleID, latestStateIndex);
-    }
-
     private Table getLinkLogTable() {
         return linkLog;
     }
 
     private Table getLinkLogVehicleOccupancyTable() {
         return linkLogVehicleOccupancy;
+    }
+
+    private Table getVehicles() {
+        return vehicles;
+    }
+
+    private Table getScheduleStops() {
+        return scheduleStops;
+    }
+
+    private Table getScheduleRoutes() {
+        return scheduleRoutes;
     }
 
     private void createNetworkLinkTables(Network network) {
