@@ -59,7 +59,7 @@ public class MatsimUtils {
         TreeMap<String, ConfigGroup> configuredModules = config.getModules();
         for (ConfigGroup module : configuredModules.values().stream().toList()) {
             if (necessaryConfigGroups.contains(module.getName())) {
-                System.out.println("Config group " + module + " is read as is");
+                log.info("Config group " + module + " is being read as is");
             } else {
                 ReflectiveConfigGroup relaxedModule =
                         new ReflectiveConfigGroup(module.getName(), true) {
