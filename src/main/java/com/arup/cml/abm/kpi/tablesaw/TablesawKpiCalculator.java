@@ -248,7 +248,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
         LongColumn indexColumn = LongColumn.create("index");
         StringColumn linkIDColumn = StringColumn.create("linkID");
         StringColumn vehicleIDColumn = StringColumn.create("vehicleID");
-        StringColumn modeColumn = StringColumn.create("mode");
+        StringColumn modeColumn = StringColumn.create("initialMode");
         DoubleColumn startTimeColumn = DoubleColumn.create("startTime");
         DoubleColumn endTimeColumn = DoubleColumn.create("endTime");
         IntColumn numberOfPeopleColumn = IntColumn.create("numberOfPeople");
@@ -286,7 +286,22 @@ public class TablesawKpiCalculator implements KpiCalculator {
                         endTimeColumn,
                         numberOfPeopleColumn
                 );
-        // todo fix modes with vehicle table
+        // fix vehicle modes with vehicle table
+        linkLog = linkLog
+                .joinOn("vehicleID")
+                .leftOuter(vehicles.selectColumns("vehicleID", "mode"));
+        int mismatchedModes = linkLog.where(
+                linkLog.stringColumn("initialMode")
+                        .isNotEqualTo(linkLog.stringColumn("mode")
+                )
+        ).stringColumn("vehicleID").countUnique();
+        if (mismatchedModes > 0) {
+            LOGGER.warn(String.format(
+                    "There are %d vehicles that have different modes to the ones found in the Link Log. " +
+                            "The modes in the Link Log will be updated with the modes from the Vehicle Table.",
+                    mismatchedModes));
+        }
+        linkLog.removeColumns("initialMode");
 
         LOGGER.info("Creating Link Log Vehicle Occupancy Table");
         LongColumn linkLogIndexColumn = LongColumn.create("linkLogIndex");
