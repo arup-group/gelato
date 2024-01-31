@@ -137,11 +137,19 @@ public class MatsimUtils {
         schedule.getTransitLines().forEach((lineId, transitLine) -> {
             transitLine.getRoutes().forEach((routeId, route) -> {
                 route.getDepartures().forEach((departureId, departure) -> {
-                    Vehicle transitVehicle = transitVehicles.getVehicles().get(departure.getVehicleId());
-                    transitVehicle.getType().setNetworkMode(route.getTransportMode());
-                    transitVehicle.getAttributes().putAttribute("PTLineID", lineId);
-                    transitVehicle.getAttributes().putAttribute("PTRouteID", routeId);
-                    vehicles.addVehicle(transitVehicle);
+                    if (vehicles.getVehicles().containsKey(departure.getVehicleId())) {
+                        // update existing
+                        Vehicle existingVehicle = vehicles.getVehicles().get(departure.getVehicleId());
+                        existingVehicle.getType().setNetworkMode(route.getTransportMode());
+                        existingVehicle.getAttributes().putAttribute("PTLineID", lineId);
+                        existingVehicle.getAttributes().putAttribute("PTRouteID", routeId);
+                    } else {
+                        Vehicle transitVehicle = transitVehicles.getVehicles().get(departure.getVehicleId());
+                        transitVehicle.getType().setNetworkMode(route.getTransportMode());
+                        transitVehicle.getAttributes().putAttribute("PTLineID", lineId);
+                        transitVehicle.getAttributes().putAttribute("PTRouteID", routeId);
+                        vehicles.addVehicle(transitVehicle);
+                    }
                 });
             });
         });
