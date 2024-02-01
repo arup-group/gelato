@@ -1,6 +1,6 @@
 package com.arup.cml.abm.kpi.matsim.handlers;
 
-import com.arup.cml.abm.kpi.TableHelpers;
+import com.arup.cml.abm.kpi.data.LinkLog;
 import org.junit.Before;
 import org.junit.Test;
 import org.matsim.api.core.v01.Id;
@@ -9,17 +9,12 @@ import org.matsim.api.core.v01.population.Person;
 import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.events.EventsUtils;
 import org.matsim.vehicles.Vehicle;
-import tech.tablesaw.api.DoubleColumn;
-import tech.tablesaw.api.LongColumn;
-import tech.tablesaw.api.StringColumn;
-import tech.tablesaw.api.Table;
 
-import java.util.Collections;
-import java.util.stream.LongStream;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 
 public class TestLinkLogHandlerWithSimpleData {
-    private final LinkLogHandler linkLogHandler = new LinkLogHandler();
+    private LinkLog linkLog;
 
     @Before
     public void setup() {
@@ -27,6 +22,8 @@ public class TestLinkLogHandlerWithSimpleData {
         Id<Vehicle> gerryVehicle = Id.createVehicleId("gerry_wheels");
 
         EventsManager eventsManager = EventsUtils.createEventsManager();
+        linkLog = new LinkLog();
+        MatsimLinkLogHandler linkLogHandler = new MatsimLinkLogHandler(linkLog);
         eventsManager.addHandler(linkLogHandler);
 
         eventsManager.processEvent(
@@ -51,30 +48,23 @@ public class TestLinkLogHandlerWithSimpleData {
 
     @Test
     public void linkLogTableHasExpectedData() {
-        TableHelpers.assertTableDataEqual(
-                linkLogHandler.getLinkLog(),
-                Table.create("Link Log")
-                        .addColumns(
-                                LongColumn.create("index", LongStream.range(0, 2).toArray()),
-                                StringColumn.create("linkID", "link_A_B", "link_B_A"),
-                                StringColumn.create("vehicleID", "gerry_wheels", "gerry_wheels"),
-                                StringColumn.create("mode", Collections.nCopies(2, "car")),
-                                DoubleColumn.create("startTime", new Double[]{0.0, 6.0}),
-                                DoubleColumn.create("endTime", new Double[]{5.0, 10.0}),
-                                DoubleColumn.create("numberOfPeople", new Double[]{1.0, 1.0})
-                        )
-        );
+        LinkLogTable expectedTable = new LinkLogTable();
+        expectedTable.withEntry(0L, "link_A_B", "gerry_wheels", "car", 0.0, 5.0, 1);
+        expectedTable.withEntry(1L, "link_B_A", "gerry_wheels", "car", 6.0, 10.0, 1);
+
+        assertThat(
+                linkLog.getLinkLogData())
+                .isEqualTo(expectedTable.getTable());
     }
 
     @Test
     public void vehicleOccupancyTableHasExpectedData() {
-        TableHelpers.assertTableDataEqual(
-                linkLogHandler.getVehicleOccupancy(),
-                Table.create("Vehicle Occupancy")
-                        .addColumns(
-                                DoubleColumn.create("linkLogIndex", new Long[]{0L, 1L}),
-                                StringColumn.create("agentId", "gerry", "gerry")
-                        )
-        );
+        LinkLogVehicleOccupancyTable expectedTable = new LinkLogVehicleOccupancyTable();
+        expectedTable.withEntry(0L, "gerry");
+        expectedTable.withEntry(1L, "gerry");
+
+        assertThat(
+                linkLog.getVehicleOccupantsData())
+                .isEqualTo(expectedTable.getTable());
     }
 }

@@ -1,6 +1,6 @@
 package com.arup.cml.abm.kpi.matsim.handlers;
 
-import com.arup.cml.abm.kpi.TableHelpers;
+import com.arup.cml.abm.kpi.data.LinkLog;
 import org.junit.Before;
 import org.junit.Test;
 import org.matsim.api.core.v01.Id;
@@ -9,17 +9,12 @@ import org.matsim.api.core.v01.population.Person;
 import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.events.EventsUtils;
 import org.matsim.vehicles.Vehicle;
-import tech.tablesaw.api.DoubleColumn;
-import tech.tablesaw.api.LongColumn;
-import tech.tablesaw.api.StringColumn;
-import tech.tablesaw.api.Table;
 
-import java.util.Collections;
-import java.util.stream.LongStream;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 
 public class TestLinkLogHandlerWithMultipleAgents {
-    private final LinkLogHandler linkLogHandler = new LinkLogHandler();
+    private LinkLog linkLog;
 
     @Before
     public void setup() {
@@ -29,6 +24,8 @@ public class TestLinkLogHandlerWithMultipleAgents {
         Id<Vehicle> partyBusVehicle = Id.createVehicleId("party_bus");
 
         EventsManager eventsManager = EventsUtils.createEventsManager();
+        linkLog = new LinkLog();
+        MatsimLinkLogHandler linkLogHandler = new MatsimLinkLogHandler(linkLog);
         eventsManager.addHandler(linkLogHandler);
 
         eventsManager.processEvent(
@@ -93,34 +90,38 @@ public class TestLinkLogHandlerWithMultipleAgents {
         );
     }
 
+
     @Test
     public void linkLogTableHasExpectedData() {
-        TableHelpers.assertTableDataEqual(
-                linkLogHandler.getLinkLog(),
-                Table.create("Link Log")
-                        .addColumns(
-                                LongColumn.create("index", LongStream.range(0, 6).toArray()),
-                                StringColumn.create("linkID",
-                                        "start_link", "gerry_link_board", "fitz_link_board", "gerry_link_alight", "fitz_link_alight",  "end_link"),
-                                StringColumn.create("vehicleID", Collections.nCopies(6, "party_bus")),
-                                StringColumn.create("mode", Collections.nCopies(6, "bus")),
-                                DoubleColumn.create("startTime", new Double[]{0.0, 5.0, 10.0, 15.0, 20.0, 25.0}),
-                                DoubleColumn.create("endTime", new Double[]{5.0, 10.0, 15.0, 20.0, 25.0, 30.0}),
-                                DoubleColumn.create("numberOfPeople", new Double[]{1.0, 2.0, 3.0, 2.0, 1.0, 1.0})
-                        )
-        );
+        LinkLogTable expectedTable = new LinkLogTable();
+        expectedTable.withEntry(0L, "start_link", "party_bus", "bus", 0.0, 5.0, 1);
+        expectedTable.withEntry(1L, "gerry_link_board", "party_bus", "bus", 5.0, 10.0, 2);
+        expectedTable.withEntry(2L, "fitz_link_board", "party_bus", "bus", 10.0, 15.0, 3);
+        expectedTable.withEntry(3L, "gerry_link_alight", "party_bus", "bus", 15.0, 20.0, 2);
+        expectedTable.withEntry(4L, "fitz_link_alight", "party_bus", "bus", 20.0, 25.0, 1);
+        expectedTable.withEntry(5L, "end_link", "party_bus", "bus", 25.0, 30.0, 1);
+
+        assertThat(
+                linkLog.getLinkLogData())
+                .isEqualTo(expectedTable.getTable());
     }
 
     @Test
     public void vehicleOccupancyTableHasExpectedData() {
-        TableHelpers.assertTableDataEqual(
-                linkLogHandler.getVehicleOccupancy(),
-                Table.create("Vehicle Occupancy")
-                        .addColumns(
-                                DoubleColumn.create("linkLogIndex", new Long[]{0L, 1L, 1L, 2L, 2L, 2L, 3L, 3L, 4L, 5L}),
-                                StringColumn.create("agentId",
-                                        "driver", "driver", "gerry", "driver", "gerry", "fitz", "driver", "fitz", "driver", "driver")
-                        )
-        );
+        LinkLogVehicleOccupancyTable expectedTable = new LinkLogVehicleOccupancyTable();
+        expectedTable.withEntry(0L, "driver");
+        expectedTable.withEntry(1L, "driver");
+        expectedTable.withEntry(1L, "gerry");
+        expectedTable.withEntry(2L, "driver");
+        expectedTable.withEntry(2L, "gerry");
+        expectedTable.withEntry(2L, "fitz");
+        expectedTable.withEntry(3L, "driver");
+        expectedTable.withEntry(3L, "fitz");
+        expectedTable.withEntry(4L, "driver");
+        expectedTable.withEntry(5L, "driver");
+
+        assertThat(
+                linkLog.getVehicleOccupantsData())
+                .isEqualTo(expectedTable.getTable());
     }
 }
