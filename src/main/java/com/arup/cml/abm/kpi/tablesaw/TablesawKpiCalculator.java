@@ -8,6 +8,7 @@ import org.matsim.api.core.v01.network.Network;
 import org.matsim.pt.transitSchedule.api.TransitSchedule;
 import org.matsim.vehicles.Vehicles;
 import tech.tablesaw.api.*;
+import tech.tablesaw.columns.numbers.NumberColumnFormatter;
 import tech.tablesaw.io.csv.CsvReadOptions;
 
 import java.io.InputStream;
@@ -17,9 +18,12 @@ import java.util.Map;
 import java.util.Objects;
 
 import static tech.tablesaw.aggregate.AggregateFunctions.mean;
+import static tech.tablesaw.aggregate.AggregateFunctions.sum;
 
 public class TablesawKpiCalculator implements KpiCalculator {
     private static final Logger LOGGER = LogManager.getLogger(TablesawKpiCalculator.class);
+    private final Table legs;
+    private final Table trips;
     private Table networkLinks;
     private Table networkLinkModes;
     private Table scheduleStops;
@@ -29,13 +33,213 @@ public class TablesawKpiCalculator implements KpiCalculator {
     private Table linkLog;
     private Table linkLogVehicleOccupancy;
 
-    public TablesawKpiCalculator(Network network, TransitSchedule schedule, Vehicles vehicles, LinkLog linkLog) {
+    public TablesawKpiCalculator(Network network, TransitSchedule schedule, Vehicles vehicles, LinkLog linkLog,
+                                 InputStream legsInputStream, InputStream tripsInputStream, Path outputDirectory) {
         // TODO: 24/01/2024 replace this ASAP with a representation of the network
         // that isn't from the MATSim API (a map, or dedicated domain object, or whatever)
+        legs = readCSVInputStream(legsInputStream).setName("Legs");
+        trips = readCSVInputStream(tripsInputStream).setName("Trips");
         createNetworkLinkTables(network);
         createTransitTables(schedule);
         createVehicleTable(vehicles);
         createLinkLogTables(linkLog);
+        writeIntermediateData(outputDirectory);
+    }
+
+    public void writeAffordabilityKpi(Path outputDirectory) {
+        System.out.printf("Writing Affordability KPI to %s%n", outputDirectory);
+    }
+
+    public void writePtWaitTimeKpi(Path outputDirectory) {
+        System.out.printf("Writing PT Wait Time KPI to %s%n", outputDirectory);
+
+        // pull out legs with stop waits
+        Table kpi = legs.where(
+                legs.stringColumn("access_stop_id").isNotMissing()
+        );
+
+        // put in hour bins
+        IntColumn wait_time_seconds = IntColumn.create("wait_time_seconds");
+        kpi.timeColumn("wait_time")
+                .forEach(time -> wait_time_seconds.append(
+                        time.toSecondOfDay()
+                ));
+        kpi.addColumns(wait_time_seconds);
+
+        // average wait by mode
+        // ***** current req
+//        Table intermediate =
+//                kpi
+//                        .summarize("wait_time_seconds", mean)
+//                        .by("mode")
+//                        .setName("Average wait time at stops by mode");
+//        intermediate.write().csv(String.format("%s/pt_wait_time.csv", outputDir));
+
+        // put in hour bins
+        StringColumn hour = StringColumn.create("hour");
+        kpi.timeColumn("dep_time")
+                .forEach(time -> hour.append(
+                        String.valueOf(time.getHour())
+                ));
+        kpi.addColumns(hour);
+
+        // ***** more balanced than req
+        Table intermediate =
+                kpi
+                        .summarize("wait_time_seconds", mean)
+                        .by("mode", "access_stop_id", "hour")
+                        .setName("Average wait time at stops by mode");
+        intermediate.write().csv(String.format("%s/pt_wait_time.csv", outputDirectory));
+
+        // kpi output
+        // ***** more balanced than req
+        kpi =
+                kpi
+                        .where(kpi.stringColumn("hour").asDoubleColumn().isGreaterThanOrEqualTo(7)
+                                .and(kpi.stringColumn("hour").asDoubleColumn().isLessThanOrEqualTo(9)))
+                        .summarize("wait_time_seconds", mean)
+                        .by("mode")
+                        .setName("PT Wait Time");
+        // TODO discuss this KPIs requirements / outputs
+        // ***** current req
+//        kpi =
+//                legs
+//                        .where(legs.stringColumn("hour").asDoubleColumn().isGreaterThanOrEqualTo(7)
+//                                .and(legs.stringColumn("hour").asDoubleColumn().isLessThanOrEqualTo(9)))
+//                        .intColumn("wait_time_seconds")
+//                        .mean();
+        kpi.setName("PT Wait Time");
+        kpi.write().csv(String.format("%s/kpi_pt_wait_time.csv", outputDirectory));
+    }
+
+    public void writeModalSplitKpi(Path outputDirectory) {
+        System.out.printf("Writing Modal Split KPI to %s%n", outputDirectory);
+
+        // percentages of trips by dominant (by distance) modes
+        Table kpi = trips.xTabPercents("longest_distance_mode");
+        kpi.doubleColumn("Percents").setPrintFormatter(NumberColumnFormatter.percent(2));
+        kpi.setName("Modal Split");
+        kpi.write().csv(String.format("%s/kpi_modal_split.csv", outputDirectory));
+    }
+
+    public void writeOccupancyRateKpi(Path outputDirectory) {
+        System.out.printf("Writing Occupancy Rate KPI to %s%n", outputDirectory);
+
+        // add capacity of the vehicle
+        Table kpi = linkLog
+                .joinOn("vehicleID")
+                .inner(vehicles.selectColumns("vehicleID", "capacity"));
+
+        // TODO include empty vehicles?
+        long numberOfVehicles = kpi.selectColumns("vehicleID").dropDuplicateRows().stream().count();
+
+        // average by vehicle
+        Table averageOccupancyPerVehicle =
+                kpi
+                        .summarize("numberOfPeople", "capacity", mean)
+                        .by("vehicleID")
+                        .setName("Occupancy Rate");
+        averageOccupancyPerVehicle.addColumns(
+                averageOccupancyPerVehicle
+                        .doubleColumn("Mean [numberOfPeople]")
+                        .divide(averageOccupancyPerVehicle.doubleColumn("Mean [capacity]"))
+        );
+        double pv = averageOccupancyPerVehicle.doubleColumn("Mean [numberOfPeople] / Mean [capacity]").sum();
+        pv = pv / numberOfVehicles;
+        averageOccupancyPerVehicle.setName("Occupancy Rate");
+        averageOccupancyPerVehicle.write().csv(String.format("%s/kpi_occupancy_rate.csv", outputDirectory));
+    }
+
+    public void writeVehicleKMKpi(Path outputDirectory) {
+        System.out.printf("Writing Vehicle KM KPI to %s%n", outputDirectory);
+
+        Table kpi = linkLog
+                .joinOn("linkID")
+                .inner(networkLinks.selectColumns("linkID", "length"));
+
+        kpi = kpi
+                .summarize("length", sum)
+                .by("vehicleID")
+                .setName("Vehicle KM");
+        kpi.addColumns(
+                kpi
+                        .doubleColumn("Sum [length]")
+                        .divide(100)
+                        .setName("distance_km")
+        );
+
+        kpi = kpi
+                .joinOn("vehicleID")
+                .inner(vehicles.selectColumns("vehicleID", "mode", "PTLineID", "PTRouteID"));
+
+        // to get to a passenger-km metric the easiest way is to go through legs
+//        Table legs = dataModel.getLegs();
+//        vehicles.stringColumn("vehicleID").setName("vehicle_id");
+//        legs = legs
+//                .joinOn("vehicle_id")
+//                .inner(vehicles.selectColumns("vehicle_id", "PTLineID", "PTRouteID"));
+//        Table kpi = legs.selectColumns(
+//                "person", "trip_id", "dep_time", "trav_time",
+//                "distance", "mode", "vehicle_id", "PTLineID", "PTRouteID");
+
+        // suggestion as intermediate output, might be too aggregated though
+//        Table intermediate = kpi
+//                .summarize("distance_km", sum)
+//                .by("mode");
+
+        kpi.doubleColumn("distance_km").sum();
+        kpi.setName("Vehicle KM");
+        kpi.write().csv(String.format("%s/kpi_vehicle_km.csv", outputDirectory));
+    }
+
+    public void writeSpeedKpi(Path outputDirectory) {
+        System.out.printf("Writing Speed KPI to %s%n", outputDirectory);
+        networkLinks = sanitiseInfiniteColumnValuesInTable(networkLinks, networkLinks.doubleColumn("length"));
+
+        // add length of links to log
+        Table kpi =
+                linkLog
+                        .joinOn("linkID")
+                        .inner(networkLinks.selectColumns("linkID", "length"));
+
+        // compute time travelled
+        kpi.addColumns(
+                kpi.doubleColumn("endTime")
+                        .subtract(kpi.doubleColumn("startTime"))
+                        .setName("travelTime")
+        );
+
+        // compute speed
+        kpi.addColumns(
+                kpi.doubleColumn("length")
+                        .divide(1000)
+                        .divide(
+                                kpi.doubleColumn("travelTime")
+                                        .divide(60 * 60)
+                        )
+                        .setName("travelSpeedKMPH")
+        );
+
+        // put in hour bins
+        IntColumn hour = IntColumn.create("hour");
+        kpi.doubleColumn("endTime")
+                .forEach(time -> hour.append(
+                        (int) Math.floor(time / (60 * 60))
+                ));
+        kpi.addColumns(hour);
+
+        // average travelSpeedKMPH by link (rows) and hour (columns)
+        // TODO is it possible to order columns? atm sorted with integers as strings, not a timeline
+        // TODO average over all links for each hour bin
+        // TODO missing data results in empty result
+        kpi = kpi
+                .pivot("linkID", "hour", "travelSpeedKMPH", mean)
+                .setName("Speed");
+        kpi.write().csv(String.format("%s/kpi_speed.csv", outputDirectory));
+    }
+
+    public void writeGHGKpi(Path outputDirectory) {
+        System.out.printf("Writing GHG KPIs to %s%n", outputDirectory);
     }
 
     @Override
@@ -46,9 +250,9 @@ public class TablesawKpiCalculator implements KpiCalculator {
         Table kpi =
                 linkLog.addColumns(
                         linkLog.doubleColumn("endTime")
-                        .subtract(linkLog.doubleColumn("startTime"))
-                        .setName("travelTime")
-        );
+                                .subtract(linkLog.doubleColumn("startTime"))
+                                .setName("travelTime")
+                );
 
         // compute free flow time on links (length / freespeed)
         networkLinks.addColumns(
@@ -93,8 +297,19 @@ public class TablesawKpiCalculator implements KpiCalculator {
                         .summarize("delayRatio", mean)
                         .by("mode")
                         .setName("Congestion KPI");
-        kpi.write().csv(String.format("%s/kpi.csv", outputDirectory));
-        writeIntermediateData(outputDirectory);
+        kpi.write().csv(String.format("%s/kpi_congestion.csv", outputDirectory));
+    }
+
+    private Table sanitiseInfiniteColumnValuesInTable(Table table, DoubleColumn column) {
+        Table infiniteValuesTable = table.where(column.eval(Double::isInfinite));
+        if (!infiniteValuesTable.isEmpty()) {
+            LOGGER.warn(("Table: `%s` has %d row(s) affected by infinite values in column: `%s`. " +
+                    "These rows will be dropped for this calculation.")
+                    .formatted(table.name(), infiniteValuesTable.rowCount(), column.name()));
+            return table.dropWhere(column.eval(Double::isInfinite));
+        } else {
+            return table;
+        }
     }
 
     private void createNetworkLinkTables(Network network) {
@@ -293,7 +508,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
         int mismatchedModes = linkLog.where(
                 linkLog.stringColumn("initialMode")
                         .isNotEqualTo(linkLog.stringColumn("mode")
-                )
+                        )
         ).stringColumn("vehicleID").countUnique();
         if (mismatchedModes > 0) {
             LOGGER.warn(String.format(

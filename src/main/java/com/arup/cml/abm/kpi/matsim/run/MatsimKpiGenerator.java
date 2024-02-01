@@ -60,8 +60,18 @@ public class MatsimKpiGenerator implements Runnable {
         summariseEventsHandled(eventsFile, matsimLinkLogHandler.getEventCounts());
 
         KpiCalculator kpiCalculator = new TablesawKpiCalculator(
-                matsimUtils.getMatsimNetwork(), matsimUtils.getTransitSchedule(), matsimUtils.getMatsimVehicles(), linkLog);
+                matsimUtils.getMatsimNetwork(), matsimUtils.getTransitSchedule(), matsimUtils.getMatsimVehicles(),
+                linkLog, matsimUtils.getMatsimLegsCSVInputStream(), matsimUtils.getMatsimTripsCSVInputStream(),
+                outputDir
+                );
 
+//        kpiCalculator.writeAffordabilityKpi(outputDir);
+        kpiCalculator.writePtWaitTimeKpi(outputDir);
+        kpiCalculator.writeModalSplitKpi(outputDir);
+        kpiCalculator.writeOccupancyRateKpi(outputDir);
+        kpiCalculator.writeVehicleKMKpi(outputDir);
+        kpiCalculator.writeSpeedKpi(outputDir);
+//        kpiCalculator.writeGHGKpi(outputDir);
         kpiCalculator.writeCongestionKpi(outputDir);
     }
 
