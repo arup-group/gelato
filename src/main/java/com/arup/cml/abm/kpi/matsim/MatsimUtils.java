@@ -1,5 +1,7 @@
 package com.arup.cml.abm.kpi.matsim;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigGroup;
@@ -16,6 +18,7 @@ import java.util.Set;
 import java.util.TreeMap;
 
 public class MatsimUtils {
+    private static final Logger LOGGER = LogManager.getLogger(MatsimUtils.class);
     private Path matsimOutputDir;
     private Network matsimNetwork;
     private Config matsimConfig;
@@ -41,7 +44,7 @@ public class MatsimUtils {
         TreeMap<String, ConfigGroup> configuredModules = config.getModules();
         for (ConfigGroup module : configuredModules.values().stream().toList()) {
             if (necessaryConfigGroups.contains(module.getName())) {
-                System.out.println("Config group " + module + " is read as is");
+                LOGGER.info("Config group {} is read as is", module);
             } else {
                 ReflectiveConfigGroup relaxedModule =
                         new ReflectiveConfigGroup(module.getName(), true) {};

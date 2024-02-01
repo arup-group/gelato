@@ -89,7 +89,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
 
     @Override
     public void writeCongestionKpi(Path outputDirectory) {
-        System.out.printf("Writing Congestion KPIs to %s%n", outputDirectory);
+        LOGGER.info("Writing Congestion KPIs to {}", outputDirectory);
         Table linkLog = getLinkLog();
 
         // compute travel time on links
@@ -142,7 +142,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
                         .summarize("delayRatio", mean)
                         .by("mode")
                         .setName("Congestion KPI");
-        kpi.write().csv(String.format("%s/kpi.csv", outputDirectory));
+        kpi.write().csv(String.format("%s/kpi-congestion.csv", outputDirectory));
         writeIntermediateData(outputDirectory);
     }
 

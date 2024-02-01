@@ -6,6 +6,8 @@ import com.arup.cml.abm.kpi.matsim.handlers.MatsimLinkLogHandler;
 import com.arup.cml.abm.kpi.tablesaw.TablesawKpiCalculator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.events.EventsUtils;
 import org.matsim.core.events.MatsimEventsReader;
@@ -19,13 +21,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 @Command(name = "MatsimKpiGenerator", version = "1.0-SNAPSHOT", mixinStandardHelpOptions = true)
 public class MatsimKpiGenerator implements Runnable {
-    @Option(names = "-mc", description = "Sets the MATSim config file to use.", required = true)
+    private static final Logger LOGGER = LogManager.getLogger(MatsimKpiGenerator.class);
+
+    @Option(names = "-mc", description = "Full path to your model's MATSim config file", required = true)
     private Path matsimConfigFile;
 
-    @Option(names = "-mo", description = "Sets the MATSim output directory use.", required = true)
+    @Option(names = "-mo", description = "Full path to your model's MATSim output directory", required = true)
     private Path matsimOutputDirectory;
 
-    @Option(names = "-o", description = "Sets the output directory. Defaults to stdout", required = true)
+    @Option(names = "-o", description = "Full path to the directory you want KPIs to be written to", required = true)
     private Path outputDir;
 
     public static void main(String[] args) {
@@ -35,11 +39,8 @@ public class MatsimKpiGenerator implements Runnable {
 
     @Override
     public void run() {
-        System.out.printf(
-                "Writing KPI metrics to %s, generated from MATSim outputs at %s, using MATSim config %s%n",
-                outputDir,
-                matsimOutputDirectory,
-                matsimConfigFile
+        LOGGER.info("Writing KPI metrics to {}, generated from MATSim outputs at {}, using MATSim config {}",
+                new Object[]{outputDir, matsimOutputDirectory, matsimConfigFile}
         );
 
         // We're not using a dependency injection framework, but we *are* programming
@@ -54,7 +55,7 @@ public class MatsimKpiGenerator implements Runnable {
         eventsManager.addHandler(matsimLinkLogHandler);
 
         String eventsFile = String.format("%s/output_events.xml.gz", matsimOutputDirectory);
-        System.out.printf("Streaming MATSim events from %s%n", eventsFile);
+        LOGGER.info("Streaming MATSim events from {}", eventsFile);
         new MatsimEventsReader(eventsManager).readFile(eventsFile);
         summariseEventsHandled(eventsFile, matsimLinkLogHandler.getEventCounts());
 
@@ -66,9 +67,9 @@ public class MatsimKpiGenerator implements Runnable {
                 .stream()
                 .mapToInt(AtomicInteger::intValue)
                 .sum();
-        System.out.printf("Recorded %,d relevant MATSim events from %s%n", eventCount, eventsFilePath);
+        LOGGER.info(String.format("Recorded %,d relevant MATSim events from %s", eventCount, eventsFilePath));
         try {
-            System.out.println(new ObjectMapper().
+            LOGGER.info(new ObjectMapper().
                     writerWithDefaultPrettyPrinter().
                     writeValueAsString(eventCounts));
         } catch (JsonProcessingException e) {
