@@ -537,12 +537,14 @@ public class TablesawKpiCalculator implements KpiCalculator {
     }
 
     private void writeIntermediateData(Path outputDir) {
-        linkLog.write().csv(String.format("%s/linkLog.csv", outputDir));
-        linkLogVehicleOccupancy.write().csv(String.format("%s/vehicleOccupancy.csv", outputDir));
-        networkLinks.write().csv(String.format("%s/networkLinks.csv", outputDir));
-        networkLinkModes.write().csv(String.format("%s/networkLinkModes.csv", outputDir));
-        scheduleStops.write().csv(String.format("%s/scheduleStops.csv", outputDir));
-        scheduleRoutes.write().csv(String.format("%s/scheduleRoutes.csv", outputDir));
-        vehicles.write().csv(String.format("%s/vehicles.csv", outputDir));
+        legs.write().csv(String.format("%s/supporting-data-legs.csv", outputDir));
+        trips.write().csv(String.format("%s/supporting-data-trips.csv", outputDir));
+        linkLog.write().csv(String.format("%s/supporting-data-linkLog.csv", outputDir));
+        linkLogVehicleOccupancy.write().csv(String.format("%s/supporting-data-vehicleOccupancy.csv", outputDir));
+        networkLinks.write().csv(String.format("%s/supporting-data-networkLinks.csv", outputDir));
+        networkLinkModes.write().csv(String.format("%s/supporting-data-networkLinkModes.csv", outputDir));
+        scheduleStops.write().csv(String.format("%s/supporting-data-scheduleStops.csv", outputDir));
+        scheduleRoutes.write().csv(String.format("%s/supporting-data-scheduleRoutes.csv", outputDir));
+        vehicles.write().csv(String.format("%s/supporting-data-vehicles.csv", outputDir));
     }
 }

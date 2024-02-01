@@ -32,7 +32,7 @@ public class MatsimKpiGeneratorIntegrationTest {
 
         assertThat(exitCode).isEqualTo(0).as("App return code should be zero");
         String[] outputFilesList = appOutputDir.getRoot().list();
-        assertThat(outputFilesList).hasSize(15).as("Check number of output files created");
+        assertThat(outputFilesList).hasSize(17).as("Check number of output files created");
         assertThat(outputFilesList).contains("kpi_congestion.csv").as("Check KPI CSV file exists");
         File expectedKpiFile = new File(String.format("%s/expected-kpi.csv", testDataDirRoot));
         assertThat(new File(String.format("%s/kpi_congestion.csv", appOutputDir.getRoot())))
