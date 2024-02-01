@@ -24,7 +24,7 @@ import java.util.Set;
 import java.util.TreeMap;
 
 public class MatsimUtils {
-    private static final Logger log = LogManager.getLogger(MatsimUtils.class);
+    private static final Logger LOGGER = LogManager.getLogger(MatsimUtils.class);
     private Path matsimOutputDir;
     private Config matsimConfig;
     private Scenario matsimScenario;
@@ -59,7 +59,7 @@ public class MatsimUtils {
         TreeMap<String, ConfigGroup> configuredModules = config.getModules();
         for (ConfigGroup module : configuredModules.values().stream().toList()) {
             if (necessaryConfigGroups.contains(module.getName())) {
-                log.info("Config group " + module + " is being read as is");
+                LOGGER.info("Config group {} is read as is", module);
             } else {
                 ReflectiveConfigGroup relaxedModule =
                         new ReflectiveConfigGroup(module.getName(), true) {

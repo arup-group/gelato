@@ -47,11 +47,11 @@ public class TablesawKpiCalculator implements KpiCalculator {
     }
 
     public void writeAffordabilityKpi(Path outputDirectory) {
-        LOGGER.info(String.format("Writing Affordability KPI to %s%n", outputDirectory));
+        LOGGER.info("Writing Affordability KPI to {}", outputDirectory);
     }
 
     public void writePtWaitTimeKpi(Path outputDirectory) {
-        LOGGER.info(String.format("Writing PT Wait Time KPI to %s%n", outputDirectory));
+        LOGGER.info("Writing PT Wait Time KPI to {}", outputDirectory);
 
         // pull out legs with PT stops information
         Table table = legs.where(
@@ -98,13 +98,13 @@ public class TablesawKpiCalculator implements KpiCalculator {
                                 .and(table.stringColumn("hour").asDoubleColumn().isLessThanOrEqualTo(9)))
                         .intColumn("wait_time_seconds")
                         .mean();
-        LOGGER.info(String.format("PT Wait Time KPI %f", kpi));
+        LOGGER.info("PT Wait Time KPI {}", kpi);
         // TODO output KPI to file
 //        kpi.write().csv(String.format("%s/kpi_pt_wait_time.csv", outputDirectory));
     }
 
     public void writeModalSplitKpi(Path outputDirectory) {
-        LOGGER.info(String.format("Writing Modal Split KPI to %s%n", outputDirectory));
+        LOGGER.info("Writing Modal Split KPI to {}", outputDirectory);
 
         // percentages of trips by dominant (by distance) modes
         Table kpi = trips.xTabPercents("longest_distance_mode");
@@ -114,7 +114,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
     }
 
     public void writeOccupancyRateKpi(Path outputDirectory) {
-        LOGGER.info(String.format("Writing Occupancy Rate KPI to %s%n", outputDirectory));
+        LOGGER.info("Writing Occupancy Rate KPI to {}", outputDirectory);
 
         // add capacity of the vehicle
         Table table = linkLog
@@ -140,13 +140,13 @@ public class TablesawKpiCalculator implements KpiCalculator {
 
         double kpi = averageOccupancyPerVehicle.doubleColumn("Mean [numberOfPeople] / Mean [capacity]").sum();
         kpi = kpi / numberOfVehicles;
-        LOGGER.info(String.format("Occupancy Rate KPI %f", kpi));
+        LOGGER.info("Occupancy Rate KPI {}", kpi);
         // TODO output KPI to file
 //        kpi.write().csv(String.format("%s/kpi_occupancy_rate.csv", outputDirectory));
     }
 
     public void writeVehicleKMKpi(Path outputDirectory) {
-        LOGGER.info(String.format("Writing Vehicle KM KPI to %s%n", outputDirectory));
+        LOGGER.info("Writing Vehicle KM KPI to {}", outputDirectory);
 
         // add link length to the link log table
         Table table = linkLog
@@ -191,7 +191,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
     }
 
     public void writeSpeedKpi(Path outputDirectory) {
-        LOGGER.info(String.format("Writing Speed KPI to %s%n", outputDirectory));
+        LOGGER.info("Writing Speed KPI to {}", outputDirectory);
         networkLinks = sanitiseInfiniteColumnValuesInTable(networkLinks, networkLinks.doubleColumn("length"));
 
         // add length of links to log
@@ -237,12 +237,12 @@ public class TablesawKpiCalculator implements KpiCalculator {
     }
 
     public void writeGHGKpi(Path outputDirectory) {
-        LOGGER.info(String.format("Writing GHG KPIs to %s%n", outputDirectory));
+        LOGGER.info("Writing GHG KPIs to {}", outputDirectory);
     }
 
     @Override
     public void writeCongestionKpi(Path outputDirectory) {
-        LOGGER.info(String.format("Writing Congestion KPIs to %s%n", outputDirectory));
+        LOGGER.info("Writing Congestion KPIs to {}", outputDirectory);
 
         // compute travel time on links
         Table table =
@@ -295,7 +295,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
                         .summarize("delayRatio", mean)
                         .by("mode")
                         .setName("Congestion KPI");
-        kpi.write().csv(String.format("%s/kpi_congestion.csv", outputDirectory));
+        kpi.write().csv(String.format("%s/kpi-congestion.csv", outputDirectory));
     }
 
     private Table sanitiseInfiniteColumnValuesInTable(Table table, DoubleColumn column) {

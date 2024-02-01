@@ -47,12 +47,55 @@ drwxr-xr-x@ 15 mickyfitz  staff   480B 13 Dec 15:17 ..
 
 # Usage
 
-You can run the tool from the command line, via the jar file:
+Gelato's CLI is quite discoverable:
 
 ```shell
-java -jar target/gelato-1.0-SNAPSHOT-92b26e8.jar
+java -jar target/gelato-1.0-SNAPSHOT-92b26e8.jar --help
 
-Making KPI metrics...
+Usage: MatsimKpiGenerator [-hV] -mc=<matsimConfigFile>
+                          -mo=<matsimOutputDirectory> -o=<outputDir>
+
+  -h, --help        Show this help message and exit.
+  -mc=<matsimConfigFile>
+                    Full path to your model's MATSim config file
+  -mo=<matsimOutputDirectory>
+                    Full path to your model's MATSim output directory
+  -o=<outputDir>    Full path to the directory you want KPIs to be written to
+  -V, --version     Print version information and exit.
+
 ```
 
+You can run the tool from the command line, directly from the jar file.
+To generate KPI metrics in a local directory on your machine, assuming:
+
+- MATSim output directory is at `/path/to/my-model/outputs`
+- MATSim config file at `/path/to/my-model/outputs/output_config.xml`
+- Target output directory at `/path/to/gelato-outputs/my-model/kpi`
+
+```shell
+java -jar target/gelato-1.0-SNAPSHOT-92b26e8.jar \
+-mc /path/to/my-model/outputs/output_config.xml \
+-mo /path/to/my-model/outputs \
+-o /path/to/gelato-outputs/my-model/kpi
+```
+
+We recommend using MATSim's output config file wherever possible.
+
 # The KPIs
+
+## Methodology
+Much of the work in creating Gelato involved defining useful KPIs that can be
+calculated from data available from a MATSim simulation. The KPIs are grouped
+together under various "Themes", strongly influenced by the
+[World Business Council for Sustainable Development](https://www.wbcsd.org/)'s
+"dimensions" of [sustainable mobility](https://docs.wbcsd.org/2015/03/Mobility_indicators.pdf)
+
+## The KPIs
+We envisage adding more KPIs as we go, but for now, these are the KPIs generated
+by Gelato:
+
+| Themes                                                                   | KPI Name   | File                 | WBCSD Definition                                                                              | Methodology                                                                                                                                              |
+|--------------------------------------------------------------------------|------------|----------------------|-----------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------|
+| <ul><li>Global Environment</li><li>Mobility System Performance</li></ul> | Congestion | `kpi-congestion.csv` | Delays in road traffic and in public transport during peak hours compared to free flow travel | At a link level, capture free-flow time and subtract congested time from this value. Congested time is the difference between link entry and exit time.  |
+|                                                                          |            |                      |                                                                                               |                                                                                                                                                          |
+
