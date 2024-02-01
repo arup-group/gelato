@@ -47,29 +47,29 @@ public class TablesawKpiCalculator implements KpiCalculator {
     }
 
     public void writeAffordabilityKpi(Path outputDirectory) {
-        System.out.printf("Writing Affordability KPI to %s%n", outputDirectory);
+        LOGGER.info(String.format("Writing Affordability KPI to %s%n", outputDirectory));
     }
 
     public void writePtWaitTimeKpi(Path outputDirectory) {
-        System.out.printf("Writing PT Wait Time KPI to %s%n", outputDirectory);
+        LOGGER.info(String.format("Writing PT Wait Time KPI to %s%n", outputDirectory));
 
         // pull out legs with stop waits
-        Table kpi = legs.where(
+        Table table = legs.where(
                 legs.stringColumn("access_stop_id").isNotMissing()
         );
 
         // put in hour bins
         IntColumn wait_time_seconds = IntColumn.create("wait_time_seconds");
-        kpi.timeColumn("wait_time")
+        table.timeColumn("wait_time")
                 .forEach(time -> wait_time_seconds.append(
                         time.toSecondOfDay()
                 ));
-        kpi.addColumns(wait_time_seconds);
+        table.addColumns(wait_time_seconds);
 
         // average wait by mode
         // ***** current req
 //        Table intermediate =
-//                kpi
+//                table
 //                        .summarize("wait_time_seconds", mean)
 //                        .by("mode")
 //                        .setName("Average wait time at stops by mode");
@@ -77,15 +77,15 @@ public class TablesawKpiCalculator implements KpiCalculator {
 
         // put in hour bins
         StringColumn hour = StringColumn.create("hour");
-        kpi.timeColumn("dep_time")
+        table.timeColumn("dep_time")
                 .forEach(time -> hour.append(
                         String.valueOf(time.getHour())
                 ));
-        kpi.addColumns(hour);
+        table.addColumns(hour);
 
         // ***** more balanced than req
         Table intermediate =
-                kpi
+                table
                         .summarize("wait_time_seconds", mean)
                         .by("mode", "access_stop_id", "hour")
                         .setName("Average wait time at stops by mode");
@@ -93,10 +93,10 @@ public class TablesawKpiCalculator implements KpiCalculator {
 
         // kpi output
         // ***** more balanced than req
-        kpi =
-                kpi
-                        .where(kpi.stringColumn("hour").asDoubleColumn().isGreaterThanOrEqualTo(7)
-                                .and(kpi.stringColumn("hour").asDoubleColumn().isLessThanOrEqualTo(9)))
+        Table kpi =
+                table
+                        .where(table.stringColumn("hour").asDoubleColumn().isGreaterThanOrEqualTo(7)
+                                .and(table.stringColumn("hour").asDoubleColumn().isLessThanOrEqualTo(9)))
                         .summarize("wait_time_seconds", mean)
                         .by("mode")
                         .setName("PT Wait Time");
@@ -113,7 +113,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
     }
 
     public void writeModalSplitKpi(Path outputDirectory) {
-        System.out.printf("Writing Modal Split KPI to %s%n", outputDirectory);
+        LOGGER.info(String.format("Writing Modal Split KPI to %s%n", outputDirectory));
 
         // percentages of trips by dominant (by distance) modes
         Table kpi = trips.xTabPercents("longest_distance_mode");
@@ -123,19 +123,19 @@ public class TablesawKpiCalculator implements KpiCalculator {
     }
 
     public void writeOccupancyRateKpi(Path outputDirectory) {
-        System.out.printf("Writing Occupancy Rate KPI to %s%n", outputDirectory);
+        LOGGER.info(String.format("Writing Occupancy Rate KPI to %s%n", outputDirectory));
 
         // add capacity of the vehicle
-        Table kpi = linkLog
+        Table table = linkLog
                 .joinOn("vehicleID")
                 .inner(vehicles.selectColumns("vehicleID", "capacity"));
 
         // TODO include empty vehicles?
-        long numberOfVehicles = kpi.selectColumns("vehicleID").dropDuplicateRows().stream().count();
+        long numberOfVehicles = table.selectColumns("vehicleID").dropDuplicateRows().stream().count();
 
         // average by vehicle
         Table averageOccupancyPerVehicle =
-                kpi
+                table
                         .summarize("numberOfPeople", "capacity", mean)
                         .by("vehicleID")
                         .setName("Occupancy Rate");
@@ -151,24 +151,24 @@ public class TablesawKpiCalculator implements KpiCalculator {
     }
 
     public void writeVehicleKMKpi(Path outputDirectory) {
-        System.out.printf("Writing Vehicle KM KPI to %s%n", outputDirectory);
+        LOGGER.info(String.format("Writing Vehicle KM KPI to %s%n", outputDirectory));
 
-        Table kpi = linkLog
+        Table table = linkLog
                 .joinOn("linkID")
                 .inner(networkLinks.selectColumns("linkID", "length"));
 
-        kpi = kpi
+        table = table
                 .summarize("length", sum)
                 .by("vehicleID")
                 .setName("Vehicle KM");
-        kpi.addColumns(
-                kpi
+        table.addColumns(
+                table
                         .doubleColumn("Sum [length]")
                         .divide(100)
                         .setName("distance_km")
         );
 
-        kpi = kpi
+        Table kpi = table
                 .joinOn("vehicleID")
                 .inner(vehicles.selectColumns("vehicleID", "mode", "PTLineID", "PTRouteID"));
 
@@ -193,28 +193,28 @@ public class TablesawKpiCalculator implements KpiCalculator {
     }
 
     public void writeSpeedKpi(Path outputDirectory) {
-        System.out.printf("Writing Speed KPI to %s%n", outputDirectory);
+        LOGGER.info(String.format("Writing Speed KPI to %s%n", outputDirectory));
         networkLinks = sanitiseInfiniteColumnValuesInTable(networkLinks, networkLinks.doubleColumn("length"));
 
         // add length of links to log
-        Table kpi =
+        Table table =
                 linkLog
                         .joinOn("linkID")
                         .inner(networkLinks.selectColumns("linkID", "length"));
 
         // compute time travelled
-        kpi.addColumns(
-                kpi.doubleColumn("endTime")
-                        .subtract(kpi.doubleColumn("startTime"))
+        table.addColumns(
+                table.doubleColumn("endTime")
+                        .subtract(table.doubleColumn("startTime"))
                         .setName("travelTime")
         );
 
         // compute speed
-        kpi.addColumns(
-                kpi.doubleColumn("length")
+        table.addColumns(
+                table.doubleColumn("length")
                         .divide(1000)
                         .divide(
-                                kpi.doubleColumn("travelTime")
+                                table.doubleColumn("travelTime")
                                         .divide(60 * 60)
                         )
                         .setName("travelSpeedKMPH")
@@ -222,32 +222,32 @@ public class TablesawKpiCalculator implements KpiCalculator {
 
         // put in hour bins
         IntColumn hour = IntColumn.create("hour");
-        kpi.doubleColumn("endTime")
+        table.doubleColumn("endTime")
                 .forEach(time -> hour.append(
                         (int) Math.floor(time / (60 * 60))
                 ));
-        kpi.addColumns(hour);
+        table.addColumns(hour);
 
         // average travelSpeedKMPH by link (rows) and hour (columns)
         // TODO is it possible to order columns? atm sorted with integers as strings, not a timeline
-        // TODO average over all links for each hour bin
+        // TODO geojson output
         // TODO missing data results in empty result
-        kpi = kpi
+        Table kpi = table
                 .pivot("linkID", "hour", "travelSpeedKMPH", mean)
                 .setName("Speed");
         kpi.write().csv(String.format("%s/kpi_speed.csv", outputDirectory));
     }
 
     public void writeGHGKpi(Path outputDirectory) {
-        System.out.printf("Writing GHG KPIs to %s%n", outputDirectory);
+        LOGGER.info(String.format("Writing GHG KPIs to %s%n", outputDirectory));
     }
 
     @Override
     public void writeCongestionKpi(Path outputDirectory) {
-        System.out.printf("Writing Congestion KPIs to %s%n", outputDirectory);
+        LOGGER.info(String.format("Writing Congestion KPIs to %s%n", outputDirectory));
 
         // compute travel time on links
-        Table kpi =
+        Table table =
                 linkLog.addColumns(
                         linkLog.doubleColumn("endTime")
                                 .subtract(linkLog.doubleColumn("startTime"))
@@ -262,38 +262,38 @@ public class TablesawKpiCalculator implements KpiCalculator {
         );
 
         // add freeflow time to link log
-        kpi =
-                kpi
+        table =
+                table
                         .joinOn("linkID")
                         .inner(networkLinks.selectColumns("linkID", "freeFlowTime"));
 
         // compute delay ratio
-        kpi.addColumns(
-                kpi.doubleColumn("travelTime")
-                        .divide(kpi.doubleColumn("freeFlowTime"))
+        table.addColumns(
+                table.doubleColumn("travelTime")
+                        .divide(table.doubleColumn("freeFlowTime"))
                         .setName("delayRatio")
         );
 
         // put in hour bins
         IntColumn hour = IntColumn.create("hour");
-        kpi.doubleColumn("endTime")
+        table.doubleColumn("endTime")
                 .forEach(time -> hour.append(
                         (int) Math.floor(time / (60 * 60))
                 ));
-        kpi.addColumns(hour);
+        table.addColumns(hour);
 
         // intermediate output data
         Table intermediate =
-                kpi
+                table
                         .summarize("delayRatio", mean)
                         .by("linkID", "mode", "hour");
         intermediate.write().csv(String.format("%s/congestion.csv", outputDirectory));
 
         // kpi output
-        kpi =
-                kpi
-                        .where(kpi.intColumn("hour").isGreaterThanOrEqualTo(7)
-                                .and(kpi.intColumn("hour").isLessThanOrEqualTo(9)))
+        Table kpi =
+                table
+                        .where(table.intColumn("hour").isGreaterThanOrEqualTo(7)
+                                .and(table.intColumn("hour").isLessThanOrEqualTo(9)))
                         .summarize("delayRatio", mean)
                         .by("mode")
                         .setName("Congestion KPI");
