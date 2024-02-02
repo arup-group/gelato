@@ -489,12 +489,13 @@ public class TablesawKpiCalculator implements KpiCalculator {
                 }
                 missingValues++;
             }
-            if (missingValues > 0) {
-                LOGGER.warn(String.format(
-                        "%d missing `endTime` data points were encountered - some vehicles were stuck and did not complete their journey",
-                        missingValues
-                ));
-            }
+        }
+
+        if (missingValues > 0) {
+            LOGGER.warn(String.format(
+                    "%d missing `endTime` data points were encountered - some vehicles were stuck and did not complete their journey",
+                    missingValues
+            ));
         }
         linkLog = Table.create("Link Log")
                 .addColumns(
