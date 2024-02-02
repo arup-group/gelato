@@ -148,6 +148,9 @@ public class MatsimUtils {
                         transitVehicle.getType().setNetworkMode(route.getTransportMode());
                         transitVehicle.getAttributes().putAttribute("PTLineID", lineId);
                         transitVehicle.getAttributes().putAttribute("PTRouteID", routeId);
+                        if (!vehicles.getVehicleTypes().containsKey(transitVehicle.getType().getId())) {
+                            vehicles.addVehicleType(transitVehicle.getType());
+                        }
                         vehicles.addVehicle(transitVehicle);
                     }
                 });
