@@ -79,9 +79,10 @@ public class TablesawKpiCalculator implements KpiCalculator {
 
         // put in hour bins
         StringColumn hour = StringColumn.create("hour");
-        table.timeColumn("dep_time")
+        table.column("dep_time")
                 .forEach(time -> hour.append(
-                        String.valueOf(time.getHour())
+                        // MATSim departure times look like "09:03:04" - grab the hour value
+                        time.toString().split(":")[0]
                 ));
         table.addColumns(hour);
 
@@ -484,18 +485,19 @@ public class TablesawKpiCalculator implements KpiCalculator {
                 endTimeColumn.append((Double) entry.getValue().get("endTime"));
                 numberOfPeopleColumn.append((Integer) entry.getValue().get("numberOfPeople"));
             } else {
+                endTimeColumn.append(-1);
+                numberOfPeopleColumn.append(0);
                 if (missingValues == 0) {
-                    LOGGER.warn("A missing `endTime` was encountered. This message is showed only once.");
+                    LOGGER.warn("A missing `endTime` was encountered. This message is shown only once.");
                 }
                 missingValues++;
             }
         }
 
         if (missingValues > 0) {
-            LOGGER.warn(String.format(
-                    "%d missing `endTime` data points were encountered - some vehicles were stuck and did not complete their journey",
-                    missingValues
-            ));
+            LOGGER.warn("{} missing `endTime` data points were encountered - some vehicles " +
+                            "were stuck and did not complete their journey",
+                    missingValues);
         }
         linkLog = Table.create("Link Log")
                 .addColumns(
