@@ -494,11 +494,6 @@ public class TablesawKpiCalculator implements KpiCalculator {
             }
         }
 
-        if (missingValues > 0) {
-            LOGGER.warn("{} missing `endTime` data points were encountered - some vehicles " +
-                            "were stuck and did not complete their journey",
-                    missingValues);
-        }
         linkLog = Table.create("Link Log")
                 .addColumns(
                         indexColumn,
@@ -509,6 +504,13 @@ public class TablesawKpiCalculator implements KpiCalculator {
                         endTimeColumn,
                         numberOfPeopleColumn
                 );
+        if (missingValues > 0) {
+            LOGGER.warn("{} missing `endTime` data points were encountered - some vehicles " +
+                            "were stuck and did not complete their journey. These Link Log entries will be deleted.",
+                    missingValues);
+            linkLog = linkLog.where(linkLog.doubleColumn("endTime").isNotEqualTo(-1));
+        }
+
         // fix vehicle modes with vehicle table
         linkLog = linkLog
                 .joinOn("vehicleID")
