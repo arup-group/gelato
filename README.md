@@ -109,3 +109,15 @@ by Gelato:
 | Parameter                                                                | Vehicle KM     | `kpi_vehicle_km.csv`     | Total distance travelled by car modes.                                                        | Sum the total distance travelled as recorded in the trip logs.                                                                                                     |
 | Parameter                                                                | Speed          | `kpi_speed.csv`          | Total distance travelled divided by travel time.                                              | Divide the total distance travelled as recorded in the trip logs by time travelled.                                                                                |
 | Parameter                                                                | Modal Split    | `kpi_modal_split.csv`    | Measures modal split by distance or number of trips per mode type.                            | Using trip logs, calculate the number of trips for each mode, as well as the percentage. This metric will not be scaled, but viewed in tandem with the other KPIs. |
+
+## Supporting Data
+
+In addition to KPI files, Gelato also generates a number of "supporting data" files. These files
+allow the user to perform their own analyses using aggregations created by Gelato as the basis
+for KPI calculations. These files use the naming scheme `supporting-data-<name of file>`.
+
+One such example is the "Link Log" (`supporting-data-linkLog.csv`), which is a data table
+recording every vehicle's entry into and exit from each network link it travelled through,
+alongside the number of occupants in the vehicle at each of these points. Gelato builds
+this table by parsing raw link entry/exit events from MATSim's `output_events.xml.gz` and
+then uses it to calculate KPIs such as congestion and occupancy.
