@@ -47,7 +47,7 @@ drwxr-xr-x@ 15 mickyfitz  staff   480B 13 Dec 15:17 ..
 
 # Usage
 
-Gelato's CLI is quite discoverable:
+You can run Gelato from the command line, directly from the jar file. The CLI is quite discoverable:
 
 ```shell
 java -jar target/gelato-1.0-SNAPSHOT-92b26e8.jar --help
@@ -65,7 +65,6 @@ Usage: MatsimKpiGenerator [-hV] -mc=<matsimConfigFile>
 
 ```
 
-You can run the tool from the command line, directly from the jar file.
 To generate KPI metrics in a local directory on your machine, assuming:
 
 - MATSim output directory is at `/path/to/my-model/outputs`
@@ -95,7 +94,7 @@ together under various "Themes", strongly influenced by the
 "dimensions" of [sustainable mobility](https://docs.wbcsd.org/2015/03/Mobility_indicators.pdf).
 
 Some KPIs do not fall directly under a specific theme, but are parameters
-for generating other KPIs. They are marked as "Parameter" in the table
+for generating other KPIs. They are marked as `Parameter` in the table
 below.
 
 ## The KPIs
