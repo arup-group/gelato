@@ -79,7 +79,11 @@ java -jar target/gelato-1.0-SNAPSHOT-92b26e8.jar \
 -o /path/to/gelato-outputs/my-model/kpi
 ```
 
-We recommend using MATSim's output config file wherever possible.
+We recommend using MATSim's output config file for the `-mc` parameter wherever
+possible.
+
+Gelato will read in MATSim's output files and generate a number of output
+files in the directory you specified via `-o`.
 
 # The KPIs
 
@@ -88,14 +92,21 @@ Much of the work in creating Gelato involved defining useful KPIs that can be
 calculated from data available from a MATSim simulation. The KPIs are grouped
 together under various "Themes", strongly influenced by the
 [World Business Council for Sustainable Development](https://www.wbcsd.org/)'s
-"dimensions" of [sustainable mobility](https://docs.wbcsd.org/2015/03/Mobility_indicators.pdf)
+"dimensions" of [sustainable mobility](https://docs.wbcsd.org/2015/03/Mobility_indicators.pdf).
+
+Some KPIs do not fall directly under a specific theme, but are parameters
+for generating other KPIs. They are marked as "Parameter" in the table
+below.
 
 ## The KPIs
 We envisage adding more KPIs as we go, but for now, these are the KPIs generated
 by Gelato:
 
-| Themes                                                                   | KPI Name   | File                 | WBCSD Definition                                                                              | Methodology                                                                                                                                              |
-|--------------------------------------------------------------------------|------------|----------------------|-----------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------|
-| <ul><li>Global Environment</li><li>Mobility System Performance</li></ul> | Congestion | `kpi-congestion.csv` | Delays in road traffic and in public transport during peak hours compared to free flow travel | At a link level, capture free-flow time and subtract congested time from this value. Congested time is the difference between link entry and exit time.  |
-|                                                                          |            |                      |                                                                                               |                                                                                                                                                          |
-
+| Themes                                                                   | KPI Name       | File                     | Definition                                                                                    | Methodology                                                                                                                                                     |
+|--------------------------------------------------------------------------|----------------|--------------------------|-----------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| <ul><li>Global Environment</li><li>Mobility System Performance</li></ul> | Congestion     | `kpi-congestion.csv`     | Delays in road traffic and in public transport during peak hours compared to free flow travel | Capture free-flow time at the link level, subtract congested time from this value. Congested time is the difference between link entry and exit time.           |
+| <ul><li>Quality of Life</li><li>Mobility System Performance</li></ul>    | PT Wait Time   | `kpi_pt_wait_time.csv`   | Average time waiting for a PT boarding.                                                       | Wait times contained within standard MATSim output 'output_legs.csv.gz'. Average trip wait times by transport mode.                                             |
+| Parameter                                                                | Occupancy Rate | `kpi_occupancy_rate.csv` | Average load factor of vehicles of all modes of city transport                                | Track boarding/alighting events at vehicle level and combine with the vehicle log to calculate distances, then aggregate to average occupancy by mode.          |
+| Parameter                                                                | Vehicle KM     | `kpi_vehicle_km.csv`     | Total distance travelled by car modes.                                                        | Sum the total distance travelled as recorded in the trip logs.                                                                                                  |
+| Parameter                                                                | Speed          | `kpi_speed.csv`          | Total distance travelled divided by travel time.                                              | Divide the total distance travelled as recorded in the trip logs by time travelled.                                                                             |
+| Parameter                                                                | Modal Split    | `kpi_modal_split.csv`    | Measures modal split by distance or number of trips per mode type.                            | Using trip logs, calculate the number of trips for each mode, as well as the percentage. This metric will not be scaled, but viewed in tandem with the other KPI's. |
