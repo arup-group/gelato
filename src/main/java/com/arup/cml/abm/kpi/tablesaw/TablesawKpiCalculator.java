@@ -11,7 +11,10 @@ import tech.tablesaw.api.*;
 import tech.tablesaw.columns.numbers.NumberColumnFormatter;
 import tech.tablesaw.io.csv.CsvReadOptions;
 
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.Writer;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Map;
@@ -102,8 +105,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
                         .intColumn("wait_time_seconds")
                         .mean();
         LOGGER.info("PT Wait Time KPI {}", kpi);
-        // TODO output KPI to file
-//        kpi.write().csv(String.format("%s/kpi_pt_wait_time.csv", outputDirectory));
+        writeContentToFile(String.format("%s/kpi_pt_wait_time.csv", outputDirectory), String.valueOf(kpi));
     }
 
     @Override
@@ -145,9 +147,9 @@ public class TablesawKpiCalculator implements KpiCalculator {
 
         double kpi = averageOccupancyPerVehicle.doubleColumn("Mean [numberOfPeople] / Mean [capacity]").sum();
         kpi = kpi / numberOfVehicles;
+
         LOGGER.info("Occupancy Rate KPI {}", kpi);
-        // TODO output KPI to file
-//        kpi.write().csv(String.format("%s/kpi_occupancy_rate.csv", outputDirectory));
+        writeContentToFile(String.format("%s/kpi_occupancy_rate.csv", outputDirectory), String.valueOf(kpi));
     }
 
     @Override
@@ -546,6 +548,16 @@ public class TablesawKpiCalculator implements KpiCalculator {
     public Table readCSVInputStream(InputStream inputStream) {
         CsvReadOptions.Builder builder = CsvReadOptions.builder(inputStream).separator(';');
         return Table.read().usingOptions(builder.build());
+    }
+
+    private void writeContentToFile(String path, String content) {
+        try {
+            Writer wr = new FileWriter(path);
+            wr.write(content);
+            wr.close();
+        } catch (IOException e) {
+            LOGGER.warn("Failed to save content `{}` to file: `{}`", content, path);
+        }
     }
 
     private void writeIntermediateData(Path outputDir) {
