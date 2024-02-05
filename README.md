@@ -11,12 +11,12 @@ Indicator (KPI) metrics that measure and document the behaviour of the simulatio
 # Installation
 
 ## Prerequisites
-- JDK >= 17 (start [here](https://www.oracle.com/java/technologies/downloads/))
+- JDK >= 17 (start [here](https://www.oracle.com/java/technologies/downloads/) or [here](https://jdk.java.net/))
 - [Maven](https://maven.apache.org/)
 
 ## Building
 To compile everything, run all unit tests, and build a runnable jar file that includes all
-the necessary dependencies:
+the necessary dependencies, clone this repo, and then from the directory you cloned it into:
 
 ```shell
 mvn clean package
