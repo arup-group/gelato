@@ -81,11 +81,11 @@ public class TablesawKpiCalculator implements KpiCalculator {
 //        intermediate.write().csv(String.format("%s/pt_wait_time.csv", outputDir));
 
         // put in hour bins
-        StringColumn hour = StringColumn.create("hour");
+        IntColumn hour = IntColumn.create("hour");
         table.column("dep_time")
                 .forEach(time -> hour.append(
                         // MATSim departure times look like "09:03:04" - grab the hour value
-                        time.toString().split(":")[0]
+                        Integer.parseInt(time.toString().split(":")[0])
                 ));
         table.addColumns(hour);
 
@@ -100,8 +100,8 @@ public class TablesawKpiCalculator implements KpiCalculator {
         // kpi output
         double kpi =
                 table
-                        .where(table.stringColumn("hour").asDoubleColumn().isGreaterThanOrEqualTo(7)
-                                .and(table.stringColumn("hour").asDoubleColumn().isLessThanOrEqualTo(9)))
+                        .where(table.intColumn("hour").isGreaterThanOrEqualTo(8)
+                                .and(table.intColumn("hour").isLessThan(10)))
                         .intColumn("wait_time_seconds")
                         .mean();
         LOGGER.info("PT Wait Time KPI {}", kpi);
