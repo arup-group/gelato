@@ -1,4 +1,4 @@
-# Gelato (working title)
+# Gelato
 
 ![DailyCIbadge](https://github.com/arup-group/gelato/actions/workflows/ci.yml/badge.svg)
 
