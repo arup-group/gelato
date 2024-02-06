@@ -32,12 +32,12 @@ public class MatsimKpiGeneratorIntegrationTest {
         );
 
         assertThat(exitCode).isEqualTo(0).as("App return code should be zero");
-        String[] generatedFiles = appOutputDir.getRoot().list();
-        assertKpiFilesWereGenerated(format("%s/expected-kpis", testDataDirRoot), generatedFiles);
-        assertSupportingFilesWereGenerated(generatedFiles);
+        assertKpiFilesWereGenerated(format("%s/expected-kpis", testDataDirRoot), appOutputDir.getRoot());
+        assertSupportingFilesWereGenerated(appOutputDir.getRoot());
     }
 
-    private void assertSupportingFilesWereGenerated(String[] outputFilesList) {
+    private void assertSupportingFilesWereGenerated(File kpiDirectory) {
+        String[] generatedFiles = kpiDirectory.list();
         String [] expectedSupportingFiles = {
                 "pt-wait-time.csv",
                 "occupancy-rate.csv",
@@ -54,13 +54,14 @@ public class MatsimKpiGeneratorIntegrationTest {
                 "supporting-data-legs.csv"
         };
         for (int i = 0; i < expectedSupportingFiles.length; i++) {
-            assertThat(outputFilesList)
+            assertThat(generatedFiles)
                     .contains(expectedSupportingFiles[i])
                     .as(format("Check supporting data output file '%s' exists", expectedSupportingFiles[i]));
         }
     }
 
-    private void assertKpiFilesWereGenerated(String expectedKpiDirectory, String[] outputFilesList) {
+    private void assertKpiFilesWereGenerated(String expectedKpiDirectory, File kpiDirectory) {
+        String[] generatedFiles = kpiDirectory.list();
         String [] expectedKpiFiles = {
                 "kpi-congestion.csv",
                 "kpi-speed.csv",
@@ -71,7 +72,7 @@ public class MatsimKpiGeneratorIntegrationTest {
         };
         for (int i = 0; i < expectedKpiFiles.length; i++) {
             String expectedFile = expectedKpiFiles[i];
-            assertThat(outputFilesList)
+            assertThat(generatedFiles)
                     .contains(expectedFile)
                     .as(format("Check KPI output file '%s' exists", expectedFile));
             File expectedKpiFile = new File(format("%s/expected-%s", expectedKpiDirectory, expectedFile));
