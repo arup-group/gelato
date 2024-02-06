@@ -2,11 +2,11 @@
 
 ![DailyCIbadge](https://github.com/arup-group/gelato/actions/workflows/ci.yml/badge.svg)
 
-A command-line post-processing tool to turn MATSim ABM outputs into KPI metrics.
+A command-line post-processing tool to turn
+[MATSim](https://github.com/matsim-org/matsim-libs/tree/master#readme) ABM outputs into Key Performance
+Indicator (KPI) metrics. These KPI metrics provide a snapshot summary of a given MATSim
+model, and are useful for comparing simulations with each other.
 
-Gelato sits downstream of a [MATSim](https://github.com/matsim-org/matsim-libs/tree/master#readme) agent-based
-transport simulation and consumes outputs from the simulation. These outputs are used to generate Key Performance
-Indicator (KPI) metrics that measure and document the behaviour of the simulation.
 
 # Installation
 
