@@ -71,14 +71,14 @@ public class MatsimKpiGeneratorIntegrationTest {
                 "kpi-pt-wait-time.csv",
         };
         for (int i = 0; i < expectedKpiFiles.length; i++) {
-            String expectedFile = expectedKpiFiles[i];
+            String kpiFile = expectedKpiFiles[i];
             assertThat(generatedFiles)
-                    .contains(expectedFile)
-                    .as(format("Check KPI output file '%s' exists", expectedFile));
-            File expectedKpiFile = new File(format("%s/expected-%s", expectedKpiDirectory, expectedFile));
-            assertThat(new File(format("%s/%s", appOutputDir.getRoot(), expectedFile)))
+                    .contains(kpiFile)
+                    .as(format("Check KPI output file '%s' exists", kpiFile));
+            File expectedKpiFile = new File(format("%s/expected-%s", expectedKpiDirectory, kpiFile));
+            assertThat(new File(format("%s/%s", kpiDirectory, kpiFile)))
                     .hasSameTextualContentAs(expectedKpiFile)
-                    .as(format("Check %s KPI data matches expectation", expectedFile));
+                    .as(format("Check %s KPI data matches expectation", kpiFile));
         }
     }
 }
