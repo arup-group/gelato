@@ -4,8 +4,10 @@
 
 <figure>
     <img alt="Gelato Clip Art" height="300" src="images/gelato.png" title="Gelato" width="150"/>
-    <figcaption>Designed by Wannapik</figcaption>
+    <figcaption>Image Designed by Wannapik</figcaption>
 </figure>
+
+<p>
 
 A command-line post-processing tool to turn
 [MATSim](https://github.com/matsim-org/matsim-libs/tree/master#readme) ABM outputs into Key Performance
