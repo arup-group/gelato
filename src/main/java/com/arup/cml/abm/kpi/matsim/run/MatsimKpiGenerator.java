@@ -1,6 +1,7 @@
 package com.arup.cml.abm.kpi.matsim.run;
 
 import com.arup.cml.abm.kpi.KpiCalculator;
+import com.arup.cml.abm.kpi.data.LinkLog;
 import com.arup.cml.abm.kpi.matsim.MatsimUtils;
 import com.arup.cml.abm.kpi.matsim.handlers.MatsimLinkLogHandler;
 import com.arup.cml.abm.kpi.tablesaw.TablesawKpiCalculator;
@@ -11,6 +12,7 @@ import org.apache.logging.log4j.Logger;
 import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.events.EventsUtils;
 import org.matsim.core.events.MatsimEventsReader;
+import org.matsim.utils.MemoryObserver;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -43,14 +45,16 @@ public class MatsimKpiGenerator implements Runnable {
                 new Object[]{outputDir, matsimOutputDirectory, matsimConfigFile}
         );
 
+        MemoryObserver.start(60);
+
         // We're not using a dependency injection framework, but we *are* programming
         // in a dependency injection style (explicit dependencies passed into
         // constructors) and then creating and wiring together the objects in the
         // object graph "manually" here. Switching to a DI framework in future should
         // be pretty straightforward if we need to.
         MatsimUtils matsimUtils = new MatsimUtils(matsimOutputDirectory, matsimConfigFile);
-        KpiCalculator kpiCalculator = new TablesawKpiCalculator(matsimUtils.getMatsimNetwork());
-        MatsimLinkLogHandler matsimLinkLogHandler = new MatsimLinkLogHandler(kpiCalculator);
+        LinkLog linkLog = new LinkLog();
+        MatsimLinkLogHandler matsimLinkLogHandler = new MatsimLinkLogHandler(linkLog);
         EventsManager eventsManager = EventsUtils.createEventsManager();
         eventsManager.addHandler(matsimLinkLogHandler);
 
@@ -59,7 +63,21 @@ public class MatsimKpiGenerator implements Runnable {
         new MatsimEventsReader(eventsManager).readFile(eventsFile);
         summariseEventsHandled(eventsFile, matsimLinkLogHandler.getEventCounts());
 
+        KpiCalculator kpiCalculator = new TablesawKpiCalculator(
+                matsimUtils.getMatsimNetwork(), matsimUtils.getTransitSchedule(), matsimUtils.getMatsimVehicles(),
+                linkLog, matsimUtils.getMatsimLegsCSVInputStream(), matsimUtils.getMatsimTripsCSVInputStream(),
+                outputDir
+                );
+
+        kpiCalculator.writeAffordabilityKpi(outputDir);
+        kpiCalculator.writePtWaitTimeKpi(outputDir);
+        kpiCalculator.writeModalSplitKpi(outputDir);
+        kpiCalculator.writeOccupancyRateKpi(outputDir);
+        kpiCalculator.writeVehicleKMKpi(outputDir);
+        kpiCalculator.writeSpeedKpi(outputDir);
+        kpiCalculator.writeGHGKpi(outputDir);
         kpiCalculator.writeCongestionKpi(outputDir);
+        MemoryObserver.stop();
     }
 
     private static void summariseEventsHandled(String eventsFilePath, Map<String, AtomicInteger> eventCounts) {
