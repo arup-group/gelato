@@ -95,7 +95,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
                         .summarize("wait_time_seconds", mean)
                         .by("mode", "access_stop_id", "hour")
                         .setName("Average wait time at stops by mode");
-        intermediate.write().csv(String.format("%s/pt_wait_time.csv", outputDirectory));
+        intermediate.write().csv(String.format("%s/pt-wait-time.csv", outputDirectory));
 
         // kpi output
         double kpi =
@@ -105,7 +105,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
                         .intColumn("wait_time_seconds")
                         .mean();
         LOGGER.info("PT Wait Time KPI {}", kpi);
-        writeContentToFile(String.format("%s/kpi_pt_wait_time.csv", outputDirectory), String.valueOf(kpi));
+        writeContentToFile(String.format("%s/kpi-pt-wait-time.csv", outputDirectory), String.valueOf(kpi));
     }
 
     @Override
@@ -116,7 +116,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
         Table kpi = trips.xTabPercents("longest_distance_mode");
         kpi.doubleColumn("Percents").setPrintFormatter(NumberColumnFormatter.percent(2));
         kpi.setName("Modal Split");
-        kpi.write().csv(String.format("%s/kpi_modal_split.csv", outputDirectory));
+        kpi.write().csv(String.format("%s/kpi-modal-split.csv", outputDirectory));
     }
 
     @Override
@@ -143,13 +143,13 @@ public class TablesawKpiCalculator implements KpiCalculator {
                         .divide(averageOccupancyPerVehicle.doubleColumn("Mean [capacity]"))
         );
         averageOccupancyPerVehicle.setName("Occupancy Rate");
-        averageOccupancyPerVehicle.write().csv(String.format("%s/occupancy_rate.csv", outputDirectory));
+        averageOccupancyPerVehicle.write().csv(String.format("%s/occupancy-rate.csv", outputDirectory));
 
         double kpi = averageOccupancyPerVehicle.doubleColumn("Mean [numberOfPeople] / Mean [capacity]").sum();
         kpi = kpi / numberOfVehicles;
 
         LOGGER.info("Occupancy Rate KPI {}", kpi);
-        writeContentToFile(String.format("%s/kpi_occupancy_rate.csv", outputDirectory), String.valueOf(kpi));
+        writeContentToFile(String.format("%s/kpi-occupancy-rate.csv", outputDirectory), String.valueOf(kpi));
     }
 
     @Override
@@ -191,11 +191,11 @@ public class TablesawKpiCalculator implements KpiCalculator {
         intermediate = intermediate
                 .summarize("distance_km", sum)
                 .by("mode");
-        intermediate.write().csv(String.format("%s/vehicle_km.csv", outputDirectory));
+        intermediate.write().csv(String.format("%s/vehicle-km.csv", outputDirectory));
 
         kpi.doubleColumn("distance_km").sum();
         kpi.setName("Vehicle KM");
-        kpi.write().csv(String.format("%s/kpi_vehicle_km.csv", outputDirectory));
+        kpi.write().csv(String.format("%s/kpi-vehicle-km.csv", outputDirectory));
     }
 
     @Override
@@ -242,7 +242,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
         Table kpi = table
                 .pivot("linkID", "hour", "travelSpeedKMPH", mean)
                 .setName("Speed");
-        kpi.write().csv(String.format("%s/kpi_speed.csv", outputDirectory));
+        kpi.write().csv(String.format("%s/kpi-speed.csv", outputDirectory));
     }
 
     @Override

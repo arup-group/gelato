@@ -9,6 +9,7 @@ import picocli.CommandLine;
 import java.io.File;
 import java.nio.file.Paths;
 
+import static java.lang.String.format;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 public class MatsimKpiGeneratorIntegrationTest {
@@ -18,12 +19,12 @@ public class MatsimKpiGeneratorIntegrationTest {
 
     @Test
     public void testApp() throws Exception {
-        String testDataDirRoot = String.format("%s/integration-test-data/smol-matsim-outputs/",
+        String testDataDirRoot = format("%s/integration-test-data/smol-matsim-outputs/",
                 Paths.get("src", "test", "resources"));
 
         int exitCode = new CommandLine(new MatsimKpiGenerator()).execute(
                 "-mc",
-                String.format("%s/output_config.xml", testDataDirRoot),
+                format("%s/output_config.xml", testDataDirRoot),
                 "-mo",
                 testDataDirRoot,
                 "-o",
@@ -31,12 +32,52 @@ public class MatsimKpiGeneratorIntegrationTest {
         );
 
         assertThat(exitCode).isEqualTo(0).as("App return code should be zero");
-        String[] outputFilesList = appOutputDir.getRoot().list();
-        assertThat(outputFilesList).hasSize(19).as("Check number of output files created");
-        assertThat(outputFilesList).contains("kpi-congestion.csv").as("Check KPI CSV file exists");
-        File expectedKpiFile = new File(String.format("%s/expected-kpi.csv", testDataDirRoot));
-        assertThat(new File(String.format("%s/kpi-congestion.csv", appOutputDir.getRoot())))
-                .hasSameTextualContentAs(expectedKpiFile)
-                .as("Check calculated KPI data");
+        String[] generatedFiles = appOutputDir.getRoot().list();
+        assertKpiFilesWereGenerated(format("%s/expected-kpis", testDataDirRoot), generatedFiles);
+        assertSupportingFilesWereGenerated(generatedFiles);
+    }
+
+    private void assertSupportingFilesWereGenerated(String[] outputFilesList) {
+        String [] expectedSupportingFiles = {
+                "pt-wait-time.csv",
+                "occupancy-rate.csv",
+                "congestion.csv",
+                "vehicle-km.csv",
+                "supporting-data-vehicles.csv",
+                "supporting-data-scheduleRoutes.csv",
+                "supporting-data-scheduleStops.csv",
+                "supporting-data-networkLinkModes.csv",
+                "supporting-data-networkLinks.csv",
+                "supporting-data-vehicleOccupancy.csv",
+                "supporting-data-linkLog.csv",
+                "supporting-data-trips.csv",
+                "supporting-data-legs.csv"
+        };
+        for (int i = 0; i < expectedSupportingFiles.length; i++) {
+            assertThat(outputFilesList)
+                    .contains(expectedSupportingFiles[i])
+                    .as(format("Check supporting data output file '%s' exists", expectedSupportingFiles[i]));
+        }
+    }
+
+    private void assertKpiFilesWereGenerated(String expectedKpiDirectory, String[] outputFilesList) {
+        String [] expectedKpiFiles = {
+                "kpi-congestion.csv",
+                "kpi-speed.csv",
+                "kpi-vehicle-km.csv",
+                "kpi-occupancy-rate.csv",
+                "kpi-modal-split.csv",
+                "kpi-pt-wait-time.csv",
+        };
+        for (int i = 0; i < expectedKpiFiles.length; i++) {
+            String expectedFile = expectedKpiFiles[i];
+            assertThat(outputFilesList)
+                    .contains(expectedFile)
+                    .as(format("Check KPI output file '%s' exists", expectedFile));
+            File expectedKpiFile = new File(format("%s/expected-%s", expectedKpiDirectory, expectedFile));
+            assertThat(new File(format("%s/%s", appOutputDir.getRoot(), expectedFile)))
+                    .hasSameTextualContentAs(expectedKpiFile)
+                    .as(format("Check %s KPI data matches expectation", expectedFile));
+        }
     }
 }
