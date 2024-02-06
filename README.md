@@ -4,12 +4,12 @@
 
 <figure>
     <img alt="Gelato Clip Art" height="300" src="images/gelato.png" title="Gelato" width="150"/>
-    <figcaption>Image Designed by Wannapik</figcaption>
+    <figcaption><sub>Image Designed by Wannapik</sub></figcaption>
 </figure>
 
 <p>
 
-A command-line post-processing tool to turn
+Gelato is a command-line post-processing tool to turn
 [MATSim](https://github.com/matsim-org/matsim-libs/tree/master#readme) ABM outputs into Key Performance
 Indicator (KPI) metrics. These KPI metrics provide a snapshot summary of a given MATSim
 model, and are useful for comparing simulations with each other.
