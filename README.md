@@ -95,7 +95,9 @@ together under various "Themes", strongly influenced by the
 
 Some KPIs do not fall directly under a specific theme, but are parameters
 for generating other KPIs. They are marked as `Parameter` in the table
-below.
+below. Parameters are included to provide context on the simulation and allow
+for sense-checking, whereas KPIs are intended to allow for comparison across
+scenarios.
 
 ## The KPIs
 We will add more KPIs as we go, but for now, these are the KPIs generated
