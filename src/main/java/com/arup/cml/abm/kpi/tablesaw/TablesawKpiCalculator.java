@@ -8,7 +8,6 @@ import org.matsim.api.core.v01.network.Network;
 import org.matsim.pt.transitSchedule.api.TransitSchedule;
 import org.matsim.vehicles.Vehicles;
 import tech.tablesaw.api.*;
-import tech.tablesaw.columns.numbers.NumberColumnFormatter;
 import tech.tablesaw.io.csv.CsvReadOptions;
 
 import java.io.FileWriter;
@@ -19,6 +18,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 import static tech.tablesaw.aggregate.AggregateFunctions.mean;
 import static tech.tablesaw.aggregate.AggregateFunctions.sum;
@@ -95,7 +95,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
                         .summarize("wait_time_seconds", mean)
                         .by("mode", "access_stop_id", "hour")
                         .setName("Average wait time at stops by mode");
-        intermediate.write().csv(String.format("%s/pt-wait-time.csv", outputDirectory));
+        intermediate.write().csv(String.format("%s/intermediate-pt-wait-time.csv", outputDirectory));
 
         // kpi output
         double kpi =
@@ -104,6 +104,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
                                 .and(table.intColumn("hour").isLessThan(10)))
                         .intColumn("wait_time_seconds")
                         .mean();
+        kpi = round(kpi, 2);
         LOGGER.info("PT Wait Time KPI {}", kpi);
         writeContentToFile(String.format("%s/kpi-pt-wait-time.csv", outputDirectory), String.valueOf(kpi));
     }
@@ -114,7 +115,9 @@ public class TablesawKpiCalculator implements KpiCalculator {
 
         // percentages of trips by dominant (by distance) modes
         Table kpi = trips.xTabPercents("longest_distance_mode");
-        kpi.doubleColumn("Percents").setPrintFormatter(NumberColumnFormatter.percent(2));
+        kpi.replaceColumn(
+                round(
+                        kpi.doubleColumn("Percents").multiply(100).setName("Percents"), 2));
         kpi.setName("Modal Split");
         kpi.write().csv(String.format("%s/kpi-modal-split.csv", outputDirectory));
     }
@@ -142,11 +145,18 @@ public class TablesawKpiCalculator implements KpiCalculator {
                         .doubleColumn("Mean [numberOfPeople]")
                         .divide(averageOccupancyPerVehicle.doubleColumn("Mean [capacity]"))
         );
-        averageOccupancyPerVehicle.setName("Occupancy Rate");
-        averageOccupancyPerVehicle.write().csv(String.format("%s/occupancy-rate.csv", outputDirectory));
+        Table intermediate = Table.create(
+                averageOccupancyPerVehicle.stringColumn("vehicleID"),
+                averageOccupancyPerVehicle.doubleColumn("Mean [numberOfPeople]"),
+                averageOccupancyPerVehicle.doubleColumn("Mean [capacity]").setName("capacity"),
+                round(averageOccupancyPerVehicle.doubleColumn("Mean [numberOfPeople] / Mean [capacity]"), 2)
+                        .setName("Average occupancy rate")
+        ).setName("Occupancy Rate");
+        intermediate.write().csv(String.format("%s/intermediate-occupancy-rate.csv", outputDirectory));
 
         double kpi = averageOccupancyPerVehicle.doubleColumn("Mean [numberOfPeople] / Mean [capacity]").sum();
         kpi = kpi / numberOfVehicles;
+        kpi = round(kpi, 2);
 
         LOGGER.info("Occupancy Rate KPI {}", kpi);
         writeContentToFile(String.format("%s/kpi-occupancy-rate.csv", outputDirectory), String.valueOf(kpi));
@@ -162,12 +172,12 @@ public class TablesawKpiCalculator implements KpiCalculator {
                 .inner(networkLinks.selectColumns("linkID", "length"));
 
         // get total km travelled for each vehicle
-        Table kpi = table
+        table = table
                 .summarize("length", sum)
                 .by("vehicleID")
                 .setName("Vehicle KM");
-        kpi.addColumns(
-                kpi
+        table.addColumns(
+                table
                         .doubleColumn("Sum [length]")
                         .divide(100)
                         .setName("distance_km")
@@ -185,17 +195,15 @@ public class TablesawKpiCalculator implements KpiCalculator {
 //                "distance", "mode", "vehicle_id", "PTLineID", "PTRouteID");
 
         // suggestion as intermediate output, might be too aggregated though
-        Table intermediate = kpi
+        Table intermediate = table
                 .joinOn("vehicleID")
                 .inner(vehicles.selectColumns("vehicleID", "mode"));
-        intermediate = intermediate
-                .summarize("distance_km", sum)
-                .by("mode");
-        intermediate.write().csv(String.format("%s/vehicle-km.csv", outputDirectory));
+        intermediate.setName("Vehicle KM per vehicle");
+        intermediate.write().csv(String.format("%s/intermediate-vehicle-km.csv", outputDirectory));
 
-        kpi.doubleColumn("distance_km").sum();
-        kpi.setName("Vehicle KM");
-        kpi.write().csv(String.format("%s/kpi-vehicle-km.csv", outputDirectory));
+        double kpi = round(table.doubleColumn("distance_km").sum(), 2);
+        LOGGER.info("Vehicle KM KPI {}", kpi);
+        writeContentToFile(String.format("%s/kpi-vehicle-km.csv", outputDirectory), String.valueOf(kpi));
     }
 
     @Override
@@ -242,6 +250,9 @@ public class TablesawKpiCalculator implements KpiCalculator {
         Table kpi = table
                 .pivot("linkID", "hour", "travelSpeedKMPH", mean)
                 .setName("Speed");
+        for (NumericColumn<?> column : kpi.numericColumns()) {
+            kpi.replaceColumn(round(column.asDoubleColumn(), 2));
+        }
         kpi.write().csv(String.format("%s/kpi-speed.csv", outputDirectory));
     }
 
@@ -295,17 +306,38 @@ public class TablesawKpiCalculator implements KpiCalculator {
                 table
                         .summarize("delayRatio", mean)
                         .by("linkID", "mode", "hour");
-        intermediate.write().csv(String.format("%s/congestion.csv", outputDirectory));
+        intermediate.write().csv(String.format("%s/intermediate-congestion.csv", outputDirectory));
 
         // kpi output
         Table kpi =
                 table
-                        .where(table.intColumn("hour").isGreaterThanOrEqualTo(7)
-                                .and(table.intColumn("hour").isLessThanOrEqualTo(9)))
+                        .where(table.intColumn("hour").isGreaterThanOrEqualTo(8)
+                                .and(table.intColumn("hour").isLessThan(10)))
                         .summarize("delayRatio", mean)
                         .by("mode")
                         .setName("Congestion KPI");
+        kpi.replaceColumn(round(kpi.doubleColumn("Mean [delayRatio]"), 2));
         kpi.write().csv(String.format("%s/kpi-congestion.csv", outputDirectory));
+    }
+
+    private static DoubleColumn round(DoubleColumn column, int decimalPoints) {
+        DoubleColumn roundedColumn = DoubleColumn.create(column.name());
+        column.forEach(new Consumer<Double>() {
+            @Override
+            public void accept(Double aDouble) {
+                if (aDouble.isNaN()) {
+                    roundedColumn.appendMissing();
+                }
+                else {
+                    roundedColumn.append(Math.round(aDouble * Math.pow(10.0, decimalPoints)) / Math.pow(10.0, decimalPoints));
+                }
+            }
+        });
+        return roundedColumn;
+    }
+
+    private static double round(double number, int decimalPoints) {
+        return Math.round(number * Math.pow(10.0, decimalPoints)) / Math.pow(10.0, decimalPoints);
     }
 
     private Table sanitiseInfiniteColumnValuesInTable(Table table, DoubleColumn column) {

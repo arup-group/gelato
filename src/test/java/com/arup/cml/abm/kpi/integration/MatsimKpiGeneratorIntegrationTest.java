@@ -39,10 +39,10 @@ public class MatsimKpiGeneratorIntegrationTest {
     private void assertSupportingFilesWereGenerated(File kpiDirectory) {
         String[] generatedFiles = kpiDirectory.list();
         String [] expectedSupportingFiles = {
-                "pt-wait-time.csv",
-                "occupancy-rate.csv",
-                "congestion.csv",
-                "vehicle-km.csv",
+                "intermediate-pt-wait-time.csv",
+                "intermediate-occupancy-rate.csv",
+                "intermediate-congestion.csv",
+                "intermediate-vehicle-km.csv",
                 "supporting-data-vehicles.csv",
                 "supporting-data-scheduleRoutes.csv",
                 "supporting-data-scheduleStops.csv",
