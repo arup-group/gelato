@@ -320,7 +320,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
         kpi.write().csv(String.format("%s/kpi-congestion.csv", outputDirectory));
     }
 
-    private static DoubleColumn round(DoubleColumn column, int decimalPoints) {
+    private DoubleColumn round(DoubleColumn column, int decimalPoints) {
         DoubleColumn roundedColumn = DoubleColumn.create(column.name());
         column.forEach(new Consumer<Double>() {
             @Override
@@ -336,7 +336,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
         return roundedColumn;
     }
 
-    private static double round(double number, int decimalPoints) {
+    private double round(double number, int decimalPoints) {
         return Math.round(number * Math.pow(10.0, decimalPoints)) / Math.pow(10.0, decimalPoints);
     }
 
