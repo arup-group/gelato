@@ -1,5 +1,6 @@
 package com.arup.cml.abm.kpi.data;
 
+import com.arup.cml.abm.kpi.data.exceptions.LinkLogPassengerConsistencyException;
 import com.google.common.collect.RowSortedTable;
 import com.google.common.collect.Table;
 import com.google.common.collect.TreeBasedTable;
@@ -41,15 +42,15 @@ public class LinkLog {
         index++;
     }
 
-    public void updateLinkLogEntry(String vehicleID, double endTime) {
+    public void completeLinkLogEntry(String vehicleID, double endTime) {
         long latestStateIndex = this.vehicleLatestLogIndex.get(vehicleID);
         linkLogData.put(latestStateIndex, "endTime", endTime);
-        linkLogData.put(latestStateIndex, "numberOfPeople", vehicleLatestOccupants.get(vehicleID).size());
+        linkLogData.put(latestStateIndex, "numberOfPeople", vehicleLatestOccupants.getOrDefault(vehicleID, new ArrayList<>()).size());
         newVehicleOccupantsEntry(vehicleID, latestStateIndex);
     }
 
     public void newVehicleOccupantsEntry(String vehicleID, long idx) {
-        ArrayList<String> currentOccupants = vehicleLatestOccupants.get(vehicleID);
+        ArrayList<String> currentOccupants = getLatestVehicleOccupants(vehicleID);
         for (String personID : currentOccupants) {
             vehicleOccupantsData.put(idx, "agentId", personID);
         }
@@ -61,7 +62,7 @@ public class LinkLog {
 
     public void personBoardsVehicle(String vehicleID, String personID) {
         if (vehicleLatestOccupants.containsKey(vehicleID)) {
-            ArrayList<String> latestOccupants = vehicleLatestOccupants.get(vehicleID);
+            ArrayList<String> latestOccupants = getLatestVehicleOccupants(vehicleID);
             latestOccupants.add(personID);
         } else {
             ArrayList<String> latestOccupants = new ArrayList<>();
@@ -70,8 +71,21 @@ public class LinkLog {
         }
     }
 
-    public void personAlightsVehicle(String vehicleID, String personID) {
-        ArrayList<String> latestOccupants = vehicleLatestOccupants.get(vehicleID);
-        latestOccupants.remove(personID);
+    public void personAlightsVehicle(String vehicleID, String personID) throws LinkLogPassengerConsistencyException {
+        ArrayList<String> latestOccupants = getLatestVehicleOccupants(vehicleID);
+        if (latestOccupants.contains(personID)) {
+            latestOccupants.remove(personID);
+        } else {
+            throw new LinkLogPassengerConsistencyException(String.format(
+                    "The requested person: `%s` cannot leave vehicle `%s` because they didn't board it", personID, vehicleID));
+        }
+    }
+
+    private ArrayList<String> getLatestVehicleOccupants(String vehicleID) throws LinkLogPassengerConsistencyException {
+        if (vehicleLatestOccupants.containsKey(vehicleID)) {
+            return vehicleLatestOccupants.get(vehicleID);
+        } else
+            throw new LinkLogPassengerConsistencyException(String.format(
+                    "The requested vehicle: `%s` has not been logged as having any passengers", vehicleID));
     }
 }

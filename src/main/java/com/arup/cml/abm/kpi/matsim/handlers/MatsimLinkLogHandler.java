@@ -1,6 +1,7 @@
 package com.arup.cml.abm.kpi.matsim.handlers;
 
 import com.arup.cml.abm.kpi.data.LinkLog;
+import com.arup.cml.abm.kpi.data.exceptions.LinkLogPassengerConsistencyException;
 import org.matsim.api.core.v01.events.*;
 import org.matsim.api.core.v01.events.handler.*;
 
@@ -36,7 +37,7 @@ public class MatsimLinkLogHandler implements
     @Override
     public void handleEvent(LinkLeaveEvent event) {
         incrementEventCount(event);
-        linkLog.updateLinkLogEntry(
+        linkLog.completeLinkLogEntry(
                 event.getVehicleId().toString(),
                 event.getTime()
         );
@@ -74,7 +75,7 @@ public class MatsimLinkLogHandler implements
     @Override
     public void handleEvent(VehicleLeavesTrafficEvent event) {
         incrementEventCount(event);
-        linkLog.updateLinkLogEntry(
+        linkLog.completeLinkLogEntry(
                 event.getVehicleId().toString(),
                 event.getTime()
         );
