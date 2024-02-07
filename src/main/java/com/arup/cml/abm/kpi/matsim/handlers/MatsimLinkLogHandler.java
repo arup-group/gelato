@@ -1,7 +1,6 @@
 package com.arup.cml.abm.kpi.matsim.handlers;
 
 import com.arup.cml.abm.kpi.data.LinkLog;
-import com.arup.cml.abm.kpi.data.exceptions.LinkLogPassengerConsistencyException;
 import org.matsim.api.core.v01.events.*;
 import org.matsim.api.core.v01.events.handler.*;
 
