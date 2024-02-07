@@ -1,5 +1,5 @@
 #
-# Build stage
+# Build stage - we need the full JDK and Maven
 #
 FROM maven:3.9.6-eclipse-temurin-17 AS build
 ENV HOME=/opt/app
@@ -9,7 +9,7 @@ ADD . $HOME
 RUN --mount=type=cache,target=/root/.m2 mvn -f $HOME/pom.xml clean package
 
 #
-# Package stage - use a much smaller base image
+# Package stage - use a much smaller base image with only the JRE
 #
 FROM eclipse-temurin:17-jre-jammy
 ARG JAR_FILE=/opt/app/target/*with-dependencies*.jar

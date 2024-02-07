@@ -17,6 +17,11 @@ model, and are useful for comparing simulations with each other.
 
 # Installation
 
+If you have Docker installed and would prefer to use Gelato via Docker rather than
+locally installing the prerequisite dependencies, then building and running the Java
+application from the command line, skip to the
+"[Using Gelato via Docker](#using-gelato-via-docker)" section.
+
 ## Prerequisites
 - JDK >= 17 (start [here](https://www.oracle.com/java/technologies/downloads/) or [here](https://jdk.java.net/))
 - [Maven](https://maven.apache.org/)
@@ -90,6 +95,40 @@ possible.
 
 Gelato will read in MATSim's output files and generate a number of output
 files in the directory you specified via `-o`.
+
+
+# Using Gelato via Docker
+
+## Building the Image
+You can build a Gelato Docker image by cloning this repo, and then running the
+following command from the directory you cloned it into:
+
+```shell
+docker build -t gelato .
+```
+
+We have tried to keep the Docker image size reasonably small (around 350MB).
+
+## Running Gelato via the Image
+Assuming:
+
+- A MATSim output directory at `/path/to/my-model/outputs`
+- A MATSim config file at `/path/to/my-model/outputs/output_config.xml`
+- A target KPI directory at `/path/to/gelato-outputs/my-model`
+
+You can run Gelato from the Docker image you just built by mounting
+the input and output data directories as volumes in the Docker container
+via a command like this:
+
+```shell
+docker run \
+-v /path/to/my-model/outputs/:/my-model-outputs \
+-v /path/to/gelato-outputs/my-model:/gelato-out \
+gelato \
+-mc /my-model-outputs/output_config.xml \
+-mo /my-model-outputs \
+-o /gelato-out
+```
 
 # The KPIs
 
