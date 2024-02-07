@@ -21,7 +21,7 @@ import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-@Command(name = "MatsimKpiGenerator", version = "1.0-SNAPSHOT", mixinStandardHelpOptions = true)
+@Command(name = "MatsimKpiGenerator", version = "0.0.1-alpha", mixinStandardHelpOptions = true)
 public class MatsimKpiGenerator implements Runnable {
     private static final Logger LOGGER = LogManager.getLogger(MatsimKpiGenerator.class);
 
