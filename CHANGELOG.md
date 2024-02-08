@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Dockerfile (#11)
+- Dockerfile ([#11](https://github.com/arup-group/gelato/issues/11))
 
 ### Fixed
 
