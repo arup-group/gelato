@@ -48,9 +48,9 @@ ls -talh target
 
 ```
 total 48
--rw-r--r--@  1 mickyfitz  staff   4.0K 13 Dec 15:17 gelato-0.0.1-alpha-with-dependencies-230f897.jar
+-rw-r--r--@  1 mickyfitz  staff    83M 13 Dec 15:17 gelato-0.0.1-alpha-with-dependencies-230f897.jar
 drwxr-xr-x@ 12 mickyfitz  staff   384B 13 Dec 15:17 .
--rw-r--r--@  1 mickyfitz  staff   3.6K 13 Dec 15:17 gelato-1.0-SNAPSHOT.jar
+-rw-r--r--@  1 mickyfitz  staff    28K 13 Dec 15:17 gelato-1.0-SNAPSHOT.jar
 drwxr-xr-x@  3 mickyfitz  staff    96B 13 Dec 15:17 maven-archiver
 -rw-r--r--@  1 mickyfitz  staff    14K 13 Dec 15:17 jacoco.exec
 drwxr-xr-x@  4 mickyfitz  staff   128B 13 Dec 15:17 surefire-reports
