@@ -12,22 +12,26 @@
 Gelato is a command-line post-processing tool to turn
 [MATSim](https://github.com/matsim-org/matsim-libs/tree/master#readme) ABM outputs into Key Performance
 Indicator (KPI) metrics. These KPI metrics provide a snapshot summary of a given MATSim
-model, and are useful for comparing simulations with each other.
+model, and are useful for comparing different MATSim models and scenarios with each other.
 
 
 # Installation
 
 If you have Docker installed and would prefer to use Gelato via Docker rather than
-locally installing the prerequisite dependencies, then building and running the Java
+locally installing the prerequisite dependencies then building and running the Java
 application from the command line, skip to the
 "[Using Gelato via Docker](#using-gelato-via-docker)" section.
 
+To find out how to build and run Gelato without using Docker, read on...
+
 ## Prerequisites
+In order to build and run Gelato locally, your environment must already have:
+
 - JDK >= 17 (start [here](https://www.oracle.com/java/technologies/downloads/) or [here](https://jdk.java.net/))
 - [Maven](https://maven.apache.org/)
 
 ## Building
-To compile everything, run all unit tests, and build a runnable jar file that includes all
+To compile everything, run all unit tests and linting checks, and build a runnable jar file that includes all
 the necessary dependencies, clone this repo, and then from the directory you cloned it into:
 
 ```shell
@@ -35,14 +39,14 @@ mvn clean package
 ```
 
 This will generate a new jar file in the `target` directory that is named according to the Gelato
-version number and the latest git commit level - `gelato-1.0-SNAPSHOT-92b26e8.jar` is the runnable
-jar in the example below:
+version number and the latest git commit level - `gelato-0.0.1-alpha-with-dependencies-230f897.jar`
+is the runnable jar in the example below:
 
 ```shell
 ls -talh target
 
 total 48
--rw-r--r--@  1 mickyfitz  staff   4.0K 13 Dec 15:17 gelato-1.0-SNAPSHOT-92b26e8.jar
+-rw-r--r--@  1 mickyfitz  staff   4.0K 13 Dec 15:17 gelato-0.0.1-alpha-with-dependencies-230f897.jar
 drwxr-xr-x@ 12 mickyfitz  staff   384B 13 Dec 15:17 .
 -rw-r--r--@  1 mickyfitz  staff   3.6K 13 Dec 15:17 gelato-1.0-SNAPSHOT.jar
 drwxr-xr-x@  3 mickyfitz  staff    96B 13 Dec 15:17 maven-archiver
@@ -62,8 +66,10 @@ drwxr-xr-x@ 15 mickyfitz  staff   480B 13 Dec 15:17 ..
 You can run Gelato from the command line, directly from the jar file. The CLI is quite discoverable:
 
 ```shell
-java -jar target/gelato-1.0-SNAPSHOT-92b26e8.jar --help
+java -jar target/gelato-0.0.1-alpha-with-dependencies-230f897.jar --help
+```
 
+```
 Usage: MatsimKpiGenerator [-hV] -mc=<matsimConfigFile>
                           -mo=<matsimOutputDirectory> -o=<outputDir>
 
@@ -74,7 +80,6 @@ Usage: MatsimKpiGenerator [-hV] -mc=<matsimConfigFile>
                     Full path to your model's MATSim output directory
   -o=<outputDir>    Full path to the directory you want KPIs to be written to
   -V, --version     Print version information and exit.
-
 ```
 
 To generate KPI metrics in a local directory on your machine, assuming:
