@@ -109,7 +109,7 @@
               <goal>shade</goal>
             </goals>
             <configuration>
-              <outputFile>${project.build.directory}/${project.build.finalName}-${git.commit.id.describe-short}.jar</outputFile>
+              <outputFile>${project.build.directory}/${project.build.finalName}-with-dependencies-${git.commit.id.describe-short}.jar</outputFile>
               <transformers>
                 <transformer>
                   <manifestEntries>
