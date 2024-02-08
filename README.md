@@ -50,7 +50,7 @@ ls -talh target
 total 48
 -rw-r--r--@  1 mickyfitz  staff    83M 13 Dec 15:17 gelato-0.0.1-alpha-with-dependencies-230f897.jar
 drwxr-xr-x@ 12 mickyfitz  staff   384B 13 Dec 15:17 .
--rw-r--r--@  1 mickyfitz  staff    28K 13 Dec 15:17 gelato-1.0-SNAPSHOT.jar
+-rw-r--r--@  1 mickyfitz  staff    28K 13 Dec 15:17 gelato-0.0.1-alpha.jar
 drwxr-xr-x@  3 mickyfitz  staff    96B 13 Dec 15:17 maven-archiver
 -rw-r--r--@  1 mickyfitz  staff    14K 13 Dec 15:17 jacoco.exec
 drwxr-xr-x@  4 mickyfitz  staff   128B 13 Dec 15:17 surefire-reports
@@ -101,7 +101,29 @@ We recommend using MATSim's output config file for the `-mc` parameter wherever
 possible.
 
 Gelato will read in MATSim's output files and generate a number of output
-files in the directory you specified via `-o`.
+files in the directory you specified via `-o`, giving you something like this:
+
+```shell
+-rw-r--r--@  1 mickyfitz  wheel   9.9M  8 Feb 12:01 intermediate-congestion.csv
+-rw-r--r--@  1 mickyfitz  wheel   664K  8 Feb 12:01 intermediate-occupancy-rate.csv
+-rw-r--r--@  1 mickyfitz  wheel   3.8K  8 Feb 12:00 intermediate-pt-wait-time.csv
+-rw-r--r--@  1 mickyfitz  wheel   1.3M  8 Feb 12:01 intermediate-vehicle-km.csv
+-rw-r--r--@  1 mickyfitz  wheel    80B  8 Feb 12:01 kpi-congestion.csv
+-rw-r--r--@  1 mickyfitz  wheel   104B  8 Feb 12:00 kpi-modal-split.csv
+-rw-r--r--@  1 mickyfitz  wheel     4B  8 Feb 12:01 kpi-occupancy-rate.csv
+-rw-r--r--@  1 mickyfitz  wheel     6B  8 Feb 12:00 kpi-pt-wait-time.csv
+-rw-r--r--@  1 mickyfitz  wheel   1.3M  8 Feb 12:01 kpi-speed.csv
+-rw-r--r--@  1 mickyfitz  wheel    10B  8 Feb 12:01 kpi-vehicle-km.csv
+-rw-r--r--@  1 mickyfitz  wheel   170K  8 Feb 12:00 supporting-data-legs.csv
+-rw-r--r--@  1 mickyfitz  wheel   220M  8 Feb 12:00 supporting-data-linkLog.csv
+-rw-r--r--@  1 mickyfitz  wheel   7.3M  8 Feb 12:00 supporting-data-networkLinkModes.csv
+-rw-r--r--@  1 mickyfitz  wheel    13M  8 Feb 12:00 supporting-data-networkLinks.csv
+-rw-r--r--@  1 mickyfitz  wheel    15K  8 Feb 12:00 supporting-data-scheduleRoutes.csv
+-rw-r--r--@  1 mickyfitz  wheel    99K  8 Feb 12:00 supporting-data-scheduleStops.csv
+-rw-r--r--@  1 mickyfitz  wheel    71K  8 Feb 12:00 supporting-data-trips.csv
+-rw-r--r--@  1 mickyfitz  wheel    90M  8 Feb 12:00 supporting-data-vehicleOccupancy.csv
+-rw-r--r--@  1 mickyfitz  wheel   573K  8 Feb 12:00 supporting-data-vehicles.csv
+```
 
 
 # Using Gelato via Docker
