@@ -137,6 +137,31 @@ gelato \
 -o /gelato-out
 ```
 
+You can use Gelato's CLI in essentially the same way you would when running directly from the jar file, for example:
+
+```shell
+docker run gelato --version
+```
+```
+0.0.1-alpha
+```
+
+```shell
+docker run gelato --help
+```
+
+```
+Usage: MatsimKpiGenerator [-hV] -mc=<matsimConfigFile>
+                          -mo=<matsimOutputDirectory> -o=<outputDir>
+  -h, --help        Show this help message and exit.
+  -mc=<matsimConfigFile>
+                    Full path to your model's MATSim config file
+  -mo=<matsimOutputDirectory>
+                    Full path to your model's MATSim output directory
+  -o=<outputDir>    Full path to the directory you want KPIs to be written to
+  -V, --version     Print version information and exit.
+```
+
 # The KPIs
 
 ## Methodology
