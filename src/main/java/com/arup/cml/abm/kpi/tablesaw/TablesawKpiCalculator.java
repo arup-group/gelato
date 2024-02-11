@@ -601,7 +601,6 @@ public class TablesawKpiCalculator implements KpiCalculator {
                                         }
                                         return Optional.empty();
                                 });
-                ;
         return Table.read().usingOptions(builder.build());
     }
 
