@@ -58,7 +58,11 @@ public class MatsimKpiGenerator implements Runnable {
         EventsManager eventsManager = EventsUtils.createEventsManager();
         eventsManager.addHandler(matsimLinkLogHandler);
 
-        String eventsFile = String.format("%s/output_events.xml.gz", matsimOutputDirectory);
+        String eventsFile = String.format("%s/%soutput_events.xml%s",
+                matsimOutputDirectory,
+                matsimUtils.getRunId(),
+                matsimUtils.getCompressionFileEnd());
+
         LOGGER.info("Streaming MATSim events from {}", eventsFile);
         new MatsimEventsReader(eventsManager).readFile(eventsFile);
         summariseEventsHandled(eventsFile, matsimLinkLogHandler.getEventCounts());
