@@ -7,7 +7,7 @@
     <groupId>com.arup.cml</groupId>
     <artifactId>gelato</artifactId>
     <packaging>jar</packaging>
-    <version>0.0.1-alpha</version>
+    <version>0.0.2-alpha</version>
 
     <name>Gelato</name>
     <description>A command-line post-processing tool to turn MATSim ABM outputs into KPI metrics</description>
@@ -78,9 +78,14 @@
 
         <dependency>
             <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>2.0.12</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.slf4j</groupId>
             <artifactId>slf4j-simple</artifactId>
             <version>2.0.12</version>
-            <scope>test</scope>
         </dependency>
 
 
