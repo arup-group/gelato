@@ -32,6 +32,8 @@ public class MatsimUtils {
     private Network matsimNetwork;
     private TransitSchedule matsimTransitSchedule;
     private Vehicles matsimVehicles;
+    private String runId;
+    private String compressionFileEnd;
 
     private final Set<String> necessaryConfigGroups = new HashSet<>(Arrays.asList(
             GlobalConfigGroup.GROUP_NAME,
@@ -42,8 +44,8 @@ public class MatsimUtils {
             VehiclesConfigGroup.GROUP_NAME,
             NetworkConfigGroup.GROUP_NAME,
             ScoringConfigGroup.GROUP_NAME,
-            ScenarioConfigGroup.GROUP_NAME
-    ));
+            ScenarioConfigGroup.GROUP_NAME,
+            ControllerConfigGroup.GROUP_NAME));
 
     public MatsimUtils(Path matsimOutputDir, Path matsimConfigFile) {
         this.matsimOutputDir = matsimOutputDir;
@@ -69,33 +71,39 @@ public class MatsimUtils {
             }
         }
         ConfigUtils.loadConfig(config, String.format(matsimInputConfig));
+        this.runId = getRunId(config.controller().getRunId());
+        this.compressionFileEnd = config.controller().getCompressionType().fileEnding;
         setOutputFilePaths(config);
         return config;
+    }
+
+    private static String getRunId(String runid) {
+        return runid == null ? "" : runid + ".";
     }
 
     private void setOutputFilePaths(Config config) {
         TreeMap<String, ConfigGroup> modules = config.getModules();
         modules.get("network")
                 .addParam("inputNetworkFile",
-                        String.format("%s/output_network.xml.gz", this.matsimOutputDir));
+                        String.format("%s/%soutput_network.xml%s", this.matsimOutputDir, this.runId, this.compressionFileEnd));
         modules.get("transit")
                 .addParam("transitScheduleFile",
-                        String.format("%s/output_transitSchedule.xml.gz", this.matsimOutputDir));
+                        String.format("%s/%soutput_transitSchedule.xml%s", this.matsimOutputDir, this.runId, this.compressionFileEnd));
         modules.get("transit")
                 .addParam("vehiclesFile",
-                        String.format("%s/output_transitVehicles.xml.gz", this.matsimOutputDir));
+                        String.format("%s/%soutput_transitVehicles.xml%s", this.matsimOutputDir, this.runId, this.compressionFileEnd));
         modules.get("plans")
                 .addParam("inputPlansFile",
-                        String.format("%s/output_plans.xml.gz", this.matsimOutputDir));
+                        String.format("%s/%soutput_plans.xml%s", this.matsimOutputDir, this.runId, this.compressionFileEnd));
         modules.get("households")
                 .addParam("inputFile",
-                        String.format("%s/output_households.xml.gz", this.matsimOutputDir));
+                        String.format("%s/%soutput_households.xml%s", this.matsimOutputDir, this.runId, this.compressionFileEnd));
         modules.get("facilities")
                 .addParam("inputFacilitiesFile",
-                        String.format("%s/output_facilities.xml.gz", this.matsimOutputDir));
+                        String.format("%s/%soutput_facilities.xml%s", this.matsimOutputDir, this.runId, this.compressionFileEnd));
         modules.get("vehicles")
                 .addParam("vehiclesFile",
-                        String.format("%s/output_vehicles.xml.gz", this.matsimOutputDir));
+                        String.format("%s/%soutput_vehicles.xml%s", this.matsimOutputDir, this.runId, this.compressionFileEnd));
     }
 
     public Network getMatsimNetwork() {
@@ -113,17 +121,21 @@ public class MatsimUtils {
     public InputStream getMatsimLegsCSVInputStream() {
         return IOUtils.getInputStream(
                 IOUtils.resolveFileOrResource(
-                        String.format("%s/output_legs.csv.gz", matsimOutputDir)
-                )
-        );
+                        String.format("%s/%soutput_legs.csv%s", this.matsimOutputDir, runId, compressionFileEnd)));
     }
 
     public InputStream getMatsimTripsCSVInputStream() {
         return IOUtils.getInputStream(
                 IOUtils.resolveFileOrResource(
-                        String.format("%s/output_trips.csv.gz", matsimOutputDir)
-                )
-        );
+                        String.format("%s/%soutput_trips.csv%s", this.matsimOutputDir, runId, compressionFileEnd)));
+    }
+
+    public String getRunId() {
+        return this.runId;
+    }
+
+    public String getCompressionFileEnd() {
+        return this.compressionFileEnd;
     }
 
     private Vehicles collectVehicles(Scenario scenario) {

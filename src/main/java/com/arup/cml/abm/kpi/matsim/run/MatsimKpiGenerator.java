@@ -21,7 +21,7 @@ import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-@Command(name = "MatsimKpiGenerator", version = "1.0-SNAPSHOT", mixinStandardHelpOptions = true)
+@Command(name = "MatsimKpiGenerator", version = "0.0.1-alpha", mixinStandardHelpOptions = true)
 public class MatsimKpiGenerator implements Runnable {
     private static final Logger LOGGER = LogManager.getLogger(MatsimKpiGenerator.class);
 
@@ -58,7 +58,11 @@ public class MatsimKpiGenerator implements Runnable {
         EventsManager eventsManager = EventsUtils.createEventsManager();
         eventsManager.addHandler(matsimLinkLogHandler);
 
-        String eventsFile = String.format("%s/output_events.xml.gz", matsimOutputDirectory);
+        String eventsFile = String.format("%s/%soutput_events.xml%s",
+                matsimOutputDirectory,
+                matsimUtils.getRunId(),
+                matsimUtils.getCompressionFileEnd());
+
         LOGGER.info("Streaming MATSim events from {}", eventsFile);
         new MatsimEventsReader(eventsManager).readFile(eventsFile);
         summariseEventsHandled(eventsFile, matsimLinkLogHandler.getEventCounts());
