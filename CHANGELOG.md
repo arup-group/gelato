@@ -9,8 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Dockerfile ([#11](https://github.com/arup-group/gelato/issues/11))
+- Support for MATSim runIds
+- Support for MATSim outputs with differing file compression types
 
 ### Fixed
+
+- Error parsing trips & legs with large numbers of rows and one or more time columns with values > 24 hours ([#18](https://github.com/arup-group/gelato/issues/18))
 
 ### Changed
 
