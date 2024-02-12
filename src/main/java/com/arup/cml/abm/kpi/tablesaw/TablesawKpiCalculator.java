@@ -45,13 +45,13 @@ public class TablesawKpiCalculator implements KpiCalculator {
                                  InputStream legsInputStream, InputStream tripsInputStream, Path outputDirectory) {
         // TODO: 24/01/2024 replace this ASAP with a representation of the network
         // that isn't from the MATSim API (a map, or dedicated domain object, or
-                // whatever)
+        // whatever)
         Map<String, ColumnType> columnMapping = new HashMap<>();
-                columnMapping.put("dep_time", ColumnType.STRING);
-                columnMapping.put("trav_time", ColumnType.STRING);
-                columnMapping.put("wait_time", ColumnType.STRING);
+        columnMapping.put("dep_time", ColumnType.STRING);
+        columnMapping.put("trav_time", ColumnType.STRING);
+        columnMapping.put("wait_time", ColumnType.STRING);
 
-                legs = readCSVInputStream(legsInputStream, columnMapping).setName("Legs");
+        legs = readCSVInputStream(legsInputStream, columnMapping).setName("Legs");
         trips = readCSVInputStream(tripsInputStream, columnMapping).setName("Trips");
         createNetworkLinkTables(network);
         createTransitTables(schedule);
@@ -577,7 +577,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
         StringColumn agentIDColumn = StringColumn.create("agentId");
 
         for (Map.Entry<Long, Map<String, Object>> entry : _linkLog.getVehicleOccupantsData().rowMap()
-                                .entrySet()) {
+                .entrySet()) {
             linkLogIndexColumn.append(entry.getKey());
             agentIDColumn.append(entry.getValue().get("agentId").toString());
         }
@@ -590,17 +590,17 @@ public class TablesawKpiCalculator implements KpiCalculator {
 
     public Table readCSVInputStream(InputStream inputStream) {
         return readCSVInputStream(inputStream, Collections.emptyMap());
-        }
+    }
 
-        public Table readCSVInputStream(InputStream inputStream, Map<String, ColumnType> columnMapping) {
-                // TODO Make separator accessible from outside
-                CsvReadOptions.Builder builder = CsvReadOptions.builder(inputStream).separator(';').header(true)
-                                .columnTypesPartial(column -> {
-                                        if (columnMapping.keySet().contains(column)) {
-                                                return Optional.of(columnMapping.get(column));
-                                        }
-                                        return Optional.empty();
-                                });
+    public Table readCSVInputStream(InputStream inputStream, Map<String, ColumnType> columnMapping) {
+        // TODO Make separator accessible from outside
+        CsvReadOptions.Builder builder = CsvReadOptions.builder(inputStream).separator(';').header(true)
+                .columnTypesPartial(column -> {
+                    if (columnMapping.keySet().contains(column)) {
+                        return Optional.of(columnMapping.get(column));
+                    }
+                    return Optional.empty();
+                });
         return Table.read().usingOptions(builder.build());
     }
 
@@ -616,11 +616,11 @@ public class TablesawKpiCalculator implements KpiCalculator {
 
     private void writeIntermediateData(Path outputDir) {
         try {
-                        Files.createDirectories(outputDir);
-                } catch (IOException e) {
-                        e.printStackTrace();
-                        throw new IllegalStateException(e);
-                }
+            Files.createDirectories(outputDir);
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new IllegalStateException(e);
+        }
         legs.write().csv(String.format("%s/supporting-data-legs.csv", outputDir));
         trips.write().csv(String.format("%s/supporting-data-trips.csv", outputDir));
         linkLog.write().csv(String.format("%s/supporting-data-linkLog.csv", outputDir));

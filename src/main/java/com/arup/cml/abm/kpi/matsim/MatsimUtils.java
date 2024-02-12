@@ -130,13 +130,11 @@ public class MatsimUtils {
                         String.format("%s/%soutput_trips.csv%s", this.matsimOutputDir, runId, compressionFileEnd)));
     }
 
-    public String getRunId()
-    {
+    public String getRunId() {
         return this.runId;
     }
 
-    public String getCompressionFileEnd()
-    {
+    public String getCompressionFileEnd() {
         return this.compressionFileEnd;
     }
 
