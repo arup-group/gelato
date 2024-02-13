@@ -578,7 +578,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
 
         for (Map.Entry<Long, Map<String, Object>> entry : _linkLog.getVehicleOccupantsData().rowMap()
                 .entrySet()) {
-            linkLogIndexColumn.append(entry.getKey());
+            linkLogIndexColumn.append((long) entry.getValue().get("linkLogIndex"));
             agentIDColumn.append(entry.getValue().get("agentId").toString());
         }
         linkLogVehicleOccupancy = Table.create("Vehicle Occupancy")
