@@ -1,6 +1,7 @@
 package com.arup.cml.abm.kpi.matsim.handlers;
 
 import com.arup.cml.abm.kpi.data.LinkLog;
+import com.google.common.collect.ImmutableMap;
 import org.matsim.api.core.v01.events.*;
 import org.matsim.api.core.v01.events.handler.*;
 
@@ -81,7 +82,7 @@ public class MatsimLinkLogHandler implements
     }
 
     public Map<String, AtomicInteger> getEventCounts() {
-        return this.eventCounts;
+        return ImmutableMap.copyOf(this.eventCounts);
     }
 
     private void incrementEventCount(Event e) {
