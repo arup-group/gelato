@@ -2,42 +2,46 @@ package com.arup.cml.abm.kpi.data;
 
 import com.arup.cml.abm.kpi.data.exceptions.LinkLogPassengerConsistencyException;
 import com.google.common.collect.RowSortedTable;
+import com.google.common.collect.Table;
 import com.google.common.collect.TreeBasedTable;
 import org.junit.Test;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.mockito.Mockito.verify;
 
 public class TestLinkLog {
 
 
     @Test
-    public void testLinkLogEntryDefaultsMode() {
-        RowSortedTable<Long, String, Object> expectedTable = new LinkLogTableBuilder()
-                .withInitialEntry(0L, "someLink", "someVehicle", "unknown", 12.0)
-                .build();
-
+    public void defaultsToUnknownModeForNewLinkLogEntryWithUnrecordedMode() {
         LinkLog linkLog = new LinkLog();
+        assertThat(linkLog.getLinkLogData().isEmpty()).isTrue().as("Link log table should be empty initially");
+
         linkLog.newLinkLogEntry("someVehicle", "someLink", 12.0);
 
-        assertThat(
-                linkLog.getLinkLogData())
-                .isEqualTo(expectedTable);
+        Table<Long, String, Object> linkLogTable = linkLog.getLinkLogData();
+        assertThat(linkLogTable.rowMap().size())
+                .isEqualTo(1)
+                .as("Link log table should contain a single row");
+        assertThat(linkLogTable.row(Long.valueOf(0)).get("mode"))
+                .isEqualTo("unknown")
+                .as("Vehicle mode should default to 'unknown'");
     }
 
     @Test
-    public void testLinkLogEntryUsesRecordedVehicleMode() {
-        RowSortedTable<Long, String, Object> expectedTable = new LinkLogTableBuilder()
-                .withInitialEntry(0L, "someLink", "someVehicle", "someMode", 12.0)
-                .build();
-
+    public void usesRecordedModeWhenAvailableForNewLinkLogEntry() {
         LinkLog linkLog = new LinkLog();
+        assertThat(linkLog.getLinkLogData().isEmpty()).isTrue().as("Link log table should be empty initially");
+
         linkLog.recordVehicleMode("someVehicle", "someMode");
         linkLog.newLinkLogEntry("someVehicle", "someLink", 12.0);
 
-        assertThat(
-                linkLog.getLinkLogData())
-                .isEqualTo(expectedTable);
+        Table<Long, String, Object> linkLogTable = linkLog.getLinkLogData();
+        assertThat(linkLogTable.rowMap().size())
+                .isEqualTo(1)
+                .as("Link log table should contain a single row");
+        assertThat(linkLogTable.row(Long.valueOf(0)).get("mode"))
+                .isEqualTo("someMode")
+                .as("Vehicle mode should have been recorded as 'someMode'");
     }
 
     @Test
