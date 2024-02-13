@@ -82,11 +82,11 @@ public class LinkLog {
         }
     }
 
-    private List<String> getLatestVehicleOccupants(String vehicleID) throws LinkLogPassengerConsistencyException {
+    private List<String> getLatestVehicleOccupants(String vehicleID) {
         if (vehicleLatestOccupants.containsKey(vehicleID)) {
             return vehicleLatestOccupants.get(vehicleID);
-        } else
-            throw new LinkLogPassengerConsistencyException(String.format(
-                    "The requested vehicle: `%s` has not been logged as having any passengers", vehicleID));
+        } else {
+            return new ArrayList<>();
+        }
     }
 }

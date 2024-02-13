@@ -225,11 +225,19 @@ public class TestLinkLog {
         }
     }
 
-    @Test(expected = LinkLogPassengerConsistencyException.class)
-    public void throwsExceptionWhenTryingToCompleteLogOfUnrecordedVehicle() {
+    @Test
+    public void defaultsToZeroPassengersWhenTryingToCompleteLogOfUnrecordedVehicle() {
         LinkLog linkLog = new LinkLog();
         linkLog.newLinkLogEntry("someVehicle", "someLink", 12.0);
         linkLog.completeLinkLogEntry("someVehicle", 24.0);
+
+        Table<Long, String, Object> linkLogTable = linkLog.getLinkLogData();
+        assertThat(linkLogTable.rowMap().size())
+                .isEqualTo(1)
+                .as("Link log table should contain a single row");
+        assertThat(linkLogTable.row(Long.valueOf(0)).get("numberOfPeople"))
+                .isEqualTo(0)
+                .as("Number of people in vehicle at index `0` should have been recorded as `0`");
     }
 
     @Test(expected = LinkLogPassengerConsistencyException.class)
