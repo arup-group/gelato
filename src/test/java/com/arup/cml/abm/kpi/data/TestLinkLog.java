@@ -1,10 +1,11 @@
 package com.arup.cml.abm.kpi.data;
 
 import com.arup.cml.abm.kpi.data.exceptions.LinkLogPassengerConsistencyException;
-import com.google.common.collect.RowSortedTable;
 import com.google.common.collect.Table;
-import com.google.common.collect.TreeBasedTable;
 import org.junit.Test;
+
+import java.util.Collection;
+import java.util.Map;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
@@ -45,54 +46,59 @@ public class TestLinkLog {
     }
 
     @Test
-    public void testCompleteLinkLogEntry() {
-        RowSortedTable<Long, String, Object> expectedLinkLogTable = new LinkLogTableBuilder()
-                .withCompleteEntry(0L, "someLink", "someVehicle", "unknown", 12.0, 24.0, 1)
-                .build();
-        RowSortedTable<Long, String, Object> expectedOccupancyTable = new LinkLogVehicleOccupancyTableBuilder()
-                .withEntry(0L, "somePerson")
-                .build();
-
+    public void completeLinkLogEntryHasEndTimeAndTracksPassengerNumber() {
         LinkLog linkLog = new LinkLog();
         linkLog.personBoardsVehicle("someVehicle", "somePerson");
         linkLog.newLinkLogEntry("someVehicle", "someLink", 12.0);
         linkLog.completeLinkLogEntry("someVehicle", 24.0);
 
-        assertThat(
-                linkLog.getLinkLogData())
-                .isEqualTo(expectedLinkLogTable);
-        assertThat(
-                linkLog.getVehicleOccupantsData())
-                .isEqualTo(expectedOccupancyTable);
+        Table<Long, String, Object> linkLogTable = linkLog.getLinkLogData();
+        assertThat(linkLogTable.rowMap().size())
+                .isEqualTo(1)
+                .as("Link log table should contain a single row");
+        assertThat(linkLogTable.row(Long.valueOf(0)).get("endTime"))
+                .isEqualTo(24.0)
+                .as("Finish time on the link should have been recorded as `24.0`");
+        assertThat(linkLogTable.row(Long.valueOf(0)).get("numberOfPeople"))
+                .isEqualTo(1)
+                .as("Number of people in vehicle should have been recorded as `1`");
+    }
+
+
+    @Test
+    public void completeLinkLogEntryTracksPassengerIds() {
+        LinkLog linkLog = new LinkLog();
+        linkLog.personBoardsVehicle("someVehicle", "somePerson");
+        linkLog.newLinkLogEntry("someVehicle", "someLink", 12.0);
+        linkLog.completeLinkLogEntry("someVehicle", 24.0);
+
+        Table<Long, String, Object> linkLogVehicleOccupantsTable = linkLog.getVehicleOccupantsData();
+        assertThat(linkLogVehicleOccupantsTable.rowMap().size())
+                .isEqualTo(1)
+                .as("Vehicle Occupant table should contain a single row");
+        assertThat(linkLogVehicleOccupantsTable.row(Long.valueOf(0)).get("agentId"))
+                .isEqualTo("somePerson")
+                .as("Agent in the vehicle should have been recorded as 'somePerson'");
     }
 
     @Test
-    public void testPersonCanEnterVehicleThatIsAlreadyMoving() {
-        RowSortedTable<Long, String, Object> expectedTable = new LinkLogTableBuilder()
-                .withCompleteEntry(0L, "someLink", "someVehicle", "unknown", 12.0, 24.0, 1)
-                .build();
-
+    public void personCanEnterVehicleThatIsAlreadyMoving() {
         LinkLog linkLog = new LinkLog();
         linkLog.newLinkLogEntry("someVehicle", "someLink", 12.0);
         linkLog.personBoardsVehicle("someVehicle", "somePerson");
         linkLog.completeLinkLogEntry("someVehicle", 24.0);
 
-        assertThat(
-                linkLog.getLinkLogData())
-                .isEqualTo(expectedTable);
+        Table<Long, String, Object> linkLogTable = linkLog.getLinkLogData();
+        assertThat(linkLogTable.rowMap().size())
+                .isEqualTo(1)
+                .as("Link log table should contain a single row");
+        assertThat(linkLogTable.row(Long.valueOf(0)).get("numberOfPeople"))
+                .isEqualTo(1)
+                .as("Number of people in vehicle should have been recorded as '1'");
     }
 
     @Test
-    public void testRecordsMultiplePeopleBoardingAtOnce() {
-        RowSortedTable<Long, String, Object> expectedLinkLogTable = new LinkLogTableBuilder()
-                .withCompleteEntry(0L, "someLink", "PartyBus", "unknown", 12.0, 24.0, 3)
-                .build();
-        RowSortedTable<Long, String, Object> expectedOccupancyTable = new LinkLogVehicleOccupancyTableBuilder()
-                .withEntry(0L, "partyPerson1")
-                .withEntry(0L, "partyPerson2")
-                .withEntry(0L, "partyPerson3")
-                .build();
-
+    public void linkLogRecordsMultiplePeopleBoardingAtOnce() {
         LinkLog linkLog = new LinkLog();
         // bus enters a link
         linkLog.newLinkLogEntry("PartyBus", "someLink", 12.0);
@@ -103,30 +109,45 @@ public class TestLinkLog {
         // bus completes its travel on link
         linkLog.completeLinkLogEntry("PartyBus", 24.0);
 
-        assertThat(
-                linkLog.getLinkLogData())
-                .isEqualTo(expectedLinkLogTable);
-        assertThat(
-                linkLog.getVehicleOccupantsData())
-                .isEqualTo(expectedOccupancyTable);
+        Table<Long, String, Object> linkLogTable = linkLog.getLinkLogData();
+        assertThat(linkLogTable.rowMap().size())
+                .isEqualTo(1)
+                .as("Link log table should contain a single row");
+        assertThat(linkLogTable.row(Long.valueOf(0)).get("numberOfPeople"))
+                .isEqualTo(3)
+                .as("Number of people in vehicle should have been recorded as `3`");
     }
 
     @Test
-    public void testTracksBoardingAndAlighting() {
-        RowSortedTable<Long, String, Object> expectedLinkLogTable = new LinkLogTableBuilder()
-                .withCompleteEntry(0L, "startLink", "PartyBus", "unknown", 0.0, 5.0, 1)
-                .withCompleteEntry(1L, "gerryLinkBoard", "PartyBus", "unknown", 5.0, 10.0, 2)
-                .withCompleteEntry(2L, "gerryLinkAlight", "PartyBus", "unknown", 10.0, 15.0, 1)
-                .withCompleteEntry(3L, "endLink", "PartyBus", "unknown", 15.0, 20.0, 1)
-                .build();
-        RowSortedTable<Long, String, Object> expectedOccupancyTable = new LinkLogVehicleOccupancyTableBuilder()
-                .withEntry(0L, "driver")
-                .withEntry(1L, "driver")
-                .withEntry(1L, "gerry")
-                .withEntry(2L, "driver")
-                .withEntry(3L, "driver")
-                .build();
+    public void linkLogVehicleOccupantsTableRecordsMultiplePeopleBoardingAtOnce() {
+        LinkLog linkLog = new LinkLog();
+        // bus enters a link
+        linkLog.newLinkLogEntry("PartyBus", "someLink", 12.0);
+        // time to get this party started
+        linkLog.personBoardsVehicle("PartyBus", "partyPerson1");
+        linkLog.personBoardsVehicle("PartyBus", "partyPerson2");
+        linkLog.personBoardsVehicle("PartyBus", "partyPerson3");
+        // bus completes its travel on link
+        linkLog.completeLinkLogEntry("PartyBus", 24.0);
 
+        Table<Long, String, Object> linkLogVehicleOccupantsTable = linkLog.getVehicleOccupantsData();
+        assertThat(linkLogVehicleOccupantsTable.rowMap().size())
+                .isEqualTo(3)
+                .as("Vehicle Occupant table should contain 3 rows");
+        Collection<Object> allOccupants = linkLogVehicleOccupantsTable.column("agentId").values();
+        for (String passenger : new String[] {"partyPerson1", "partyPerson2", "partyPerson3"}) {
+            assertThat(allOccupants.contains(passenger)).isTrue()
+                    .as(String.format("'%s' is expected in the 'agentId' column", passenger));
+        }
+        for (Long idx : new Long[] {0L, 1L, 2L}) {
+            assertThat(linkLogVehicleOccupantsTable.row(idx).get("linkLogIndex"))
+                    .isEqualTo(0L)
+                    .as("Each row should reference the single index: '0', of the Link Log in 'linkLogIndex' column");
+        }
+    }
+
+    @Test
+    public void linkLogTracksPassengerBoardingAndAlighting() {
         LinkLog linkLog = new LinkLog();
         // driver hops on and bus starts
         linkLog.personBoardsVehicle("PartyBus", "driver");
@@ -144,80 +165,83 @@ public class TestLinkLog {
         linkLog.newLinkLogEntry("PartyBus", "endLink", 15.0);
         linkLog.completeLinkLogEntry("PartyBus", 20.0);
 
-        assertThat(
-                linkLog.getLinkLogData())
-                .isEqualTo(expectedLinkLogTable);
-        assertThat(
-                linkLog.getVehicleOccupantsData())
-                .isEqualTo(expectedOccupancyTable);
+        Table<Long, String, Object> linkLogTable = linkLog.getLinkLogData();
+        assertThat(linkLogTable.rowMap().size())
+                .isEqualTo(4)
+                .as("Link log table should contain 4 rows");
+        assertThat(linkLogTable.row(Long.valueOf(0)).get("numberOfPeople"))
+                .isEqualTo(1)
+                .as("Number of people in vehicle at index `0` should have been recorded as `1`");
+        assertThat(linkLogTable.row(Long.valueOf(1)).get("numberOfPeople"))
+                .isEqualTo(2)
+                .as("Number of people in vehicle at index `1` should have been recorded as `2`");
+        assertThat(linkLogTable.row(Long.valueOf(2)).get("numberOfPeople"))
+                .isEqualTo(1)
+                .as("Number of people in vehicle at index `2 should have been recorded as `1`");
+        assertThat(linkLogTable.row(Long.valueOf(3)).get("numberOfPeople"))
+                .isEqualTo(1)
+                .as("Number of people in vehicle at index `3` should have been recorded as `1`");
+    }
+
+    @Test
+    public void vehicleOccupantsTableTracksBoardingAndAlighting() {
+        LinkLog linkLog = new LinkLog();
+        // driver hops on and bus starts
+        linkLog.personBoardsVehicle("PartyBus", "driver");
+        linkLog.newLinkLogEntry("PartyBus", "startLink", 0.0);
+        linkLog.completeLinkLogEntry("PartyBus", 5.0);
+        // gerry gets on
+        linkLog.newLinkLogEntry("PartyBus", "gerryLinkBoard", 5.0);
+        linkLog.personBoardsVehicle("PartyBus", "gerry");
+        linkLog.completeLinkLogEntry("PartyBus", 10.0);
+        // gerry leaves
+        linkLog.newLinkLogEntry("PartyBus", "gerryLinkAlight", 10.0);
+        linkLog.personAlightsVehicle("PartyBus", "gerry");
+        linkLog.completeLinkLogEntry("PartyBus", 15.0);
+        // bus completes its travel
+        linkLog.newLinkLogEntry("PartyBus", "endLink", 15.0);
+        linkLog.completeLinkLogEntry("PartyBus", 20.0);
+
+        Table<Long, String, Object> linkLogVehicleOccupantsTable = linkLog.getVehicleOccupantsData();
+        assertThat(linkLogVehicleOccupantsTable.rowMap().size())
+                .isEqualTo(5)
+                .as("Vehicle Occupant table should contain 5 rows");
+        Map<Long, Map<String, Object>> expectedOccupantsTable = Map.of(
+                0L, Map.of("agentId", "driver", "linkLogIndex", 0L),
+                1L, Map.of("agentId", "driver", "linkLogIndex", 1L),
+                2L, Map.of("agentId", "gerry", "linkLogIndex", 1L),
+                3L, Map.of("agentId", "driver", "linkLogIndex", 2L),
+                4L, Map.of("agentId", "driver", "linkLogIndex", 3L)
+        );
+        for (Long idx : new Long[] {0L, 1L, 2L, 3L, 4L}) {
+            assertThat(linkLogVehicleOccupantsTable.row(idx).get("agentId"))
+                    .isEqualTo(expectedOccupantsTable.get(idx).get("agentId"))
+                    .as(String.format("'%s' is expected in the 'agentId' column at index `%d`",
+                            expectedOccupantsTable.get(idx).get("agentId"), idx));
+            assertThat(linkLogVehicleOccupantsTable.row(idx).get("linkLogIndex"))
+                    .isEqualTo(expectedOccupantsTable.get(idx).get("linkLogIndex"))
+                    .as(String.format("`%d` is expected in the 'linkLogIndex' column at index `%d`",
+                            expectedOccupantsTable.get(idx).get("linkLogIndex"), idx));
+        }
     }
 
     @Test(expected = LinkLogPassengerConsistencyException.class)
-    public void testThrowsExceptionWhenTryingToCompleteLogOfUnrecordedVehicle() {
+    public void throwsExceptionWhenTryingToCompleteLogOfUnrecordedVehicle() {
         LinkLog linkLog = new LinkLog();
         linkLog.newLinkLogEntry("someVehicle", "someLink", 12.0);
         linkLog.completeLinkLogEntry("someVehicle", 24.0);
     }
 
     @Test(expected = LinkLogPassengerConsistencyException.class)
-    public void testThrowsExceptionWhenPassengerWantsToLeaveUnrecordedVehicle() {
+    public void throwsExceptionWhenPassengerWantsToLeaveUnrecordedVehicle() {
         LinkLog linkLog = new LinkLog();
         linkLog.personAlightsVehicle("someVehicle", "someDude");
     }
 
     @Test(expected = LinkLogPassengerConsistencyException.class)
-    public void testThrowsExceptionWhenPersonWantsToLeaveVehicleTheyDidntBoard() {
+    public void throwsExceptionWhenPersonWantsToLeaveVehicleTheyDidntBoard() {
         LinkLog linkLog = new LinkLog();
         linkLog.personBoardsVehicle("someVehicle", "someDude");
         linkLog.personAlightsVehicle("someVehicle", "someRandomDude");
-    }
-
-    private class LinkLogTableBuilder {
-
-        private LinkLogTableBuilder() {
-        }
-
-        RowSortedTable<Long, String, Object> linkLog = TreeBasedTable.create();
-
-        public LinkLogTableBuilder withInitialEntry(
-                Long index, String linkID, String vehicleID, String mode, double startTime) {
-            linkLog.put(index, "linkID", linkID);
-            linkLog.put(index, "vehicleID", vehicleID);
-            linkLog.put(index, "mode", mode);
-            linkLog.put(index, "startTime", startTime);
-            return this;
-        }
-
-        public LinkLogTableBuilder withCompleteEntry(
-                Long index, String linkID, String vehicleID, String mode, double startTime, double endTime, int numberOfPeople) {
-            linkLog.put(index, "linkID", linkID);
-            linkLog.put(index, "vehicleID", vehicleID);
-            linkLog.put(index, "mode", mode);
-            linkLog.put(index, "startTime", startTime);
-            linkLog.put(index, "endTime", endTime);
-            linkLog.put(index, "numberOfPeople", numberOfPeople);
-            return this;
-        }
-
-        public RowSortedTable<Long, String, Object> build() {
-            return linkLog;
-        }
-    }
-
-    private class LinkLogVehicleOccupancyTableBuilder {
-
-        private LinkLogVehicleOccupancyTableBuilder() {
-        }
-
-        RowSortedTable<Long, String, Object> linkLogVehicleOccupants = TreeBasedTable.create();
-
-        public LinkLogVehicleOccupancyTableBuilder withEntry(Long linkLogIndex, String agentId) {
-            linkLogVehicleOccupants.put(linkLogIndex, "agentId", agentId);
-            return this;
-        }
-
-        public RowSortedTable<Long, String, Object> build() {
-            return linkLogVehicleOccupants;
-        }
     }
 }

@@ -22,6 +22,8 @@ public class LinkLog {
 
     // Link Log entry index
     private long index = 0;
+    // Vehicle Occupants index
+    private long vehicleOccupancyIndex = 0;
 
     public Table<Long, String, Object> getLinkLogData() {
         return linkLogData;
@@ -50,7 +52,9 @@ public class LinkLog {
     public void newVehicleOccupantsEntry(String vehicleID, long idx) {
         List<String> currentOccupants = getLatestVehicleOccupants(vehicleID);
         for (String personID : currentOccupants) {
-            vehicleOccupantsData.put(idx, "agentId", personID);
+            vehicleOccupantsData.put(vehicleOccupancyIndex, "linkLogIndex", idx);
+            vehicleOccupantsData.put(vehicleOccupancyIndex, "agentId", personID);
+            vehicleOccupancyIndex += 1;
         }
     }
 
