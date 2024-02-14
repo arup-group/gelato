@@ -17,7 +17,7 @@ import static java.lang.String.format;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 public class MatsimKpiGeneratorIntegrationTest {
-    private final String compressionFileEnding = ".gz"; 
+    private final String compressionFileEnding = ".gz";
 
     @Rule
     public TemporaryFolder appOutputDir = new TemporaryFolder();
@@ -43,20 +43,20 @@ public class MatsimKpiGeneratorIntegrationTest {
 
     private void assertSupportingFilesWereGenerated(File kpiDirectory) {
         String[] generatedFiles = kpiDirectory.list();
-        String [] expectedSupportingFiles = {
-                "intermediate-pt-wait-time.csv"+compressionFileEnding,
-                "intermediate-occupancy-rate.csv"+compressionFileEnding,
-                "intermediate-congestion.csv"+compressionFileEnding,
-                "intermediate-vehicle-km.csv"+compressionFileEnding,
-                "supporting-data-vehicles.csv"+compressionFileEnding,
-                "supporting-data-scheduleRoutes.csv"+compressionFileEnding,
-                "supporting-data-scheduleStops.csv"+compressionFileEnding,
-                "supporting-data-networkLinkModes.csv"+compressionFileEnding,
-                "supporting-data-networkLinks.csv"+compressionFileEnding,
-                "supporting-data-vehicleOccupancy.csv"+compressionFileEnding,
-                "supporting-data-linkLog.csv"+compressionFileEnding,
-                "supporting-data-trips.csv"+compressionFileEnding,
-                "supporting-data-legs.csv"+compressionFileEnding
+        String[] expectedSupportingFiles = {
+                "intermediate-pt-wait-time.csv" + compressionFileEnding,
+                "intermediate-occupancy-rate.csv" + compressionFileEnding,
+                "intermediate-congestion.csv" + compressionFileEnding,
+                "intermediate-vehicle-km.csv" + compressionFileEnding,
+                "supporting-data-vehicles.csv" + compressionFileEnding,
+                "supporting-data-scheduleRoutes.csv" + compressionFileEnding,
+                "supporting-data-scheduleStops.csv" + compressionFileEnding,
+                "supporting-data-networkLinkModes.csv" + compressionFileEnding,
+                "supporting-data-networkLinks.csv" + compressionFileEnding,
+                "supporting-data-vehicleOccupancy.csv" + compressionFileEnding,
+                "supporting-data-linkLog.csv" + compressionFileEnding,
+                "supporting-data-trips.csv" + compressionFileEnding,
+                "supporting-data-legs.csv" + compressionFileEnding
         };
         for (int i = 0; i < expectedSupportingFiles.length; i++) {
             assertThat(generatedFiles)
@@ -67,13 +67,13 @@ public class MatsimKpiGeneratorIntegrationTest {
 
     private void assertKpiFilesWereGenerated(String expectedKpiDirectory, File kpiDirectory) throws Exception {
         String[] generatedFiles = kpiDirectory.list();
-        String [] expectedKpiFiles = {
-                "kpi-congestion.csv"+compressionFileEnding,
-                "kpi-speed.csv"+compressionFileEnding,
-                "kpi-vehicle-km.csv"+compressionFileEnding,
-                "kpi-occupancy-rate.csv"+compressionFileEnding,
-                "kpi-modal-split.csv"+compressionFileEnding,
-                "kpi-pt-wait-time.csv"+compressionFileEnding,
+        String[] expectedKpiFiles = {
+                "kpi-congestion.csv" + compressionFileEnding,
+                "kpi-speed.csv" + compressionFileEnding,
+                "kpi-vehicle-km.csv" + compressionFileEnding,
+                "kpi-occupancy-rate.csv" + compressionFileEnding,
+                "kpi-modal-split.csv" + compressionFileEnding,
+                "kpi-pt-wait-time.csv" + compressionFileEnding,
         };
         for (int i = 0; i < expectedKpiFiles.length; i++) {
             String kpiFile = expectedKpiFiles[i];
@@ -102,7 +102,7 @@ public class MatsimKpiGeneratorIntegrationTest {
             contentString = new String(bytesOut.toByteArray());
         }
 
-        // remove all line endings, tabs, etc., for cross platform compatibility
-        return contentString.replaceAll("\\s+","");
+        // remove all line endings, tabs, etc., for cross-platform compatibility
+        return contentString.replaceAll("\\s+", "");
     }
 }
