@@ -1,9 +1,13 @@
 package com.arup.cml.abm.kpi.integration;
 
 import com.arup.cml.abm.kpi.matsim.run.MatsimKpiGenerator;
+
+import org.assertj.core.api.Assertions;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.matsim.core.utils.misc.CRCChecksum;
+
 import picocli.CommandLine;
 
 import java.io.File;
@@ -13,6 +17,7 @@ import static java.lang.String.format;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 public class MatsimKpiGeneratorIntegrationTest {
+    private final String compressionFileEnding = ".gz"; 
 
     @Rule
     public TemporaryFolder appOutputDir = new TemporaryFolder();
@@ -39,19 +44,19 @@ public class MatsimKpiGeneratorIntegrationTest {
     private void assertSupportingFilesWereGenerated(File kpiDirectory) {
         String[] generatedFiles = kpiDirectory.list();
         String [] expectedSupportingFiles = {
-                "intermediate-pt-wait-time.csv",
-                "intermediate-occupancy-rate.csv",
-                "intermediate-congestion.csv",
-                "intermediate-vehicle-km.csv",
-                "supporting-data-vehicles.csv",
-                "supporting-data-scheduleRoutes.csv",
-                "supporting-data-scheduleStops.csv",
-                "supporting-data-networkLinkModes.csv",
-                "supporting-data-networkLinks.csv",
-                "supporting-data-vehicleOccupancy.csv",
-                "supporting-data-linkLog.csv",
-                "supporting-data-trips.csv",
-                "supporting-data-legs.csv"
+                "intermediate-pt-wait-time.csv"+compressionFileEnding,
+                "intermediate-occupancy-rate.csv"+compressionFileEnding,
+                "intermediate-congestion.csv"+compressionFileEnding,
+                "intermediate-vehicle-km.csv"+compressionFileEnding,
+                "supporting-data-vehicles.csv"+compressionFileEnding,
+                "supporting-data-scheduleRoutes.csv"+compressionFileEnding,
+                "supporting-data-scheduleStops.csv"+compressionFileEnding,
+                "supporting-data-networkLinkModes.csv"+compressionFileEnding,
+                "supporting-data-networkLinks.csv"+compressionFileEnding,
+                "supporting-data-vehicleOccupancy.csv"+compressionFileEnding,
+                "supporting-data-linkLog.csv"+compressionFileEnding,
+                "supporting-data-trips.csv"+compressionFileEnding,
+                "supporting-data-legs.csv"+compressionFileEnding
         };
         for (int i = 0; i < expectedSupportingFiles.length; i++) {
             assertThat(generatedFiles)
@@ -63,12 +68,12 @@ public class MatsimKpiGeneratorIntegrationTest {
     private void assertKpiFilesWereGenerated(String expectedKpiDirectory, File kpiDirectory) {
         String[] generatedFiles = kpiDirectory.list();
         String [] expectedKpiFiles = {
-                "kpi-congestion.csv",
-                "kpi-speed.csv",
-                "kpi-vehicle-km.csv",
-                "kpi-occupancy-rate.csv",
-                "kpi-modal-split.csv",
-                "kpi-pt-wait-time.csv",
+                "kpi-congestion.csv"+compressionFileEnding,
+                "kpi-speed.csv"+compressionFileEnding,
+                "kpi-vehicle-km.csv"+compressionFileEnding,
+                "kpi-occupancy-rate.csv"+compressionFileEnding,
+                "kpi-modal-split.csv"+compressionFileEnding,
+                "kpi-pt-wait-time.csv"+compressionFileEnding,
         };
         for (int i = 0; i < expectedKpiFiles.length; i++) {
             String kpiFile = expectedKpiFiles[i];
@@ -76,9 +81,10 @@ public class MatsimKpiGeneratorIntegrationTest {
                     .contains(kpiFile)
                     .as(format("Check KPI output file '%s' exists", kpiFile));
             File expectedKpiFile = new File(format("%s/expected-%s", expectedKpiDirectory, kpiFile));
-            assertThat(new File(format("%s/%s", kpiDirectory, kpiFile)))
-                    .hasSameTextualContentAs(expectedKpiFile)
-                    .as(format("Check %s KPI data matches expectation", kpiFile));
+            File currentKpiFile = new File(format("%s/%s", kpiDirectory, kpiFile));
+            long expected = CRCChecksum.getCRCFromFile(expectedKpiFile.toString());
+            long current = CRCChecksum.getCRCFromFile(currentKpiFile.toString());
+            assertThat(expected).isEqualTo(current).as(format("Check %s KPI data matches expectation", kpiFile));
         }
     }
 }
