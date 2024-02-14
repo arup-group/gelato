@@ -1,17 +1,17 @@
 package com.arup.cml.abm.kpi.integration;
 
 import com.arup.cml.abm.kpi.matsim.run.MatsimKpiGenerator;
-
-import org.assertj.core.api.Assertions;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.matsim.core.utils.misc.CRCChecksum;
-
 import picocli.CommandLine;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.zip.GZIPInputStream;
 
 import static java.lang.String.format;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -65,7 +65,7 @@ public class MatsimKpiGeneratorIntegrationTest {
         }
     }
 
-    private void assertKpiFilesWereGenerated(String expectedKpiDirectory, File kpiDirectory) {
+    private void assertKpiFilesWereGenerated(String expectedKpiDirectory, File kpiDirectory) throws Exception {
         String[] generatedFiles = kpiDirectory.list();
         String [] expectedKpiFiles = {
                 "kpi-congestion.csv"+compressionFileEnding,
@@ -82,9 +82,27 @@ public class MatsimKpiGeneratorIntegrationTest {
                     .as(format("Check KPI output file '%s' exists", kpiFile));
             File expectedKpiFile = new File(format("%s/expected-%s", expectedKpiDirectory, kpiFile));
             File currentKpiFile = new File(format("%s/%s", kpiDirectory, kpiFile));
-            long expected = CRCChecksum.getCRCFromFile(expectedKpiFile.toString());
-            long current = CRCChecksum.getCRCFromFile(currentKpiFile.toString());
-            assertThat(expected).isEqualTo(current).as(format("Check %s KPI data matches expectation", kpiFile));
+            assertThat(readGzipFileToString(expectedKpiFile))
+                    .isEqualTo(readGzipFileToString(currentKpiFile))
+                    .as(format("Check %s KPI data matches expectation", kpiFile));
         }
+    }
+
+    private String readGzipFileToString(File gzipFile) throws IOException {
+        String contentString = "";
+
+        try (GZIPInputStream gis = new GZIPInputStream(new FileInputStream(gzipFile));
+             ByteArrayOutputStream bytesOut = new ByteArrayOutputStream(1024)) {
+
+            byte[] buffer = new byte[1024];
+            int len;
+            while ((len = gis.read(buffer)) > 0) {
+                bytesOut.write(buffer, 0, len);
+            }
+            contentString = new String(bytesOut.toByteArray());
+        }
+
+        // remove all line endings, tabs, etc., for cross platform compatibility
+        return contentString.replaceAll("\\s+","");
     }
 }
