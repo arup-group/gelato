@@ -12,6 +12,7 @@ import org.matsim.pt.transitSchedule.api.TransitSchedule;
 import org.matsim.vehicles.Vehicles;
 import tech.tablesaw.api.*;
 import tech.tablesaw.io.csv.CsvReadOptions;
+import tech.tablesaw.io.csv.CsvWriteOptions;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -642,9 +643,9 @@ public class TablesawKpiCalculator implements KpiCalculator {
     }
 
     private void writeTableCompressed(Table table, String filePath, CompressionType compressionType) {
-            System.setProperty("line.separator", "\n"); // Required to allow platform independent checksum similarity
             try (OutputStream stream = getCompressedOutputStream(filePath, compressionType)) {
-                    table.write().csv(stream);
+                    CsvWriteOptions options = CsvWriteOptions.builder(stream).lineEnd("\n").build();
+                    table.write().csv(options);
             } catch (IOException e) {
                     throw new IllegalStateException("Can't write table " + filePath);
             }
