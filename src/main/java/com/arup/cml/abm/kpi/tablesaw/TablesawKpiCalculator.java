@@ -609,6 +609,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
     }
 
     private void writeContentToFile(String path, String content, CompressionType compressionType) {
+        System.setProperty("line.separator", "\n"); // Required to allow platform independent checksum similarity
         try (Writer wr = IOUtils.getBufferedWriter(path.concat(compressionType.fileEnding))) {
             wr.write(content);
         } catch (IOException e) {
@@ -641,6 +642,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
     }
 
     private void writeTableCompressed(Table table, String filePath, CompressionType compressionType) {
+            System.setProperty("line.separator", "\n"); // Required to allow platform independent checksum similarity
             try (OutputStream stream = getCompressedOutputStream(filePath, compressionType)) {
                     table.write().csv(stream);
             } catch (IOException e) {
