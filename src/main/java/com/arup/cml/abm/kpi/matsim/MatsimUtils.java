@@ -179,7 +179,8 @@ public class MatsimUtils {
             FleetSpecification fleetSpecification = new FleetSpecificationImpl();
             new FleetReader(fleetSpecification).readFile(drtVehiclesPath);
 
-            for (Map.Entry<Id<DvrpVehicle>, DvrpVehicleSpecification> entry : fleetSpecification.getVehicleSpecifications().entrySet()) {
+            for (Map.Entry<Id<DvrpVehicle>,
+                    DvrpVehicleSpecification> entry : fleetSpecification.getVehicleSpecifications().entrySet()) {
                 Id<DvrpVehicle> drtVehicleId = entry.getKey();
                 DvrpVehicleSpecification vehicleSpec = entry.getValue();
                 int capacity = vehicleSpec.getCapacity();
