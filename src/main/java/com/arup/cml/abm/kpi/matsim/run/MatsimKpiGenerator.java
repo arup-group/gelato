@@ -25,6 +25,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Command(name = "MatsimKpiGenerator", version = "0.0.2-alpha", mixinStandardHelpOptions = true)
 public class MatsimKpiGenerator implements Runnable {
     private static final Logger LOGGER = LogManager.getLogger(MatsimKpiGenerator.class);
+    public static final String EOL = "\n";
 
     @Option(names = "-mc", description = "Full path to your model's MATSim config file", required = true)
     private Path matsimConfigFile;
@@ -36,6 +37,7 @@ public class MatsimKpiGenerator implements Runnable {
     private Path outputDir;
 
     public static void main(String[] args) {
+        System.setProperty("line.separator", EOL); // Required to allow platform independent checksum similarity
         int exitCode = new CommandLine(new MatsimKpiGenerator()).execute(args);
         System.exit(exitCode);
     }

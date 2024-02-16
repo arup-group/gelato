@@ -4,6 +4,8 @@ import com.arup.cml.abm.kpi.KpiCalculator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.arup.cml.abm.kpi.data.LinkLog;
+import com.arup.cml.abm.kpi.matsim.run.MatsimKpiGenerator;
+
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.config.groups.ControllerConfigGroup.CompressionType;
 import org.matsim.core.utils.io.IOUtils;
@@ -609,7 +611,6 @@ public class TablesawKpiCalculator implements KpiCalculator {
     }
 
     private void writeContentToFile(String path, String content, CompressionType compressionType) {
-        System.setProperty("line.separator", "\n"); // Required to allow platform independent checksum similarity
         try (Writer wr = IOUtils.getBufferedWriter(path.concat(compressionType.fileEnding))) {
             wr.write(content);
         } catch (IOException e) {
@@ -643,7 +644,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
 
     private void writeTableCompressed(Table table, String filePath, CompressionType compressionType) {
         try (OutputStream stream = getCompressedOutputStream(filePath, compressionType)) {
-            CsvWriteOptions options = CsvWriteOptions.builder(stream).lineEnd("\n").build();
+            CsvWriteOptions options = CsvWriteOptions.builder(stream).lineEnd(MatsimKpiGenerator.EOL).build();
             table.write().csv(options);
         } catch (IOException e) {
             throw new IllegalStateException("Can't write table " + filePath);
