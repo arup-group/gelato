@@ -647,7 +647,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
             CsvWriteOptions options = CsvWriteOptions.builder(stream).lineEnd(MatsimKpiGenerator.EOL).build();
             table.write().csv(options);
         } catch (IOException e) {
-            throw new IllegalStateException("Can't write table " + filePath);
+            throw new IllegalStateException(e);
         }
     }
 }

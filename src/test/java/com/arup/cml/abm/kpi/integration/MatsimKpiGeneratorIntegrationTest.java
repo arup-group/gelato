@@ -15,7 +15,7 @@ import static java.lang.String.format;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 public class MatsimKpiGeneratorIntegrationTest {
-    private final String compressionFileEnding = ".gz";
+    private static final String COMPRESSION_FILE_EXTENSION = ".gz";
 
     @Rule
     public TemporaryFolder appOutputDir = new TemporaryFolder();
@@ -42,19 +42,19 @@ public class MatsimKpiGeneratorIntegrationTest {
     private void assertSupportingFilesWereGenerated(File kpiDirectory) {
         String[] generatedFiles = kpiDirectory.list();
         String[] expectedSupportingFiles = {
-                "intermediate-pt-wait-time.csv" + compressionFileEnding,
-                "intermediate-occupancy-rate.csv" + compressionFileEnding,
-                "intermediate-congestion.csv" + compressionFileEnding,
-                "intermediate-vehicle-km.csv" + compressionFileEnding,
-                "supporting-data-vehicles.csv" + compressionFileEnding,
-                "supporting-data-scheduleRoutes.csv" + compressionFileEnding,
-                "supporting-data-scheduleStops.csv" + compressionFileEnding,
-                "supporting-data-networkLinkModes.csv" + compressionFileEnding,
-                "supporting-data-networkLinks.csv" + compressionFileEnding,
-                "supporting-data-vehicleOccupancy.csv" + compressionFileEnding,
-                "supporting-data-linkLog.csv" + compressionFileEnding,
-                "supporting-data-trips.csv" + compressionFileEnding,
-                "supporting-data-legs.csv" + compressionFileEnding
+                "intermediate-pt-wait-time.csv" + COMPRESSION_FILE_EXTENSION,
+                "intermediate-occupancy-rate.csv" + COMPRESSION_FILE_EXTENSION,
+                "intermediate-congestion.csv" + COMPRESSION_FILE_EXTENSION,
+                "intermediate-vehicle-km.csv" + COMPRESSION_FILE_EXTENSION,
+                "supporting-data-vehicles.csv" + COMPRESSION_FILE_EXTENSION,
+                "supporting-data-scheduleRoutes.csv" + COMPRESSION_FILE_EXTENSION,
+                "supporting-data-scheduleStops.csv" + COMPRESSION_FILE_EXTENSION,
+                "supporting-data-networkLinkModes.csv" + COMPRESSION_FILE_EXTENSION,
+                "supporting-data-networkLinks.csv" + COMPRESSION_FILE_EXTENSION,
+                "supporting-data-vehicleOccupancy.csv" + COMPRESSION_FILE_EXTENSION,
+                "supporting-data-linkLog.csv" + COMPRESSION_FILE_EXTENSION,
+                "supporting-data-trips.csv" + COMPRESSION_FILE_EXTENSION,
+                "supporting-data-legs.csv" + COMPRESSION_FILE_EXTENSION
         };
         for (int i = 0; i < expectedSupportingFiles.length; i++) {
             assertThat(generatedFiles)
@@ -66,12 +66,12 @@ public class MatsimKpiGeneratorIntegrationTest {
     private void assertKpiFilesWereGenerated(String expectedKpiDirectory, File kpiDirectory) {
         String[] generatedFiles = kpiDirectory.list();
         String[] expectedKpiFiles = {
-                "kpi-congestion.csv" + compressionFileEnding,
-                "kpi-speed.csv" + compressionFileEnding,
-                "kpi-vehicle-km.csv" + compressionFileEnding,
-                "kpi-occupancy-rate.csv" + compressionFileEnding,
-                "kpi-modal-split.csv" + compressionFileEnding,
-                "kpi-pt-wait-time.csv" + compressionFileEnding,
+                "kpi-congestion.csv" + COMPRESSION_FILE_EXTENSION,
+                "kpi-speed.csv" + COMPRESSION_FILE_EXTENSION,
+                "kpi-vehicle-km.csv" + COMPRESSION_FILE_EXTENSION,
+                "kpi-occupancy-rate.csv" + COMPRESSION_FILE_EXTENSION,
+                "kpi-modal-split.csv" + COMPRESSION_FILE_EXTENSION,
+                "kpi-pt-wait-time.csv" + COMPRESSION_FILE_EXTENSION,
         };
         for (int i = 0; i < expectedKpiFiles.length; i++) {
             String kpiFile = expectedKpiFiles[i];
