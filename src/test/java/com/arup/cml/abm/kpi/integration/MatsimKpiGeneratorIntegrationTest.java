@@ -36,6 +36,25 @@ public class MatsimKpiGeneratorIntegrationTest {
         assertSupportingFilesWereGenerated(appOutputDir.getRoot());
     }
 
+    @Test
+    public void testAppWithDrt() throws Exception {
+        String testDataDirRoot = format("%s/integration-test-data/drt-matsim-outputs/",
+                Paths.get("src", "test", "resources"));
+
+        int exitCode = new CommandLine(new MatsimKpiGenerator()).execute(
+                "-mc",
+                format("%s/output_config.xml", testDataDirRoot),
+                "-mo",
+                testDataDirRoot,
+                "-o",
+                appOutputDir.getRoot().getAbsolutePath()
+        );
+
+        assertThat(exitCode).isEqualTo(0).as("App return code should be zero");
+        assertKpiFilesWereGenerated(format("%s/expected-kpis", testDataDirRoot), appOutputDir.getRoot());
+        assertSupportingFilesWereGenerated(appOutputDir.getRoot());
+    }
+
     private void assertSupportingFilesWereGenerated(File kpiDirectory) {
         String[] generatedFiles = kpiDirectory.list();
         String [] expectedSupportingFiles = {
