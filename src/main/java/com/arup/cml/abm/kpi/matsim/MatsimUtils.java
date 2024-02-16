@@ -175,7 +175,7 @@ public class MatsimUtils {
         String drtVehiclesPath = String.format("%s/drt_vehicles.xml.gz", this.matsimOutputDir);
         File drtFile = new File(drtVehiclesPath);
         if (drtFile.exists()) {
-            LOGGER.info("DRT Vehicles File was found and will not be used to label DRT vehicles");
+            LOGGER.info("DRT Vehicles File was found and will be used to label DRT vehicles");
             FleetSpecification fleetSpecification = new FleetSpecificationImpl();
             new FleetReader(fleetSpecification).readFile(drtVehiclesPath);
 
