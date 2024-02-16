@@ -5,6 +5,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.arup.cml.abm.kpi.data.LinkLog;
 import org.matsim.api.core.v01.network.Network;
+import org.matsim.core.utils.misc.Time;
 import org.matsim.pt.transitSchedule.api.TransitSchedule;
 import org.matsim.vehicles.Vehicles;
 import tech.tablesaw.api.*;
@@ -14,10 +15,14 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Writer;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 import static tech.tablesaw.aggregate.AggregateFunctions.mean;
@@ -39,9 +44,15 @@ public class TablesawKpiCalculator implements KpiCalculator {
     public TablesawKpiCalculator(Network network, TransitSchedule schedule, Vehicles vehicles, LinkLog linkLog,
                                  InputStream legsInputStream, InputStream tripsInputStream, Path outputDirectory) {
         // TODO: 24/01/2024 replace this ASAP with a representation of the network
-        // that isn't from the MATSim API (a map, or dedicated domain object, or whatever)
-        legs = readCSVInputStream(legsInputStream).setName("Legs");
-        trips = readCSVInputStream(tripsInputStream).setName("Trips");
+        // that isn't from the MATSim API (a map, or dedicated domain object, or
+        // whatever)
+        Map<String, ColumnType> columnMapping = new HashMap<>();
+        columnMapping.put("dep_time", ColumnType.STRING);
+        columnMapping.put("trav_time", ColumnType.STRING);
+        columnMapping.put("wait_time", ColumnType.STRING);
+
+        legs = readCSVInputStream(legsInputStream, columnMapping).setName("Legs");
+        trips = readCSVInputStream(tripsInputStream, columnMapping).setName("Trips");
         createNetworkLinkTables(network);
         createTransitTables(schedule);
         createVehicleTable(vehicles);
@@ -65,10 +76,9 @@ public class TablesawKpiCalculator implements KpiCalculator {
 
         // convert H:M:S format to seconds
         IntColumn wait_time_seconds = IntColumn.create("wait_time_seconds");
-        table.timeColumn("wait_time")
+        table.stringColumn("wait_time")
                 .forEach(time -> wait_time_seconds.append(
-                        time.toSecondOfDay()
-                ));
+                        (int) Time.parseTime(time)));
         table.addColumns(wait_time_seconds);
 
         // average wait by mode
@@ -566,8 +576,9 @@ public class TablesawKpiCalculator implements KpiCalculator {
         LongColumn linkLogIndexColumn = LongColumn.create("linkLogIndex");
         StringColumn agentIDColumn = StringColumn.create("agentId");
 
-        for (Map.Entry<Long, Map<String, Object>> entry : _linkLog.getVehicleOccupantsData().rowMap().entrySet()) {
-            linkLogIndexColumn.append(entry.getKey());
+        for (Map.Entry<Long, Map<String, Object>> entry : _linkLog.getVehicleOccupantsData().rowMap()
+                .entrySet()) {
+            linkLogIndexColumn.append((long) entry.getValue().get("linkLogIndex"));
             agentIDColumn.append(entry.getValue().get("agentId").toString());
         }
         linkLogVehicleOccupancy = Table.create("Vehicle Occupancy")
@@ -578,7 +589,18 @@ public class TablesawKpiCalculator implements KpiCalculator {
     }
 
     public Table readCSVInputStream(InputStream inputStream) {
-        CsvReadOptions.Builder builder = CsvReadOptions.builder(inputStream).separator(';');
+        return readCSVInputStream(inputStream, Collections.emptyMap());
+    }
+
+    public Table readCSVInputStream(InputStream inputStream, Map<String, ColumnType> columnMapping) {
+        // TODO Make separator accessible from outside
+        CsvReadOptions.Builder builder = CsvReadOptions.builder(inputStream).separator(';').header(true)
+                .columnTypesPartial(column -> {
+                    if (columnMapping.keySet().contains(column)) {
+                        return Optional.of(columnMapping.get(column));
+                    }
+                    return Optional.empty();
+                });
         return Table.read().usingOptions(builder.build());
     }
 
@@ -593,6 +615,12 @@ public class TablesawKpiCalculator implements KpiCalculator {
     }
 
     private void writeIntermediateData(Path outputDir) {
+        try {
+            Files.createDirectories(outputDir);
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new IllegalStateException(e);
+        }
         legs.write().csv(String.format("%s/supporting-data-legs.csv", outputDir));
         trips.write().csv(String.format("%s/supporting-data-trips.csv", outputDir));
         linkLog.write().csv(String.format("%s/supporting-data-linkLog.csv", outputDir));
