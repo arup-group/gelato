@@ -10,6 +10,7 @@ import picocli.CommandLine;
 
 import java.io.File;
 import java.nio.file.Paths;
+
 import static java.lang.String.format;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
@@ -64,13 +65,13 @@ public class MatsimKpiGeneratorIntegrationTest {
 
     private void assertKpiFilesWereGenerated(String expectedKpiDirectory, File kpiDirectory) {
         String[] generatedFiles = kpiDirectory.list();
-        String [] expectedKpiFiles = {
-                "kpi-congestion.csv"+compressionFileEnding,
-                "kpi-speed.csv"+compressionFileEnding,
-                "kpi-vehicle-km.csv"+compressionFileEnding,
-                "kpi-occupancy-rate.csv"+compressionFileEnding,
-                "kpi-modal-split.csv"+compressionFileEnding,
-                "kpi-pt-wait-time.csv"+compressionFileEnding,
+        String[] expectedKpiFiles = {
+                "kpi-congestion.csv" + compressionFileEnding,
+                "kpi-speed.csv" + compressionFileEnding,
+                "kpi-vehicle-km.csv" + compressionFileEnding,
+                "kpi-occupancy-rate.csv" + compressionFileEnding,
+                "kpi-modal-split.csv" + compressionFileEnding,
+                "kpi-pt-wait-time.csv" + compressionFileEnding,
         };
         for (int i = 0; i < expectedKpiFiles.length; i++) {
             String kpiFile = expectedKpiFiles[i];

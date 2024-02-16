@@ -342,8 +342,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
             public void accept(Double aDouble) {
                 if (aDouble.isNaN()) {
                     roundedColumn.appendMissing();
-                }
-                else {
+                } else {
                     roundedColumn.append(Math.round(aDouble * Math.pow(10.0, decimalPoints)) / Math.pow(10.0, decimalPoints));
                 }
             }
@@ -625,29 +624,29 @@ public class TablesawKpiCalculator implements KpiCalculator {
             e.printStackTrace();
             throw new IllegalStateException(e);
         }
-        
-        this.writeTableCompressed(legs,String.format("%s/supporting-data-legs.csv", outputDir), this.compressionType);
-        this.writeTableCompressed(trips,String.format("%s/supporting-data-trips.csv", outputDir), this.compressionType);
-        this.writeTableCompressed(linkLog,String.format("%s/supporting-data-linkLog.csv", outputDir),this.compressionType);
-        this.writeTableCompressed(linkLogVehicleOccupancy,String.format("%s/supporting-data-vehicleOccupancy.csv", outputDir), this.compressionType);
-        this.writeTableCompressed(networkLinks,String.format("%s/supporting-data-networkLinks.csv", outputDir), this.compressionType);
-        this.writeTableCompressed(networkLinkModes,String.format("%s/supporting-data-networkLinkModes.csv", outputDir), this.compressionType);
-        this.writeTableCompressed(scheduleStops,String.format("%s/supporting-data-scheduleStops.csv", outputDir), this.compressionType);
-        this.writeTableCompressed(scheduleRoutes,String.format("%s/supporting-data-scheduleRoutes.csv", outputDir), this.compressionType);
-        this.writeTableCompressed(vehicles,String.format("%s/supporting-data-vehicles.csv", outputDir), this.compressionType);
+
+        this.writeTableCompressed(legs, String.format("%s/supporting-data-legs.csv", outputDir), this.compressionType);
+        this.writeTableCompressed(trips, String.format("%s/supporting-data-trips.csv", outputDir), this.compressionType);
+        this.writeTableCompressed(linkLog, String.format("%s/supporting-data-linkLog.csv", outputDir), this.compressionType);
+        this.writeTableCompressed(linkLogVehicleOccupancy, String.format("%s/supporting-data-vehicleOccupancy.csv", outputDir), this.compressionType);
+        this.writeTableCompressed(networkLinks, String.format("%s/supporting-data-networkLinks.csv", outputDir), this.compressionType);
+        this.writeTableCompressed(networkLinkModes, String.format("%s/supporting-data-networkLinkModes.csv", outputDir), this.compressionType);
+        this.writeTableCompressed(scheduleStops, String.format("%s/supporting-data-scheduleStops.csv", outputDir), this.compressionType);
+        this.writeTableCompressed(scheduleRoutes, String.format("%s/supporting-data-scheduleRoutes.csv", outputDir), this.compressionType);
+        this.writeTableCompressed(vehicles, String.format("%s/supporting-data-vehicles.csv", outputDir), this.compressionType);
     }
 
     private OutputStream getCompressedOutputStream(String filepath, CompressionType compressionType) {
-            return IOUtils.getOutputStream(IOUtils.getFileUrl(filepath.concat(compressionType.fileEnding)),
-                            false);
+        return IOUtils.getOutputStream(IOUtils.getFileUrl(filepath.concat(compressionType.fileEnding)),
+                false);
     }
 
     private void writeTableCompressed(Table table, String filePath, CompressionType compressionType) {
-            try (OutputStream stream = getCompressedOutputStream(filePath, compressionType)) {
-                    CsvWriteOptions options = CsvWriteOptions.builder(stream).lineEnd("\n").build();
-                    table.write().csv(options);
-            } catch (IOException e) {
-                    throw new IllegalStateException("Can't write table " + filePath);
-            }
+        try (OutputStream stream = getCompressedOutputStream(filePath, compressionType)) {
+            CsvWriteOptions options = CsvWriteOptions.builder(stream).lineEnd("\n").build();
+            table.write().csv(options);
+        } catch (IOException e) {
+            throw new IllegalStateException("Can't write table " + filePath);
+        }
     }
 }
