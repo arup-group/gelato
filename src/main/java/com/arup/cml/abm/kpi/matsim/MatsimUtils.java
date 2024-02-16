@@ -200,10 +200,7 @@ public class MatsimUtils {
                     Vehicle drtVehicle = VehicleUtils.createVehicle(Id.createVehicleId(drtVehicleId), drtVehicleType);
                     vehicles.addVehicle(drtVehicle);
                 }
-
-
             }
-            // todo run on IdF outputs, compare with Val's outputs
         }
 
         return vehicles;
