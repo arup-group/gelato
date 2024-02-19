@@ -1,5 +1,7 @@
 package com.arup.cml.abm.kpi;
 
+import tech.tablesaw.api.Table;
+
 import java.nio.file.Path;
 
 public interface KpiCalculator {
@@ -17,5 +19,5 @@ public interface KpiCalculator {
 
     void writeGHGKpi(Path outputDirectory);
 
-    void writeCongestionKpi(Path directory);
+    Table writeCongestionKpi(Path directory);
 }
