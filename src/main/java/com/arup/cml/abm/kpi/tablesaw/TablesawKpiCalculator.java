@@ -4,16 +4,21 @@ import com.arup.cml.abm.kpi.KpiCalculator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.arup.cml.abm.kpi.data.LinkLog;
+import com.arup.cml.abm.kpi.matsim.run.MatsimKpiGenerator;
+
 import org.matsim.api.core.v01.network.Network;
+import org.matsim.core.config.groups.ControllerConfigGroup.CompressionType;
+import org.matsim.core.utils.io.IOUtils;
 import org.matsim.core.utils.misc.Time;
 import org.matsim.pt.transitSchedule.api.TransitSchedule;
 import org.matsim.vehicles.Vehicles;
 import tech.tablesaw.api.*;
 import tech.tablesaw.io.csv.CsvReadOptions;
+import tech.tablesaw.io.csv.CsvWriteOptions;
 
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -40,9 +45,11 @@ public class TablesawKpiCalculator implements KpiCalculator {
 
     private Table linkLog;
     private Table linkLogVehicleOccupancy;
+    private CompressionType compressionType;
 
     public TablesawKpiCalculator(Network network, TransitSchedule schedule, Vehicles vehicles, LinkLog linkLog,
-                                 InputStream legsInputStream, InputStream tripsInputStream, Path outputDirectory) {
+                                 InputStream legsInputStream, InputStream tripsInputStream, Path outputDirectory, CompressionType compressionType) {
+        this.compressionType = compressionType;
         // TODO: 24/01/2024 replace this ASAP with a representation of the network
         // that isn't from the MATSim API (a map, or dedicated domain object, or
         // whatever)
@@ -71,7 +78,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
 
         // pull out legs with PT stops information
         Table table = legs.where(
-                legs.stringColumn("access_stop_id").isNotMissing()
+                legs.column("access_stop_id").isNotMissing()
         );
 
         // convert H:M:S format to seconds
@@ -105,7 +112,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
                         .summarize("wait_time_seconds", mean)
                         .by("mode", "access_stop_id", "hour")
                         .setName("Average wait time at stops by mode");
-        intermediate.write().csv(String.format("%s/intermediate-pt-wait-time.csv", outputDirectory));
+        this.writeTableCompressed(intermediate, String.format("%s/intermediate-pt-wait-time.csv", outputDirectory), this.compressionType);
 
         // kpi output
         double kpi =
@@ -116,7 +123,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
                         .mean();
         kpi = round(kpi, 2);
         LOGGER.info("PT Wait Time KPI {}", kpi);
-        writeContentToFile(String.format("%s/kpi-pt-wait-time.csv", outputDirectory), String.valueOf(kpi));
+        writeContentToFile(String.format("%s/kpi-pt-wait-time.csv", outputDirectory), String.valueOf(kpi), this.compressionType);
     }
 
     @Override
@@ -129,7 +136,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
                 round(
                         kpi.doubleColumn("Percents").multiply(100).setName("Percents"), 2));
         kpi.setName("Modal Split");
-        kpi.write().csv(String.format("%s/kpi-modal-split.csv", outputDirectory));
+        this.writeTableCompressed(kpi, String.format("%s/kpi-modal-split.csv", outputDirectory), compressionType);
     }
 
     @Override
@@ -162,14 +169,14 @@ public class TablesawKpiCalculator implements KpiCalculator {
                 round(averageOccupancyPerVehicle.doubleColumn("Mean [numberOfPeople] / Mean [capacity]"), 2)
                         .setName("Average occupancy rate")
         ).setName("Occupancy Rate");
-        intermediate.write().csv(String.format("%s/intermediate-occupancy-rate.csv", outputDirectory));
+        this.writeTableCompressed(intermediate, String.format("%s/intermediate-occupancy-rate.csv", outputDirectory), this.compressionType);
 
         double kpi = averageOccupancyPerVehicle.doubleColumn("Mean [numberOfPeople] / Mean [capacity]").sum();
         kpi = kpi / numberOfVehicles;
         kpi = round(kpi, 2);
 
         LOGGER.info("Occupancy Rate KPI {}", kpi);
-        writeContentToFile(String.format("%s/kpi-occupancy-rate.csv", outputDirectory), String.valueOf(kpi));
+        writeContentToFile(String.format("%s/kpi-occupancy-rate.csv", outputDirectory), String.valueOf(kpi), this.compressionType);
     }
 
     @Override
@@ -209,11 +216,11 @@ public class TablesawKpiCalculator implements KpiCalculator {
                 .joinOn("vehicleID")
                 .inner(vehicles.selectColumns("vehicleID", "mode"));
         intermediate.setName("Vehicle KM per vehicle");
-        intermediate.write().csv(String.format("%s/intermediate-vehicle-km.csv", outputDirectory));
+        this.writeTableCompressed(intermediate, String.format("%s/intermediate-vehicle-km.csv", outputDirectory), this.compressionType);
 
         double kpi = round(table.doubleColumn("distance_km").sum(), 2);
         LOGGER.info("Vehicle KM KPI {}", kpi);
-        writeContentToFile(String.format("%s/kpi-vehicle-km.csv", outputDirectory), String.valueOf(kpi));
+        writeContentToFile(String.format("%s/kpi-vehicle-km.csv", outputDirectory), String.valueOf(kpi), this.compressionType);
     }
 
     @Override
@@ -263,7 +270,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
         for (NumericColumn<?> column : kpi.numericColumns()) {
             kpi.replaceColumn(round(column.asDoubleColumn(), 2));
         }
-        kpi.write().csv(String.format("%s/kpi-speed.csv", outputDirectory));
+        this.writeTableCompressed(kpi, String.format("%s/kpi-speed.csv", outputDirectory), this.compressionType);
     }
 
     @Override
@@ -318,7 +325,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
                 table
                         .summarize("delayRatio", mean)
                         .by("linkID", "mode", "hour");
-        intermediate.write().csv(String.format("%s/intermediate-congestion.csv", outputDirectory));
+        this.writeTableCompressed(intermediate, String.format("%s/intermediate-congestion.csv", outputDirectory), this.compressionType);
 
         // kpi output
         Table kpi =
@@ -329,7 +336,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
                         .by("mode")
                         .setName("Congestion KPI");
         kpi.replaceColumn(round(kpi.doubleColumn("Mean [delayRatio]"), 2));
-        kpi.write().csv(String.format("%s/kpi-congestion.csv", outputDirectory));
+        this.writeTableCompressed(kpi, String.format("%s/kpi-congestion.csv", outputDirectory), compressionType);
     }
 
     private DoubleColumn round(DoubleColumn column, int decimalPoints) {
@@ -339,8 +346,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
             public void accept(Double aDouble) {
                 if (aDouble.isNaN()) {
                     roundedColumn.appendMissing();
-                }
-                else {
+                } else {
                     roundedColumn.append(Math.round(aDouble * Math.pow(10.0, decimalPoints)) / Math.pow(10.0, decimalPoints));
                 }
             }
@@ -606,11 +612,9 @@ public class TablesawKpiCalculator implements KpiCalculator {
         return Table.read().usingOptions(builder.build());
     }
 
-    private void writeContentToFile(String path, String content) {
-        try {
-            Writer wr = new FileWriter(path);
+    private void writeContentToFile(String path, String content, CompressionType compressionType) {
+        try (Writer wr = IOUtils.getBufferedWriter(path.concat(compressionType.fileEnding))) {
             wr.write(content);
-            wr.close();
         } catch (IOException e) {
             LOGGER.warn("Failed to save content `{}` to file: `{}`", content, path);
         }
@@ -623,14 +627,29 @@ public class TablesawKpiCalculator implements KpiCalculator {
             e.printStackTrace();
             throw new IllegalStateException(e);
         }
-        legs.write().csv(String.format("%s/supporting-data-legs.csv", outputDir));
-        trips.write().csv(String.format("%s/supporting-data-trips.csv", outputDir));
-        linkLog.write().csv(String.format("%s/supporting-data-linkLog.csv", outputDir));
-        linkLogVehicleOccupancy.write().csv(String.format("%s/supporting-data-vehicleOccupancy.csv", outputDir));
-        networkLinks.write().csv(String.format("%s/supporting-data-networkLinks.csv", outputDir));
-        networkLinkModes.write().csv(String.format("%s/supporting-data-networkLinkModes.csv", outputDir));
-        scheduleStops.write().csv(String.format("%s/supporting-data-scheduleStops.csv", outputDir));
-        scheduleRoutes.write().csv(String.format("%s/supporting-data-scheduleRoutes.csv", outputDir));
-        vehicles.write().csv(String.format("%s/supporting-data-vehicles.csv", outputDir));
+
+        this.writeTableCompressed(legs, String.format("%s/supporting-data-legs.csv", outputDir), this.compressionType);
+        this.writeTableCompressed(trips, String.format("%s/supporting-data-trips.csv", outputDir), this.compressionType);
+        this.writeTableCompressed(linkLog, String.format("%s/supporting-data-linkLog.csv", outputDir), this.compressionType);
+        this.writeTableCompressed(linkLogVehicleOccupancy, String.format("%s/supporting-data-vehicleOccupancy.csv", outputDir), this.compressionType);
+        this.writeTableCompressed(networkLinks, String.format("%s/supporting-data-networkLinks.csv", outputDir), this.compressionType);
+        this.writeTableCompressed(networkLinkModes, String.format("%s/supporting-data-networkLinkModes.csv", outputDir), this.compressionType);
+        this.writeTableCompressed(scheduleStops, String.format("%s/supporting-data-scheduleStops.csv", outputDir), this.compressionType);
+        this.writeTableCompressed(scheduleRoutes, String.format("%s/supporting-data-scheduleRoutes.csv", outputDir), this.compressionType);
+        this.writeTableCompressed(vehicles, String.format("%s/supporting-data-vehicles.csv", outputDir), this.compressionType);
+    }
+
+    private OutputStream getCompressedOutputStream(String filepath, CompressionType compressionType) {
+        return IOUtils.getOutputStream(IOUtils.getFileUrl(filepath.concat(compressionType.fileEnding)),
+                false);
+    }
+
+    private void writeTableCompressed(Table table, String filePath, CompressionType compressionType) {
+        try (OutputStream stream = getCompressedOutputStream(filePath, compressionType)) {
+            CsvWriteOptions options = CsvWriteOptions.builder(stream).lineEnd(MatsimKpiGenerator.EOL).build();
+            table.write().csv(options);
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        }
     }
 }

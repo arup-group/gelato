@@ -2,8 +2,10 @@ package com.arup.cml.abm.kpi.matsim;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Network;
+import org.matsim.contrib.dvrp.fleet.*;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigGroup;
 import org.matsim.core.config.ConfigUtils;
@@ -14,14 +16,14 @@ import org.matsim.core.utils.io.IOUtils;
 import org.matsim.pt.config.TransitConfigGroup;
 import org.matsim.pt.transitSchedule.api.TransitSchedule;
 import org.matsim.vehicles.Vehicle;
+import org.matsim.vehicles.VehicleType;
+import org.matsim.vehicles.VehicleUtils;
 import org.matsim.vehicles.Vehicles;
 
+import java.io.File;
 import java.io.InputStream;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
 
 public class MatsimUtils {
     private static final Logger LOGGER = LogManager.getLogger(MatsimUtils.class);
@@ -169,7 +171,37 @@ public class MatsimUtils {
             });
         });
 
-        // TODO: add reading DRT vehicles if relevant matsim output found
+        // reading DRT vehicles if relevant matsim output found
+        String drtVehiclesPath = String.format("%s/drt_vehicles.xml.gz", this.matsimOutputDir);
+        File drtFile = new File(drtVehiclesPath);
+        if (drtFile.exists()) {
+            LOGGER.info("DRT Vehicles File was found and will be used to label DRT vehicles");
+            FleetSpecification fleetSpecification = new FleetSpecificationImpl();
+            new FleetReader(fleetSpecification).readFile(drtVehiclesPath);
+
+            for (Map.Entry<Id<DvrpVehicle>,
+                    DvrpVehicleSpecification> entry : fleetSpecification.getVehicleSpecifications().entrySet()) {
+                Id<DvrpVehicle> drtVehicleId = entry.getKey();
+                DvrpVehicleSpecification vehicleSpec = entry.getValue();
+                int capacity = vehicleSpec.getCapacity();
+                Id<VehicleType> vehicleTypeID = Id.create(String.format("drt-%d", capacity), VehicleType.class);
+                if (vehicles.getVehicleTypes().containsKey(vehicleTypeID)) {
+                    // add DRT vehicle for existing vehicle type
+                    VehicleType drtVehicleType = vehicles.getVehicleTypes().get(vehicleTypeID);
+                    Vehicle drtVehicle = VehicleUtils.createVehicle(Id.createVehicleId(drtVehicleId), drtVehicleType);
+                    vehicles.addVehicle(drtVehicle);
+                } else {
+                    // create the DRT vehicle for that capacity
+                    VehicleType drtVehicleType = VehicleUtils.createVehicleType(vehicleTypeID);
+                    drtVehicleType.setNetworkMode("drt");
+                    drtVehicleType.getCapacity().setSeats(capacity);
+                    vehicles.addVehicleType(drtVehicleType);
+                    // add DRT vehicle
+                    Vehicle drtVehicle = VehicleUtils.createVehicle(Id.createVehicleId(drtVehicleId), drtVehicleType);
+                    vehicles.addVehicle(drtVehicle);
+                }
+            }
+        }
 
         return vehicles;
     }

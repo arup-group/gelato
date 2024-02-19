@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.matsim.core.api.experimental.events.EventsManager;
+import org.matsim.core.config.groups.ControllerConfigGroup.CompressionType;
 import org.matsim.core.events.EventsUtils;
 import org.matsim.core.events.MatsimEventsReader;
 import org.matsim.utils.MemoryObserver;
@@ -24,6 +25,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Command(name = "MatsimKpiGenerator", version = "0.0.2-alpha", mixinStandardHelpOptions = true)
 public class MatsimKpiGenerator implements Runnable {
     private static final Logger LOGGER = LogManager.getLogger(MatsimKpiGenerator.class);
+    public static final String EOL = "\n";
 
     @Option(names = "-mc", description = "Full path to your model's MATSim config file", required = true)
     private Path matsimConfigFile;
@@ -35,6 +37,7 @@ public class MatsimKpiGenerator implements Runnable {
     private Path outputDir;
 
     public static void main(String[] args) {
+        System.setProperty("line.separator", EOL); // Required to allow platform independent checksum similarity
         int exitCode = new CommandLine(new MatsimKpiGenerator()).execute(args);
         System.exit(exitCode);
     }
@@ -70,7 +73,7 @@ public class MatsimKpiGenerator implements Runnable {
         KpiCalculator kpiCalculator = new TablesawKpiCalculator(
                 matsimUtils.getMatsimNetwork(), matsimUtils.getTransitSchedule(), matsimUtils.getMatsimVehicles(),
                 linkLog, matsimUtils.getMatsimLegsCSVInputStream(), matsimUtils.getMatsimTripsCSVInputStream(),
-                outputDir
+                outputDir, CompressionType.gzip
                 );
 
         kpiCalculator.writeAffordabilityKpi(outputDir);
