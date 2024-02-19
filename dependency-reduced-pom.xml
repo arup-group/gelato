@@ -225,5 +225,6 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <maven.compiler.target>17</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <matsim.version>16.0-PR3032</matsim.version>
   </properties>
 </project>
