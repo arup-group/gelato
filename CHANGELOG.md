@@ -16,11 +16,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Error parsing trips & legs with large numbers of rows and one or more time columns with values > 24 hours ([#18](https://github.com/arup-group/gelato/issues/18))
 - SLF4J runtime error/warning ([#20](https://github.com/arup-group/gelato/issues/20))
-- drt mode not showing up in congestion outputs ([#10](https://github.com/arup-group/gelato/issues/10),[#23](https://github.com/arup-group/gelato/issues/23))
+- drt mode not showing up in congestion outputs ([#10](https://github.com/arup-group/gelato/issues/10), [#23](https://github.com/arup-group/gelato/issues/23))
+
 
 ### Changed
 
-### Removed
+- Output files are now compressed ([#27](https://github.com/arup-group/gelato/issues/27))
 
 ## [0.0.1-alpha] - 2024-02-07
 
