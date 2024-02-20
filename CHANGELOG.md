@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Output files are now compressed ([#27](https://github.com/arup-group/gelato/issues/27))
+- Wording and content of the README ([#16](https://github.com/arup-group/gelato/issues/16))
 
 ## [0.0.1-alpha] - 2024-02-07
 
