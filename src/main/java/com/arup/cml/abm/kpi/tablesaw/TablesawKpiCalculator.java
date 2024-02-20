@@ -282,9 +282,25 @@ public class TablesawKpiCalculator implements KpiCalculator {
 
     @Override
     public double writeTravelTime(Path outputDirectory) {
-        // TODO: implement KPI
         LOGGER.info("Writing Travel Time KPI to {}", outputDirectory);
-        return 0.0;
+
+        // convert H:M:S format to seconds
+        IntColumn trav_time_minutes = IntColumn.create("trav_time_minutes");
+        trips.stringColumn("trav_time")
+                .forEach(time -> trav_time_minutes.append(
+                        (int) Math.round(Time.parseTime(time) / 60)));
+        trips.addColumns(trav_time_minutes);
+
+        Table intermediate =
+                trips
+                        .summarize("trav_time_minutes", mean)
+                        .by("end_activity_type")
+                        .setName("Travel Time by trip purpose");
+        this.writeTableCompressed(intermediate, String.format("%s/intermediate-travel-time.csv", outputDirectory), this.compressionType);
+
+        double kpi = trips.intColumn("trav_time_minutes").mean();
+        this.writeTableCompressed(intermediate, String.format("%s/kpi-travel-time.csv", outputDirectory), this.compressionType);
+        return kpi;
     }
 
     @Override
