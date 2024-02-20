@@ -22,17 +22,27 @@ given MATSim model, and help compare different MATSim models and scenarios again
 # Installation
 
 If you have Docker installed and would prefer to use Gelato via Docker rather than
-locally installing the prerequisite dependencies then building and running the Java
+locally installing the prerequisite dependencies and building and running the Java
 application from the command line, skip to the
 "[Using Gelato via Docker](#using-gelato-via-docker)" section.
 
-To find out how to build and run Gelato without using Docker, read on...
+Alternatively, you can grab the latest pre-built, runnable Gelato jar file from the
+[releases page](https://github.com/arup-group/gelato/releases), make sure you have the necessary
+[prerequisites](#prerequisites) installed and then skip straight to the "[Usage](#usage)" section.
+
+To find out how to build Gelato from source and then run it without using Docker, read on...
 
 ## Prerequisites
-In order to build and run Gelato locally, your environment must already have:
+In order to build and run Gelato locally, your environment must already have available:
 
-- JDK >= 17 (start [here](https://www.oracle.com/java/technologies/downloads/) or [here](https://jdk.java.net/))
-- [Maven](https://maven.apache.org/)
+#### JDK >= 17
+- Start [here](https://www.oracle.com/java/technologies/downloads/) or [here](https://jdk.java.net/)
+- If you want to run Gelato from a pre-built jar file rather than build it yourself, you can install a JRE
+rather than a full JDK
+
+#### Maven
+- Start [here](https://maven.apache.org/)
+- Only required if you're building Gelato from source
 
 ## Building
 To compile everything, run all unit tests and linting checks, and build a runnable jar file that includes all
@@ -95,7 +105,7 @@ To generate KPI metrics in a local directory on your machine, assuming:
 - Target output directory at `/path/to/gelato-outputs/my-model/kpi`
 
 ```shell
-java -jar target/gelato-1.0-SNAPSHOT-92b26e8.jar \
+java -jar target/gelato-0.0.1-alpha-with-dependencies-230f897.jar \
 -mc /path/to/my-model/outputs/output_config.xml \
 -mo /path/to/my-model/outputs \
 -o /path/to/gelato-outputs/my-model/kpi
