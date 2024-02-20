@@ -209,6 +209,9 @@ sustainable development:
 | "Economic Success"                      | "Economic"/"Profit"            | "Economic"                    |
 | "Mobility System Performance"           | N/A                            | "Mobility System Performance" |
 
+"Mobility System Performance" is effectively a separate, unifying layer, whereby
+improvements in Mobility System Performance can lead to better outcomes across any or all of the other three themes.
+
 Some KPIs do not fall directly under a specific theme, but are parameters
 for generating other KPIs. They are marked as `Parameter` in the table
 below. Parameters are included to provide context on the simulation and allow
