@@ -19,5 +19,11 @@ public interface KpiCalculator {
 
     void writeGHGKpi(Path outputDirectory);
 
+    double writeTravelTime(Path outputDirectory);
+
+    Table writeAccessToMobilityServices(Path outputDirectory);
+
     Table writeCongestionKpi(Path directory);
+
+    Table writeMobilitySpaceUsage(Path outputDirectory);
 }

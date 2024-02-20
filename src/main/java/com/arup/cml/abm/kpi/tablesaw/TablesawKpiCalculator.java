@@ -69,6 +69,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
 
     @Override
     public void writeAffordabilityKpi(Path outputDirectory) {
+        // TODO: implement KPI
         LOGGER.info("Writing Affordability KPI to {}", outputDirectory);
     }
 
@@ -275,7 +276,22 @@ public class TablesawKpiCalculator implements KpiCalculator {
 
     @Override
     public void writeGHGKpi(Path outputDirectory) {
+        // TODO: implement KPI
         LOGGER.info("Writing GHG KPIs to {}", outputDirectory);
+    }
+
+    @Override
+    public double writeTravelTime(Path outputDirectory) {
+        // TODO: implement KPI
+        LOGGER.info("Writing Travel Time KPI to {}", outputDirectory);
+        return 0.0;
+    }
+
+    @Override
+    public Table writeAccessToMobilityServices(Path outputDirectory) {
+        // TODO: implement KPI
+        LOGGER.info("Writing Access To Mobility Services KPI to {}", outputDirectory);
+        return Table.create("");
     }
 
     @Override
@@ -338,6 +354,13 @@ public class TablesawKpiCalculator implements KpiCalculator {
         kpi.replaceColumn(round(kpi.doubleColumn("Mean [delayRatio]"), 2));
         this.writeTableCompressed(kpi, String.format("%s/kpi-congestion.csv", outputDirectory), compressionType);
         return kpi;
+    }
+
+    @Override
+    public Table writeMobilitySpaceUsage(Path outputDirectory) {
+        // TODO: implement KPI
+        LOGGER.info("Writing Mobility Space Usage KPI to {}", outputDirectory);
+        return Table.create("");
     }
 
     private DoubleColumn round(DoubleColumn column, int decimalPoints) {
