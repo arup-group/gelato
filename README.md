@@ -197,15 +197,17 @@ Usage: MatsimKpiGenerator [-hV] -mc=<matsimConfigFile>
 ## Methodology
 Much of the work that led to the creation of Gelato involved defining
 [a framework of useful KPIs (link to blog post here)]() that can be calculated using data available from a MATSim
-simulation. The KPIs are grouped together under various "themes", strongly influenced by the
-[World Business Council for Sustainable Development](https://www.wbcsd.org/)'s three pillars of sustainable development
-(see [sustainable mobility](https://docs.wbcsd.org/2015/03/Mobility_indicators.pdf)):
+simulation. The KPIs are grouped together under four "themes", strongly influenced by the
+[World Business Council for Sustainable Development](https://www.wbcsd.org/) dimensions of
+[sustainable mobility](https://docs.wbcsd.org/2015/03/Mobility_indicators.pdf) and the three pillars of
+sustainable development:
 
-| Sustainable Development Pillar | KPI Theme     |
-|--------------------------------|---------------|
-| Global Environment             | "Environment" |
-| Quality of Life                | "Social"      |
-| Economic Success               | "Economic"    |
+| WBCSD Dimension of Sustainable Mobility | Sustainable Development Pillar | KPI Theme                     |
+|-----------------------------------------|--------------------------------|-------------------------------|
+| "Global Environment"                    | "Environmental"/"Planet"       | "Environment"                 |
+| "Quality of Life"                       | "Social"/"People"              | "Social"                      |
+| "Economic Success"                      | "Economic"/"Profit"            | "Economic"                    |
+| "Mobility System Performance"           | N/A                            | "Mobility System Performance" |
 
 Some KPIs do not fall directly under a specific theme, but are parameters
 for generating other KPIs. They are marked as `Parameter` in the table
