@@ -279,7 +279,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
     }
 
     @Override
-    public void writeCongestionKpi(Path outputDirectory) {
+    public Table writeCongestionKpi(Path outputDirectory) {
         LOGGER.info("Writing Congestion KPIs to {}", outputDirectory);
 
         // compute travel time on links
@@ -291,9 +291,11 @@ public class TablesawKpiCalculator implements KpiCalculator {
                 );
 
         // compute free flow time on links (length / freespeed)
-        networkLinks.addColumns(
-                networkLinks.doubleColumn("length")
-                        .divide(networkLinks.doubleColumn("freespeed"))
+        Table sanitisedNetworkLinks = sanitiseInfiniteColumnValuesInTable(
+                networkLinks, networkLinks.doubleColumn("freespeed"));
+        sanitisedNetworkLinks.addColumns(
+                sanitisedNetworkLinks.doubleColumn("length")
+                        .divide(sanitisedNetworkLinks.doubleColumn("freespeed"))
                         .setName("freeFlowTime")
         );
 
@@ -301,7 +303,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
         table =
                 table
                         .joinOn("linkID")
-                        .inner(networkLinks.selectColumns("linkID", "freeFlowTime"));
+                        .inner(sanitisedNetworkLinks.selectColumns("linkID", "freeFlowTime"));
 
         // compute delay ratio
         table.addColumns(
@@ -335,6 +337,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
                         .setName("Congestion KPI");
         kpi.replaceColumn(round(kpi.doubleColumn("Mean [delayRatio]"), 2));
         this.writeTableCompressed(kpi, String.format("%s/kpi-congestion.csv", outputDirectory), compressionType);
+        return kpi;
     }
 
     private DoubleColumn round(DoubleColumn column, int decimalPoints) {
