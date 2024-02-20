@@ -1,6 +1,10 @@
 package com.arup.cml.abm.kpi.tablesaw;
 
 import com.arup.cml.abm.kpi.TableHelpers;
+import com.arup.cml.abm.kpi.builders.KpiCalculatorBuilder;
+import com.arup.cml.abm.kpi.builders.LinkLogBuilder;
+import com.arup.cml.abm.kpi.builders.NetworkBuilder;
+import com.arup.cml.abm.kpi.builders.VehiclesBuilder;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -17,13 +21,19 @@ public class KpiOutputTest {
     @Test
     public void linkWithInfiniteSpeedDoesNotBreakCongestionKpiOutput() {
         TablesawKpiCalculator kpiCalculator = new KpiCalculatorBuilder(tmpDir)
-                .withNetworkNode("A", 1, 1)
-                .withNetworkNode("B", 2, 2)
-                .withNetworkLinkWithSpeed("infLink", "A", "B", Double.POSITIVE_INFINITY)
-                .withNetworkLink("otherLink", "B", "A")
-                .withVehicle("someCar", "car")
-                .withLinkLogEntry("someCar", "infLink", (9 * 60 * 60), (9 * 60 * 60) + 5)
-                .withLinkLogEntry("someCar", "otherLink", (9 * 60 * 60) + 5, (9 * 60 * 60) + 10)
+                .withNetwork(new NetworkBuilder()
+                        .withNetworkNode("A", 1, 1)
+                        .withNetworkNode("B", 2, 2)
+                        .withNetworkLinkWithSpeed("infLink", "A", "B", Double.POSITIVE_INFINITY)
+                        .withNetworkLink("otherLink", "B", "A")
+                        .build())
+                .withVehicles(new VehiclesBuilder()
+                        .withVehicle("someCar", "car", "car")
+                        .build())
+                .withLinkLog(new LinkLogBuilder()
+                        .withEntry("someCar", "infLink", (9 * 60 * 60), (9 * 60 * 60) + 25)
+                        .withEntry("someCar", "otherLink", (9 * 60 * 60) + 25, (9 * 60 * 60) + 30)
+                        .build())
                 .build();
         Table outputKpi = kpiCalculator.writeCongestionKpi(Path.of(tmpDir.getRoot().getAbsolutePath()));
 
