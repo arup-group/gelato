@@ -197,20 +197,19 @@ Usage: MatsimKpiGenerator [-hV] -mc=<matsimConfigFile>
 ## Methodology
 Much of the work that led to the creation of Gelato involved defining
 [a framework of useful KPIs (link to blog post here)]() that can be calculated using data available from a MATSim
-simulation. The KPIs are grouped together under four "themes", strongly influenced by the
+simulation. The KPIs are grouped together under "themes", strongly influenced by the
 [World Business Council for Sustainable Development](https://www.wbcsd.org/) dimensions of
 [sustainable mobility](https://docs.wbcsd.org/2015/03/Mobility_indicators.pdf) and the three pillars of
 sustainable development:
 
-| WBCSD Dimension of Sustainable Mobility | Sustainable Development Pillar | KPI Theme                     |
-|-----------------------------------------|--------------------------------|-------------------------------|
-| "Global Environment"                    | "Environmental"/"Planet"       | "Environment"                 |
-| "Quality of Life"                       | "Social"/"People"              | "Social"                      |
-| "Economic Success"                      | "Economic"/"Profit"            | "Economic"                    |
-| "Mobility System Performance"           | N/A                            | "Mobility System Performance" |
+| WBCSD Dimension of Sustainable Mobility | Sustainable Development Pillar | KPI Theme     |
+|-----------------------------------------|--------------------------------|---------------|
+| "Global Environment"                    | "Environmental"/"Planet"       | "Environment" |
+| "Quality of Life"                       | "Social"/"People"              | "Social"      |
+| "Economic Success"                      | "Economic"/"Profit"            | "Economic"    |
 
-"Mobility System Performance" is effectively a separate, unifying layer, whereby
-improvements in Mobility System Performance can lead to better outcomes across any or all of the other three themes.
+Spanning across all themes, "Mobility System Performance" is effectively a separate, unifying layer, whereby
+improvements in mobility system performance can lead to better outcomes across any or all of the other themes.
 
 Some KPIs do not fall directly under a specific theme, but are parameters
 for generating other KPIs. They are marked as `Parameter` in the table
