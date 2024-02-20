@@ -1,6 +1,5 @@
 package com.arup.cml.abm.kpi.tablesaw;
 
-import com.arup.cml.abm.kpi.TableHelpers;
 import com.arup.cml.abm.kpi.builders.KpiCalculatorBuilder;
 import com.arup.cml.abm.kpi.builders.LinkLogBuilder;
 import com.arup.cml.abm.kpi.builders.NetworkBuilder;
@@ -8,18 +7,20 @@ import com.arup.cml.abm.kpi.builders.VehiclesBuilder;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import tech.tablesaw.api.DoubleColumn;
-import tech.tablesaw.api.StringColumn;
+import tech.tablesaw.api.Row;
 import tech.tablesaw.api.Table;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+
 import java.nio.file.Path;
-public class KpiOutputTest {
+
+public class TablesawKpiCalculatorTest {
 
     @Rule
     public TemporaryFolder tmpDir = new TemporaryFolder();
 
     @Test
-    public void linkWithInfiniteSpeedDoesNotBreakCongestionKpiOutput() {
+    public void linkWithInfiniteSpeedDoesNotBreakCongestionKpi() {
         TablesawKpiCalculator kpiCalculator = new KpiCalculatorBuilder(tmpDir)
                 .withNetwork(new NetworkBuilder()
                         .withNetworkNode("A", 1, 1)
@@ -37,12 +38,10 @@ public class KpiOutputTest {
                 .build();
         Table outputKpi = kpiCalculator.writeCongestionKpi(Path.of(tmpDir.getRoot().getAbsolutePath()));
 
-        Table expectedTable =
-                Table.create("Congestion KPI")
-                        .addColumns(
-                                StringColumn.create("mode", new String[]{"car"}),
-                                DoubleColumn.create("Mean [delayRatio]", new double[]{5}));
-        TableHelpers.assertTableDataEqual(outputKpi, expectedTable);
+        assertThat(outputKpi.rowCount()).isEqualTo(1).as("Congestion KPI table should include only one row/mode");
+        Row metrics = outputKpi.row(0);
+        assertThat(metrics.getString("mode")).isEqualTo("car").as("Mode should be car");
+        assertThat(metrics.getDouble("Mean [delayRatio]")).isEqualTo(5).as("Mean delay should be 5");
     }
 }
 
