@@ -79,6 +79,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
         // pull out legs with PT stops information
         Table table = legs.where(
                 legs.column("access_stop_id").isNotMissing()
+                        .or(legs.stringColumn("mode").isEqualTo("drt"))
         );
 
         // convert H:M:S format to seconds
