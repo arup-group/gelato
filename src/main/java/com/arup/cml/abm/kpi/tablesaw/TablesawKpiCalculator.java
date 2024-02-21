@@ -7,7 +7,11 @@ import com.arup.cml.abm.kpi.data.LinkLog;
 import com.arup.cml.abm.kpi.matsim.run.MatsimKpiGenerator;
 
 import org.matsim.api.core.v01.network.Network;
+import org.matsim.api.core.v01.population.Person;
+import org.matsim.api.core.v01.population.Population;
 import org.matsim.core.config.groups.ControllerConfigGroup.CompressionType;
+import org.matsim.core.config.groups.ScoringConfigGroup;
+import org.matsim.core.population.PopulationUtils;
 import org.matsim.core.utils.io.IOUtils;
 import org.matsim.core.utils.misc.Time;
 import org.matsim.pt.transitSchedule.api.TransitSchedule;
@@ -37,6 +41,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
     private static final Logger LOGGER = LogManager.getLogger(TablesawKpiCalculator.class);
     private final Table legs;
     private final Table trips;
+    private Table personModeScores;
     private Table networkLinks;
     private Table networkLinkModes;
     private Table scheduleStops;
@@ -48,7 +53,9 @@ public class TablesawKpiCalculator implements KpiCalculator {
     private CompressionType compressionType;
 
     public TablesawKpiCalculator(Network network, TransitSchedule schedule, Vehicles vehicles, LinkLog linkLog,
-                                 InputStream legsInputStream, InputStream tripsInputStream, Path outputDirectory, CompressionType compressionType) {
+                                 Population population, ScoringConfigGroup scoring,
+                                 InputStream legsInputStream, InputStream tripsInputStream,
+                                 Path outputDirectory, CompressionType compressionType) {
         this.compressionType = compressionType;
         // TODO: 24/01/2024 replace this ASAP with a representation of the network
         // that isn't from the MATSim API (a map, or dedicated domain object, or
@@ -60,6 +67,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
 
         legs = readCSVInputStream(legsInputStream, columnMapping).setName("Legs");
         trips = readCSVInputStream(tripsInputStream, columnMapping).setName("Trips");
+        createPeopleTables(population, scoring);
         createNetworkLinkTables(network);
         createTransitTables(schedule);
         createVehicleTable(vehicles);
@@ -68,9 +76,36 @@ public class TablesawKpiCalculator implements KpiCalculator {
     }
 
     @Override
-    public void writeAffordabilityKpi(Path outputDirectory) {
-        // TODO: implement KPI
+    public Table writeAffordabilityKpi(Path outputDirectory) {
         LOGGER.info("Writing Affordability KPI to {}", outputDirectory);
+
+        Table table = legs
+                .joinOn("person", "mode")
+                .inner(personModeScores);
+
+        table.addColumns(
+                table.intColumn("distance")
+                        .multiply(table.doubleColumn("monetaryDistanceRate"))
+                        .add(table.doubleColumn("dailyMonetaryConstant"))
+                        .abs()
+                        .setName("monetaryCostOfTravel")
+        );
+
+        Table intermediate = table
+                .selectColumns("person", "subpopulation", "trip_id", "mode", "dep_time", "trav_time",
+                        "distance", "monetaryCostOfTravel")
+                .setName("Monetary Travel Costs");
+        this.writeTableCompressed(intermediate, String.format("%s/intermediate-affordability.csv", outputDirectory), this.compressionType);
+
+        Table kpi = table.where(
+                        table.column("access_stop_id").isNotMissing()
+                                .or(table.stringColumn("mode").isEqualTo("drt"))
+                )
+                .summarize("monetaryCostOfTravel", sum)
+                .by("person", "subpopulation")
+                .setName("Daily PT & DRT Travel Costs");
+        this.writeTableCompressed(kpi, String.format("%s/kpi-affordability.csv", outputDirectory), this.compressionType);
+        return kpi;
     }
 
     @Override
@@ -299,7 +334,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
         this.writeTableCompressed(intermediate, String.format("%s/intermediate-travel-time.csv", outputDirectory), this.compressionType);
 
         double kpi = trips.intColumn("trav_time_minutes").mean();
-        this.writeTableCompressed(intermediate, String.format("%s/kpi-travel-time.csv", outputDirectory), this.compressionType);
+        writeContentToFile(String.format("%s/kpi-travel-time.csv", outputDirectory), String.valueOf(kpi), this.compressionType);
         return kpi;
     }
 
@@ -408,6 +443,36 @@ public class TablesawKpiCalculator implements KpiCalculator {
         } else {
             return table;
         }
+    }
+
+    private void createPeopleTables(Population population, ScoringConfigGroup scoring) {
+        LOGGER.info("Creating Population Mode Scoring Table");
+
+        StringColumn personIDColumn = StringColumn.create("person");
+        StringColumn subpopulationColumn = StringColumn.create("subpopulation");
+        StringColumn modeColumn = StringColumn.create("mode");
+        DoubleColumn monetaryDistanceRateColumn = DoubleColumn.create("monetaryDistanceRate");
+        DoubleColumn dailyMonetaryConstantColumn = DoubleColumn.create("dailyMonetaryConstant");
+
+        for (Person person : population.getPersons().values()) {
+            ScoringConfigGroup.ScoringParameterSet scoringParams = scoring.getScoringParameters(PopulationUtils.getSubpopulation(person));
+            for (ScoringConfigGroup.ModeParams modeParams : scoringParams.getModes().values()) {
+                personIDColumn.append(person.getId().toString());
+                subpopulationColumn.append(PopulationUtils.getSubpopulation(person));
+                modeColumn.append(modeParams.getMode());
+                monetaryDistanceRateColumn.append(modeParams.getMonetaryDistanceRate());
+                dailyMonetaryConstantColumn.append(modeParams.getDailyMonetaryConstant());
+            }
+        }
+
+        personModeScores = Table.create("Person Mode Scoring Parameters")
+                .addColumns(
+                        personIDColumn,
+                        subpopulationColumn,
+                        modeColumn,
+                        monetaryDistanceRateColumn,
+                        dailyMonetaryConstantColumn
+                );
     }
 
     private void createNetworkLinkTables(Network network) {
@@ -670,6 +735,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
 
         this.writeTableCompressed(legs, String.format("%s/supporting-data-legs.csv", outputDir), this.compressionType);
         this.writeTableCompressed(trips, String.format("%s/supporting-data-trips.csv", outputDir), this.compressionType);
+        this.writeTableCompressed(personModeScores, String.format("%s/supporting-person-mode-score-parameters.csv", outputDir), this.compressionType);
         this.writeTableCompressed(linkLog, String.format("%s/supporting-data-linkLog.csv", outputDir), this.compressionType);
         this.writeTableCompressed(linkLogVehicleOccupancy, String.format("%s/supporting-data-vehicleOccupancy.csv", outputDir), this.compressionType);
         this.writeTableCompressed(networkLinks, String.format("%s/supporting-data-networkLinks.csv", outputDir), this.compressionType);

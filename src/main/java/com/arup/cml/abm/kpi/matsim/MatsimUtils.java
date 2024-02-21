@@ -5,6 +5,7 @@ import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Network;
+import org.matsim.api.core.v01.population.Population;
 import org.matsim.contrib.dvrp.fleet.*;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigGroup;
@@ -34,6 +35,8 @@ public class MatsimUtils {
     private Network matsimNetwork;
     private TransitSchedule matsimTransitSchedule;
     private Vehicles matsimVehicles;
+    private ScoringConfigGroup scoring;
+    private Population population;
     private String runId;
     private String compressionFileEnd;
 
@@ -56,6 +59,8 @@ public class MatsimUtils {
         this.matsimNetwork = matsimScenario.getNetwork();
         this.matsimTransitSchedule = matsimScenario.getTransitSchedule();
         this.matsimVehicles = collectVehicles(matsimScenario);
+        this.population = matsimScenario.getPopulation();
+        this.scoring = matsimConfig.scoring();
     }
 
     private Config getConfig(String matsimInputConfig) {
@@ -118,6 +123,14 @@ public class MatsimUtils {
 
     public Vehicles getMatsimVehicles() {
         return matsimVehicles;
+    }
+
+    public ScoringConfigGroup getScoring() {
+        return scoring;
+    }
+
+    public Population getPopulation() {
+        return population;
     }
 
     public InputStream getMatsimLegsCSVInputStream() {

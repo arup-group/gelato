@@ -4,7 +4,9 @@ import com.arup.cml.abm.kpi.data.LinkLog;
 import com.arup.cml.abm.kpi.tablesaw.TablesawKpiCalculator;
 import org.junit.rules.TemporaryFolder;
 import org.matsim.api.core.v01.network.Network;
+import org.matsim.api.core.v01.population.Population;
 import org.matsim.core.config.groups.ControllerConfigGroup;
+import org.matsim.core.config.groups.ScoringConfigGroup;
 import org.matsim.core.utils.io.IOUtils;
 import org.matsim.pt.transitSchedule.api.TransitSchedule;
 import org.matsim.vehicles.Vehicles;
@@ -19,6 +21,8 @@ public class KpiCalculatorBuilder {
     String trips;
     Vehicles vehicles = new VehiclesBuilder().build();
     LinkLog linkLog = new LinkLog();
+    Population population = new PopulationBuilder().build();
+    ScoringConfigGroup scoring = new ScoringConfigGroup();
 
     public KpiCalculatorBuilder(TemporaryFolder tmpDir) {
         this.tmpDir = tmpDir;
@@ -57,7 +61,8 @@ public class KpiCalculatorBuilder {
     }
 
     public TablesawKpiCalculator build() {
-        return new TablesawKpiCalculator(network, schedule, vehicles, linkLog, getInputStream(legs), getInputStream(trips),
+        return new TablesawKpiCalculator(network, schedule, vehicles, linkLog, population, scoring,
+                getInputStream(legs), getInputStream(trips),
                 Path.of(tmpDir.getRoot().getAbsolutePath()), ControllerConfigGroup.CompressionType.gzip
         );
     }
