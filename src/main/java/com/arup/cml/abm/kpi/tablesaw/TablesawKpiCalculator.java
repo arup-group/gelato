@@ -89,15 +89,6 @@ public class TablesawKpiCalculator implements KpiCalculator {
                         (int) Time.parseTime(time)));
         table.addColumns(wait_time_seconds);
 
-        // average wait by mode
-        // ***** current req - average wait time by mode
-//        Table intermediate =
-//                table
-//                        .summarize("wait_time_seconds", mean)
-//                        .by("mode")
-//                        .setName("Average wait time at stops by mode");
-//        intermediate.write().csv(String.format("%s/pt_wait_time.csv", outputDir));
-
         // put in hour bins
         IntColumn hour = IntColumn.create("hour");
         table.column("dep_time")
