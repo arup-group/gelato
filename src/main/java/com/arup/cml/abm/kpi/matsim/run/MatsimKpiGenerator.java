@@ -84,6 +84,7 @@ public class MatsimKpiGenerator implements Runnable {
         kpiCalculator.writeVehicleKMKpi(outputDir);
         kpiCalculator.writeSpeedKpi(outputDir);
         kpiCalculator.writeGHGKpi(outputDir);
+        kpiCalculator.writeAccessToMobilityServices(outputDir);
         kpiCalculator.writeCongestionKpi(outputDir);
         kpiCalculator.writeTravelTime(outputDir);
         MemoryObserver.stop();

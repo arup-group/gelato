@@ -67,6 +67,7 @@ public class MatsimKpiGeneratorIntegrationTest {
                 "intermediate-vehicle-km.csv" + COMPRESSION_FILE_EXTENSION,
                 "intermediate-affordability.csv" + COMPRESSION_FILE_EXTENSION,
                 "intermediate-travel-time.csv" + COMPRESSION_FILE_EXTENSION,
+                "intermediate-access-to-mobility-services.csv" + COMPRESSION_FILE_EXTENSION,
                 "supporting-data-vehicles.csv" + COMPRESSION_FILE_EXTENSION,
                 "supporting-data-scheduleRoutes.csv" + COMPRESSION_FILE_EXTENSION,
                 "supporting-data-scheduleStops.csv" + COMPRESSION_FILE_EXTENSION,
@@ -96,6 +97,9 @@ public class MatsimKpiGeneratorIntegrationTest {
                 "kpi-pt-wait-time.csv" + COMPRESSION_FILE_EXTENSION,
                 "kpi-travel-time.csv" + COMPRESSION_FILE_EXTENSION,
                 "kpi-affordability.csv" + COMPRESSION_FILE_EXTENSION,
+                "kpi-access-to-mobility-services-access-to-bus.csv" + COMPRESSION_FILE_EXTENSION,
+                "kpi-access-to-mobility-services-access-to-rail.csv" + COMPRESSION_FILE_EXTENSION,
+                "kpi-access-to-mobility-services-access-to-pt-and-pt-used.csv" + COMPRESSION_FILE_EXTENSION,
         };
         for (int i = 0; i < expectedKpiFiles.length; i++) {
             String kpiFile = expectedKpiFiles[i];

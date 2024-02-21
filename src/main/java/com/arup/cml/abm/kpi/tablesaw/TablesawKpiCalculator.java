@@ -19,6 +19,7 @@ import org.matsim.vehicles.Vehicles;
 import tech.tablesaw.api.*;
 import tech.tablesaw.io.csv.CsvReadOptions;
 import tech.tablesaw.io.csv.CsvWriteOptions;
+import tech.tablesaw.selection.Selection;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,12 +27,7 @@ import java.io.OutputStream;
 import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Consumer;
 
 import static tech.tablesaw.aggregate.AggregateFunctions.mean;
@@ -64,8 +60,8 @@ public class TablesawKpiCalculator implements KpiCalculator {
         columnMapping.put("dep_time", ColumnType.STRING);
         columnMapping.put("trav_time", ColumnType.STRING);
         columnMapping.put("wait_time", ColumnType.STRING);
-
         legs = readCSVInputStream(legsInputStream, columnMapping).setName("Legs");
+        columnMapping.put("first_pt_boarding_stop", ColumnType.STRING);
         trips = readCSVInputStream(tripsInputStream, columnMapping).setName("Trips");
         createPeopleTables(population, scoring);
         createNetworkLinkTables(network);
@@ -340,9 +336,95 @@ public class TablesawKpiCalculator implements KpiCalculator {
 
     @Override
     public Table writeAccessToMobilityServices(Path outputDirectory) {
-        // TODO: implement KPI
         LOGGER.info("Writing Access To Mobility Services KPI to {}", outputDirectory);
-        return Table.create("");
+
+        // get home locations for persons
+        Table table = trips
+                .where(trips.stringColumn("start_activity_type").isEqualTo("home"))
+                .selectColumns("person", "start_activity_type", "start_x", "start_y", "first_pt_boarding_stop");
+        table.column("start_activity_type").setName("location_type");
+        table.column("start_x").setName("x");
+        table.column("start_y").setName("y");
+        BooleanColumn usedPtColumn = BooleanColumn.create("used_pt");
+        table.stringColumn("first_pt_boarding_stop").forEach(new Consumer<String>() {
+            @Override
+            public void accept(String aString) {
+                if (aString.isEmpty()) {
+                    usedPtColumn.append(false);
+                } else {
+                    usedPtColumn.append(true);
+                }
+            }
+        });
+        table.addColumns(usedPtColumn);
+        table.removeColumns(table.column("first_pt_boarding_stop"));
+        table = table.dropDuplicateRows();
+
+        // find out if they have access to pt
+        table = addPTAccessColumnWithinDistance(
+                table,
+                scheduleStops.where(scheduleStops.stringColumn("mode").isEqualTo("bus")),
+                400.0,
+                "bus_access_400m"
+        );
+        table = addPTAccessColumnWithinDistance(
+                table,
+                scheduleStops.where(scheduleStops.stringColumn("mode").isEqualTo("rail")),
+                800.0,
+                "rail_access_800m"
+        );
+        this.writeTableCompressed(
+                table,
+                String.format("%s/intermediate-access-to-mobility-services.csv", outputDirectory),
+                this.compressionType);
+
+        // compute KPIs
+        double bus_kpi = ((double) table.booleanColumn("bus_access_400m").countTrue() /
+                table.booleanColumn("bus_access_400m").size())
+                * 100;
+        bus_kpi = round(bus_kpi, 2);
+        writeContentToFile(String.format("%s/kpi-access-to-mobility-services-access-to-bus.csv", outputDirectory),
+                String.valueOf(bus_kpi), this.compressionType);
+
+        double rail_kpi = ((double) table.booleanColumn("rail_access_800m").countTrue() /
+                table.booleanColumn("rail_access_800m").size())
+                * 100;
+        rail_kpi = round(rail_kpi, 2);
+        writeContentToFile(String.format("%s/kpi-access-to-mobility-services-access-to-rail.csv", outputDirectory),
+                String.valueOf(rail_kpi), this.compressionType);
+
+        Selection ptAccess = table.booleanColumn("bus_access_400m").isTrue()
+                .or(table.booleanColumn("rail_access_800m").isTrue());
+        double used_pt_kpi = ((double) table.where(ptAccess.and(table.booleanColumn("used_pt").isTrue())
+        ).rowCount() / table.rowCount())
+                * 100;
+        used_pt_kpi = round(used_pt_kpi, 2);
+        writeContentToFile(String.format("%s/kpi-access-to-mobility-services-access-to-pt-and-pt-used.csv", outputDirectory),
+                String.valueOf(used_pt_kpi), this.compressionType);
+
+        return table;
+    }
+
+    private Table addPTAccessColumnWithinDistance(Table table, Table stops, double distance, String columnName) {
+        table.addColumns(
+                BooleanColumn.create(columnName,
+                        Collections.nCopies(table.column("person").size(), false)));
+        // to collect people with access, we remove them from table to not process them again
+        Table trueTable = table.emptyCopy();
+        for (Row stopRow : stops) {
+            double x = stopRow.getNumber("x");
+            double y = stopRow.getNumber("y");
+            for (Row personRow : table) {
+                double circleCalc = Math.pow(personRow.getNumber("x") - x, 2) + Math.pow(personRow.getNumber("y") - y, 2);
+                if (circleCalc <= Math.pow(distance, 2)) {
+                    // is within radius of 'distance'
+                    personRow.setBoolean(columnName, true);
+                    trueTable.append(personRow);
+                    table = table.dropWhere(table.stringColumn("person").isEqualTo(personRow.getString("person")));
+                }
+            }
+        }
+        return table.append(trueTable);
     }
 
     @Override
@@ -566,14 +648,27 @@ public class TablesawKpiCalculator implements KpiCalculator {
         StringColumn routeIDColumn = StringColumn.create("routeID");
         StringColumn modeColumn = StringColumn.create("mode");
 
+        // for adding modes to stops
+        StringColumn stopIDModeColumn = StringColumn.create("stopID");
+        StringColumn modeModeColumn = StringColumn.create("mode");
+
         LOGGER.info("Creating Schedule Transit Tables");
         schedule.getTransitLines().forEach((lineId, transitLine) -> {
             transitLine.getRoutes().forEach((routeId, route) -> {
                 lineIDColumn.append(lineId.toString());
                 routeIDColumn.append(routeId.toString());
                 modeColumn.append(route.getTransportMode());
+                route.getStops().forEach((stop) -> {
+                    stopIDModeColumn.append(stop.getStopFacility().getId().toString());
+                    modeModeColumn.append(route.getTransportMode());
+                });
             });
         });
+        Table tmpStopModeTable = Table.create("Stop Modes").addColumns(
+                stopIDModeColumn,
+                modeModeColumn
+        ).dropDuplicateRows();
+        scheduleStops = scheduleStops.joinOn("stopID").inner(tmpStopModeTable);
 
         scheduleRoutes = Table.create("Schedule Routes")
                 .addColumns(
