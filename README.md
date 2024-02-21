@@ -246,7 +246,7 @@ various KPI calculations:
 |--------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------|
 | `intermediate-congestion.csv.gz`     | Average delay ratio for travel time on each link, for each mode, across all hours of the modelled day, given the link was used within that hour by vehicle(s) of that mode. | `kpi-congestion.csv.gz`     |
 | `intermediate-occupancy-rate.csv.gz` | Average occupancy of each vehicle, across the modelled day, given that vehicle has travelled. Capacity of the vehicle is reported for convenience.                          | `kpi-occupancy-rate.csv.gz` |
-| `intermediate-pt-wait-time.csv.gz`   | Average waiting time, in seconds, for each transit stop and transit and drt modes, across hours of the modelled day (given the transit stop was used for travel).           | `kpi-pt-wait-time.csv.gz`   |
+| `intermediate-pt-wait-time.csv.gz`   | Average waiting time, in seconds, for each transit stop and transit and DRT modes, across hours of the modelled day (given the transit stop was used for travel).           | `kpi-pt-wait-time.csv.gz`   |
 | `intermediate-vehicle-km.csv.gz`     | Total kilometres travelled by each vehicle during the modelled day. The mode of the vehicle is reported for convenience.                                                    | `kpi-vehicle-km.csv.gz`     |
 
 ## Supporting Data
