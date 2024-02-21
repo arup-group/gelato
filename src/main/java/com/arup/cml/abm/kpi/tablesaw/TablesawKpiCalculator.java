@@ -79,6 +79,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
         // pull out legs with PT stops information
         Table table = legs.where(
                 legs.column("access_stop_id").isNotMissing()
+                        .or(legs.stringColumn("mode").isEqualTo("drt"))
         );
 
         // convert H:M:S format to seconds
@@ -87,15 +88,6 @@ public class TablesawKpiCalculator implements KpiCalculator {
                 .forEach(time -> wait_time_seconds.append(
                         (int) Time.parseTime(time)));
         table.addColumns(wait_time_seconds);
-
-        // average wait by mode
-        // ***** current req - average wait time by mode
-//        Table intermediate =
-//                table
-//                        .summarize("wait_time_seconds", mean)
-//                        .by("mode")
-//                        .setName("Average wait time at stops by mode");
-//        intermediate.write().csv(String.format("%s/pt_wait_time.csv", outputDir));
 
         // put in hour bins
         IntColumn hour = IntColumn.create("hour");
