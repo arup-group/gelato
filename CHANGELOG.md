@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - SLF4J runtime error/warning ([#20](https://github.com/arup-group/gelato/issues/20))
 - drt mode not showing up in congestion outputs ([#10](https://github.com/arup-group/gelato/issues/10), [#23](https://github.com/arup-group/gelato/issues/23))
 - missing data in congestion KPI outputs that were caused by infinite speed links ([#38](https://github.com/arup-group/gelato/issues/38))
+- drt mode not showing up in PT wait time KPI output ([#45](https://github.com/arup-group/gelato/issues/45), [#46](https://github.com/arup-group/gelato/issues/46))
 
 ### Changed
 
