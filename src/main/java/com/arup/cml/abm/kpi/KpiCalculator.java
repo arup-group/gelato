@@ -5,7 +5,7 @@ import tech.tablesaw.api.Table;
 import java.nio.file.Path;
 
 public interface KpiCalculator {
-    Table writeAffordabilityKpi(Path outputDirectory);
+    double writeAffordabilityKpi(Path outputDirectory);
 
     void writePtWaitTimeKpi(Path outputDirectory);
 

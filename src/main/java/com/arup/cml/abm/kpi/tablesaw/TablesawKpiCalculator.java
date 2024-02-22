@@ -72,36 +72,118 @@ public class TablesawKpiCalculator implements KpiCalculator {
     }
 
     @Override
-    public Table writeAffordabilityKpi(Path outputDirectory) {
+    public double writeAffordabilityKpi(Path outputDirectory) {
         LOGGER.info("Writing Affordability KPI to {}", outputDirectory);
 
+        // join personal monetary costs, constant and per distance unit
         Table table = legs
                 .joinOn("person", "mode")
                 .inner(personModeScores);
 
+        // compute monetary cost for each leg
         table.addColumns(
                 table.intColumn("distance")
                         .multiply(table.doubleColumn("monetaryDistanceRate"))
                         .add(table.doubleColumn("dailyMonetaryConstant"))
                         .abs()
-                        .setName("monetaryCostOfTravel")
-        );
-
-        Table intermediate = table
-                .selectColumns("person", "subpopulation", "trip_id", "mode", "dep_time", "trav_time",
-                        "distance", "monetaryCostOfTravel")
+                        .setName("monetaryCostOfTravel"));
+        table = table
+                .selectColumns("person", "income", "income_numeric", "subpopulation", "monetaryCostOfTravel")
                 .setName("Monetary Travel Costs");
+
+        // we decide which income column we should use, and what name is given to as the low income bracket
+        String incomeColumnName = null;
+        String lowIncomeName = null;
+        if (table.column("income_numeric").countMissing() != table.column("income_numeric").size()) {
+            // numeric income values present, so we assign income percentiles and use this new column
+            double perc_25 = table.doubleColumn("income_numeric").percentile(25.0);
+            double perc_50 = table.doubleColumn("income_numeric").percentile(50.0);
+            double perc_75 = table.doubleColumn("income_numeric").percentile(75.0);
+            incomeColumnName = "income_bracket";
+            lowIncomeName = "25th percentile";
+            StringColumn incomeBracket = StringColumn.create(incomeColumnName);
+            String finalLowIncomeName = lowIncomeName;
+            table.doubleColumn("income_numeric").forEach(new Consumer<Double>() {
+                @Override
+                public void accept(Double income) {
+                    if (income.isNaN()) {
+                        incomeBracket.appendMissing();
+                    } else if (income <= perc_25) {
+                        incomeBracket.append(finalLowIncomeName);
+                    } else if (income <= perc_50) {
+                        incomeBracket.append("26-50th percentile");
+                    } else if (income <= perc_75) {
+                        incomeBracket.append("51-75th percentile");
+                    } else {
+                        incomeBracket.append("75th+ percentile");
+                    }
+                }
+            });
+            table.addColumns(incomeBracket);
+        } else {
+            lowIncomeName = findStringWithSubstring(table.stringColumn("income"), "low");
+            if (lowIncomeName != null) {
+                incomeColumnName = "income";
+            } else {
+                lowIncomeName = findStringWithSubstring(table.stringColumn("subpopulation"), "low income");
+                if (lowIncomeName != null) {
+                    incomeColumnName = "subpopulation";
+                }
+            }
+            if (lowIncomeName == null) {
+                incomeColumnName = "subpopulation";
+                LOGGER.warn("Low Income category was not found anywhere. You will only receive intermediate outputs " +
+                        "for the Affordability Kpi and they will be grouped by subpopulation. Let's hope you " +
+                        "configured something for this sim!");
+            }
+        }
+
+        // total daily cost for each person
+        table = table
+                .summarize("monetaryCostOfTravel", sum)
+                .by("person", incomeColumnName)
+                .setName("Daily Monetary Travel Cost");
+
+        // average across income bracket or subpopulation
+        Table intermediate = table
+                .summarize("Sum [monetaryCostOfTravel]", sum, mean)
+                .by(incomeColumnName)
+                .setName("Average Monetary Travel Cost by ...");
+        intermediate.column("Sum [Sum [monetaryCostOfTravel]]").setName("total_daily_monetary_cost");
+        intermediate.column("Mean [Sum [monetaryCostOfTravel]]").setName("mean_daily_monetary_cost");
+        // append an overall cost result
+        Table overallRow = intermediate.emptyCopy();
+        overallRow.stringColumn(incomeColumnName).append("overall");
+        overallRow.doubleColumn("total_daily_monetary_cost").append(
+                intermediate.doubleColumn("total_daily_monetary_cost").sum());
+        double overallAverageCost = intermediate.doubleColumn("total_daily_monetary_cost").sum() /
+                table.column("person").size();
+        overallRow.doubleColumn("mean_daily_monetary_cost").append(overallAverageCost);
+        intermediate.append(overallRow);
         this.writeTableCompressed(intermediate, String.format("%s/intermediate-affordability.csv", outputDirectory), this.compressionType);
 
-        Table kpi = table.where(
-                        table.column("access_stop_id").isNotMissing()
-                                .or(table.stringColumn("mode").isEqualTo("drt"))
-                )
-                .summarize("monetaryCostOfTravel", sum)
-                .by("person", "subpopulation")
-                .setName("Daily PT & DRT Travel Costs");
-        this.writeTableCompressed(kpi, String.format("%s/kpi-affordability.csv", outputDirectory), this.compressionType);
-        return kpi;
+        if (lowIncomeName != null) {
+            // average daily cost for agents in the low income bracket
+            double lowIncomeAverageCost = intermediate
+                    .where(intermediate.stringColumn(incomeColumnName).isEqualTo(lowIncomeName))
+                    .doubleColumn("mean_daily_monetary_cost")
+                    .get(0);
+            double kpi = round(lowIncomeAverageCost / overallAverageCost, 2);
+            writeContentToFile(String.format("%s/kpi-affordability.csv", outputDirectory), String.valueOf(kpi), this.compressionType);
+            return kpi;
+        }
+        LOGGER.warn("We could not give you a KPI, check logs and intermediate output.");
+        return -1.0;
+    }
+
+    private static String findStringWithSubstring(StringColumn col, String substring) {
+        StringColumn values = col.unique();
+        for (String value : values) {
+            if (value.toUpperCase().contains(substring.toUpperCase())) {
+                return value;
+            }
+        }
+        return null;
     }
 
     @Override
@@ -325,8 +407,8 @@ public class TablesawKpiCalculator implements KpiCalculator {
 
         // add and apply emissions factors
         Table emissionsFactors = Table.create("Emissions Factors").addColumns(
-                StringColumn.create("mode", new String[] {"car", "bus"}),
-                DoubleColumn.create("factor", new double[] {0.222, 1.372})
+                StringColumn.create("mode", new String[]{"car", "bus"}),
+                DoubleColumn.create("factor", new double[]{0.222, 1.372})
         );
         table = table.joinOn("mode").inner(emissionsFactors);
         table.addColumns(table.numberColumn("Sum [distance_km]")
@@ -366,6 +448,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
         LOGGER.info("Writing Access To Mobility Services KPI to {}", outputDirectory);
 
         // get home locations for persons
+        // todo persons table
         Table table = trips
                 .where(trips.stringColumn("start_activity_type").isEqualTo("home"))
                 .selectColumns("person", "start_activity_type", "start_x", "start_y", "first_pt_boarding_stop");
@@ -394,6 +477,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
                 400.0,
                 "bus_access_400m"
         );
+        // todo add subway
         table = addPTAccessColumnWithinDistance(
                 table,
                 scheduleStops.where(scheduleStops.stringColumn("mode").isEqualTo("rail")),
@@ -558,6 +642,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
         LOGGER.info("Creating Population Mode Scoring Table");
 
         StringColumn personIDColumn = StringColumn.create("person");
+        StringColumn incomeColumn = StringColumn.create("income");
         StringColumn subpopulationColumn = StringColumn.create("subpopulation");
         StringColumn modeColumn = StringColumn.create("mode");
         DoubleColumn monetaryDistanceRateColumn = DoubleColumn.create("monetaryDistanceRate");
@@ -567,6 +652,8 @@ public class TablesawKpiCalculator implements KpiCalculator {
             ScoringConfigGroup.ScoringParameterSet scoringParams = scoring.getScoringParameters(PopulationUtils.getSubpopulation(person));
             for (ScoringConfigGroup.ModeParams modeParams : scoringParams.getModes().values()) {
                 personIDColumn.append(person.getId().toString());
+                incomeColumn.append(
+                        person.getAttributes().getAsMap().getOrDefault("income", "Unknown").toString());
                 subpopulationColumn.append(PopulationUtils.getSubpopulation(person));
                 modeColumn.append(modeParams.getMode());
                 monetaryDistanceRateColumn.append(modeParams.getMonetaryDistanceRate());
@@ -577,11 +664,26 @@ public class TablesawKpiCalculator implements KpiCalculator {
         personModeScores = Table.create("Person Mode Scoring Parameters")
                 .addColumns(
                         personIDColumn,
+                        incomeColumn,
                         subpopulationColumn,
                         modeColumn,
                         monetaryDistanceRateColumn,
                         dailyMonetaryConstantColumn
                 );
+
+        // attempt to parse income to a numeric column
+        DoubleColumn incomeNumeric = DoubleColumn.create("income_numeric");
+        personModeScores.stringColumn("income").forEach(new Consumer<String>() {
+            @Override
+            public void accept(String aString) {
+                if (aString.matches("([0-9]*[.])?[0-9]+")) {
+                    incomeNumeric.append(Double.parseDouble(aString));
+                } else {
+                    incomeNumeric.appendMissing();
+                }
+            }
+        });
+        personModeScores.addColumns(incomeNumeric);
     }
 
     private void createNetworkLinkTables(Network network) {
