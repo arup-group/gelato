@@ -17,7 +17,7 @@ public interface KpiCalculator {
 
     void writeSpeedKpi(Path outputDirectory);
 
-    void writeGHGKpi(Path outputDirectory);
+    double writeGHGKpi(Path outputDirectory);
 
     double writeTravelTime(Path outputDirectory);
 

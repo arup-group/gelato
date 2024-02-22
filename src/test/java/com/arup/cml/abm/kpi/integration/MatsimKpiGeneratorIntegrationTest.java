@@ -77,7 +77,7 @@ public class MatsimKpiGeneratorIntegrationTest {
                 "supporting-data-linkLog.csv" + COMPRESSION_FILE_EXTENSION,
                 "supporting-data-trips.csv" + COMPRESSION_FILE_EXTENSION,
                 "supporting-data-legs.csv" + COMPRESSION_FILE_EXTENSION,
-                "supporting-person-mode-score-parameters.csv" + COMPRESSION_FILE_EXTENSION
+                "supporting-data-person-mode-score-parameters.csv" + COMPRESSION_FILE_EXTENSION
         };
         for (int i = 0; i < expectedSupportingFiles.length; i++) {
             assertThat(generatedFiles)
@@ -100,6 +100,7 @@ public class MatsimKpiGeneratorIntegrationTest {
                 "kpi-access-to-mobility-services-access-to-bus.csv" + COMPRESSION_FILE_EXTENSION,
                 "kpi-access-to-mobility-services-access-to-rail.csv" + COMPRESSION_FILE_EXTENSION,
                 "kpi-access-to-mobility-services-access-to-pt-and-pt-used.csv" + COMPRESSION_FILE_EXTENSION,
+                "kpi-ghg-emissions.csv" + COMPRESSION_FILE_EXTENSION,
         };
         for (int i = 0; i < expectedKpiFiles.length; i++) {
             String kpiFile = expectedKpiFiles[i];

@@ -306,9 +306,36 @@ public class TablesawKpiCalculator implements KpiCalculator {
     }
 
     @Override
-    public void writeGHGKpi(Path outputDirectory) {
-        // TODO: implement KPI
+    public double writeGHGKpi(Path outputDirectory) {
         LOGGER.info("Writing GHG KPIs to {}", outputDirectory);
+
+        // take car and bus link log events
+        Table table = linkLog
+                .where(linkLog.stringColumn("mode").isEqualTo("car")
+                        .or(linkLog.stringColumn("mode").isEqualTo("bus")));
+
+        // add link length to the link log table
+        table = table
+                .joinOn("linkID")
+                .inner(networkLinks.selectColumns("linkID", "length"));
+        table.addColumns(table.numberColumn("length").divide(1000).setName("distance_km"));
+
+        // total distance by mode
+        table = table.summarize("distance_km", sum).by("mode");
+
+        // add and apply emissions factors
+        Table emissionsFactors = Table.create("Emissions Factors").addColumns(
+                StringColumn.create("mode", new String[] {"car", "bus"}),
+                DoubleColumn.create("factor", new double[] {0.222, 1.372})
+        );
+        table = table.joinOn("mode").inner(emissionsFactors);
+        table.addColumns(table.numberColumn("Sum [distance_km]")
+                .multiply(table.numberColumn("factor"))
+                .setName("emissions"));
+
+        double kpi = round(table.numberColumn("emissions").sum(), 2);
+        writeContentToFile(String.format("%s/kpi-ghg-emissions.csv", outputDirectory), String.valueOf(kpi), this.compressionType);
+        return kpi;
     }
 
     @Override
@@ -830,7 +857,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
 
         this.writeTableCompressed(legs, String.format("%s/supporting-data-legs.csv", outputDir), this.compressionType);
         this.writeTableCompressed(trips, String.format("%s/supporting-data-trips.csv", outputDir), this.compressionType);
-        this.writeTableCompressed(personModeScores, String.format("%s/supporting-person-mode-score-parameters.csv", outputDir), this.compressionType);
+        this.writeTableCompressed(personModeScores, String.format("%s/supporting-data-person-mode-score-parameters.csv", outputDir), this.compressionType);
         this.writeTableCompressed(linkLog, String.format("%s/supporting-data-linkLog.csv", outputDir), this.compressionType);
         this.writeTableCompressed(linkLogVehicleOccupancy, String.format("%s/supporting-data-vehicleOccupancy.csv", outputDir), this.compressionType);
         this.writeTableCompressed(networkLinks, String.format("%s/supporting-data-networkLinks.csv", outputDir), this.compressionType);
