@@ -14,4 +14,4 @@ RUN --mount=type=cache,target=/root/.m2 mvn -f $HOME/pom.xml clean package
 FROM eclipse-temurin:17-jre-jammy
 ARG JAR_FILE=/opt/app/target/*with-dependencies*.jar
 COPY --from=build $JAR_FILE /app/runner.jar
-ENTRYPOINT ["java", "-jar", "/app/runner.jar"]
+ENTRYPOINT java $JVM_OPTS -jar /app/runner.jar "$0" "$@"
