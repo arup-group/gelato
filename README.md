@@ -142,6 +142,56 @@ files in the directory you specified via `-o`, giving you something like this:
 For a short explanation of the content and meaning of these files, see [the KPI section](#the-kpis). For a more
 comprehensive description, see [insert blog post link here]().
 
+## A word about memory
+Gelato is a memory-hungry application. The bigger the model outputs you feed it in
+terms of the size of the events file, the network file, etc., the more memory it will need.
+For this reason, for some MATSim models you will need to:
+
+- Run Gelato in an environment with a lot of RAM available (memory usage of over 100GB is not unheard of)
+- Tweak [the JVM heap settings](https://bell-sw.com/blog/guide-to-jvm-memory-configuration-options/) to make
+sure that Gelato is able to use as much of the available RAM as possible
+
+Gelato logs its memory usage every minute, like so:
+```shell
+2024-02-12T13:34:03,345  INFO MemoryObserver:42 used RAM: 25 MB  free: 518 MB  total: 544 MB
+2024-02-12T13:35:03,350  INFO MemoryObserver:42 used RAM: 6167 MB  free: 9304 MB  total: 15472 MB
+2024-02-12T13:36:03,351  INFO MemoryObserver:42 used RAM: 9854 MB  free: 9585 MB  total: 19440 MB
+2024-02-12T13:37:03,358  INFO MemoryObserver:42 used RAM: 15375 MB  free: 5568 MB  total: 20944 MB
+2024-02-12T13:38:03,365  INFO MemoryObserver:42 used RAM: 21976 MB  free: 3623 MB  total: 25600 MB
+2024-02-12T13:39:03,372  INFO MemoryObserver:42 used RAM: 25378 MB  free: 221 MB  total: 25600 MB
+2024-02-12T13:40:03,374  INFO MemoryObserver:42 used RAM: 22115 MB  free: 3484 MB  total: 25600 MB
+2024-02-12T13:41:03,379  INFO MemoryObserver:42 used RAM: 23096 MB  free: 2503 MB  total: 25600 MB
+2024-02-12T13:42:03,385  INFO MemoryObserver:42 used RAM: 22929 MB  free: 2670 MB  total: 25600 MB
+2024-02-12T13:43:03,392  INFO MemoryObserver:42 used RAM: 24238 MB  free: 1361 MB  total: 25600 MB
+2024-02-12T13:44:03,402  INFO MemoryObserver:42 used RAM: 23718 MB  free: 1881 MB  total: 25600 MB
+2024-02-12T13:45:03,409  INFO MemoryObserver:42 used RAM: 23552 MB  free: 2047 MB  total: 25600 MB
+```
+
+If you're running on a machine with 120GB of RAM, you may be surprised to see Gelato
+fail with an out of memory error having used around only 30GB of RAM. This is because the JVM's
+[`MaxRAMPercentage`](https://www.baeldung.com/java-jvm-parameters-rampercentage#-xxmaxrampercentage)
+setting defaults to 25%, so 75% of the available RAM will go ignored and unused. You can override this
+default behaviour in a number of different ways using JVM parameters, for example:
+
+- Use `Xmx` to set the max heap size to an absolute value, for example 100GB:
+```shell
+java -Xmx100g \
+-jar gelato-0.0.2-alpha.jar \
+-mc /path/to/my-model/outputs/output_config.xml \
+-mo /path/to/my-model/outputs \
+-o /path/to/gelato-outputs/my-model/kpi
+```
+- Use `MaxRAMPercentage` to set the max heap size as a percentage of the available RAM (values *must*
+include 1 decimal place, so `80.0` rather than `80`):
+```shell
+java -XX:MaxRAMPercentage=80.0 \
+-jar gelato-0.0.2-alpha.jar \
+-mc /path/to/my-model/outputs/output_config.xml \
+-mo /path/to/my-model/outputs \
+-o /p
+```
+
+
 # Using Gelato via Docker
 
 ## Building the Image
@@ -201,6 +251,34 @@ Usage: MatsimKpiGenerator [-hV] -mc=<matsimConfigFile>
   -o=<outputDir>    Full path to the directory you want KPIs to be written to
   -V, --version     Print version information and exit.
 ```
+
+## Configuring JVM memory settings in the Docker container
+JVMs have been "container-aware" for a few years now, meaning they can detect when they are running
+inside a container and read Cgroup settings. This means that JVM memory settings are based on the memory
+available **to the container**, rather than the memory available in the host environment. This is welcome
+behaviour when running Gelato via Docker, but you will usually still need to tweak the JVM settings to
+make full use of containers with large amounts of RAM.
+
+You can do this using the same JVM parameters described in the [JVM memory](#a-word-about-memory)
+section above, but passing these parameters into the Docker container requires you to set a `JVM_OPTS`
+environmental variable to hold all the param name/value pairs. Your Docker `run` command would therefore
+look something like this:
+
+```shell
+docker run \
+-v /path/to/my-model/outputs/:/my-model-outputs \
+-v /path/to/gelato-outputs/my-model:/gelato-out \
+-e JVM_OPTS="-Xmx100G -XX:+PrintFlagsFinal" \
+gelato \
+-mc /my-model-outputs/output_config.xml \
+-mo /my-model-outputs \
+-o /gelato-out
+```
+
+(The `-XX:+PrintFlagsFinal` param does not modify memory configuration, but instructs the JVM to dump all of
+its settings to the console on startup. That can be handy when you want to confirm that the memory settings
+are as you expect.)
+
 
 # The KPIs
 
