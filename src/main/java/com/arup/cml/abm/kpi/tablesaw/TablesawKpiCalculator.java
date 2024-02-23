@@ -314,18 +314,6 @@ public class TablesawKpiCalculator implements KpiCalculator {
                         .setName("distance_km")
         );
 
-        // TODO add kpi for passenger KM
-        // to get to a passenger-km metric the easiest way is to go through legs
-//        Table legs = dataModel.getLegs();
-//        vehicles.stringColumn("vehicleID").setName("vehicle_id");
-//        legs = legs
-//                .joinOn("vehicle_id")
-//                .inner(vehicles.selectColumns("vehicle_id", "PTLineID", "PTRouteID"));
-//        Table kpi = legs.selectColumns(
-//                "person", "trip_id", "dep_time", "trav_time",
-//                "distance", "mode", "vehicle_id", "PTLineID", "PTRouteID");
-
-        // suggestion as intermediate output, might be too aggregated though
         Table intermediate = table
                 .joinOn("vehicleID")
                 .inner(vehicles.selectColumns("vehicleID", "mode"));
@@ -335,6 +323,27 @@ public class TablesawKpiCalculator implements KpiCalculator {
         double kpi = round(table.doubleColumn("distance_km").sum(), 2);
         LOGGER.info("Vehicle KM KPI {}", kpi);
         writeContentToFile(String.format("%s/kpi-vehicle-km.csv", outputDirectory), String.valueOf(kpi), this.compressionType);
+    }
+
+    @Override
+    public void writePassengerKMKpi(Path outputDirectory) {
+        LOGGER.info("Writing Passenger KM KPI to {}", outputDirectory);
+        // to get to a passenger-km metric the easiest way is to go through legs
+        Table intermediate = trips
+                .summarize("traveled_distance", sum)
+                .by("person")
+                .setName("Passenger KM per person");
+        intermediate.column("Sum [traveled_distance]").setName("traveled_distance");
+        intermediate.addColumns(
+                intermediate.doubleColumn("traveled_distance")
+                        .divide(1000)
+                        .setName("traveled_distance_km")
+        );
+        this.writeTableCompressed(intermediate, String.format("%s/intermediate-passenger-km.csv", outputDirectory), this.compressionType);
+
+        double kpi = round(trips.numberColumn("traveled_distance").divide(1000).sum(), 2);
+        LOGGER.info("Passenger KM KPI: {} km", kpi);
+        writeContentToFile(String.format("%s/kpi-passenger-km.csv", outputDirectory), String.valueOf(kpi), this.compressionType);
     }
 
     @Override
@@ -410,6 +419,11 @@ public class TablesawKpiCalculator implements KpiCalculator {
                 StringColumn.create("mode", new String[]{"car", "bus"}),
                 DoubleColumn.create("factor", new double[]{0.222, 1.372})
         );
+
+        // todo intermediate output that has emissions and emissions per capita
+        // (emissions divided by total number of agents in sim)?
+        // Final KPI will be emissions per capita that will be scaled.
+
         table = table.joinOn("mode").inner(emissionsFactors);
         table.addColumns(table.numberColumn("Sum [distance_km]")
                 .multiply(table.numberColumn("factor"))
@@ -422,6 +436,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
 
     @Override
     public double writeTravelTime(Path outputDirectory) {
+        // TODO update method name KPI missing
         LOGGER.info("Writing Travel Time KPI to {}", outputDirectory);
 
         // convert H:M:S format to seconds
@@ -445,6 +460,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
 
     @Override
     public Table writeAccessToMobilityServices(Path outputDirectory) {
+        // TODO update method name KPI missing
         LOGGER.info("Writing Access To Mobility Services KPI to {}", outputDirectory);
 
         // get home locations for persons

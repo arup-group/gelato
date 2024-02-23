@@ -15,6 +15,8 @@ public interface KpiCalculator {
 
     void writeVehicleKMKpi(Path outputDirectory);
 
+    void writePassengerKMKpi(Path outputDirectory);
+
     void writeSpeedKpi(Path outputDirectory);
 
     double writeGHGKpi(Path outputDirectory);
