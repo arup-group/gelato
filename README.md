@@ -173,7 +173,7 @@ fail with an out of memory error having used around only 30GB of RAM. This is be
 setting defaults to 25%, so 75% of the available RAM will go ignored and unused. You can override this
 default behaviour in a number of different ways using JVM parameters, for example:
 
-- Use `Xmx` to set the max heap size to an absolute value, for example 100GB in this example:
+- Use `Xmx` to set the max heap size to an absolute value, for example 100GB:
 ```shell
 java -Xmx100g \
 -jar gelato-0.0.2-alpha.jar \
