@@ -40,25 +40,34 @@ public class MatsimUtils {
     private final Set<String> necessaryConfigGroups = new HashSet<>(Arrays.asList(
             GlobalConfigGroup.GROUP_NAME,
             PlansConfigGroup.GROUP_NAME,
-            FacilitiesConfigGroup.GROUP_NAME,
+                    FacilitiesConfigGroup.GROUP_NAME,
             HouseholdsConfigGroup.GROUP_NAME,
-            TransitConfigGroup.GROUP_NAME,
+                    TransitConfigGroup.GROUP_NAME,
             VehiclesConfigGroup.GROUP_NAME,
-            NetworkConfigGroup.GROUP_NAME,
+                    NetworkConfigGroup.GROUP_NAME,
             ScoringConfigGroup.GROUP_NAME,
-            ScenarioConfigGroup.GROUP_NAME,
+                    ScenarioConfigGroup.GROUP_NAME,
             ControllerConfigGroup.GROUP_NAME));
 
     public MatsimUtils(Path matsimOutputDir, Path matsimConfigFile) {
+        this(matsimOutputDir, matsimConfigFile, true);
+    }
+
+    public MatsimUtils(Path matsimOutputDir, Path matsimConfigFile, boolean skipPlansFile) {
         this.matsimOutputDir = matsimOutputDir;
-        this.matsimConfig = getConfig(matsimConfigFile.toString());
+        this.matsimConfig = getConfig(matsimConfigFile.toString(), skipPlansFile);
         this.matsimScenario = ScenarioUtils.loadScenario(matsimConfig);
         this.matsimNetwork = matsimScenario.getNetwork();
         this.matsimTransitSchedule = matsimScenario.getTransitSchedule();
         this.matsimVehicles = collectVehicles(matsimScenario);
     }
 
-    private Config getConfig(String matsimInputConfig) {
+    /** Disable certain memory heavy inputs e.g. plansFile */
+    private void skipPlansFile(Config matsimConfig) {
+        matsimConfig.plans().setInputFile(null);
+    }
+
+    private Config getConfig(String matsimInputConfig, boolean skipPlansFile) {
         Config config = ConfigUtils.createConfig();
         TreeMap<String, ConfigGroup> configuredModules = config.getModules();
         for (ConfigGroup module : configuredModules.values().stream().toList()) {
@@ -76,6 +85,11 @@ public class MatsimUtils {
         this.runId = getRunId(config.controller().getRunId());
         this.compressionFileEnd = config.controller().getCompressionType().fileEnding;
         setOutputFilePaths(config);
+
+        if (skipPlansFile) {
+            skipPlansFile(config);
+        }
+
         return config;
     }
 
@@ -87,22 +101,22 @@ public class MatsimUtils {
         TreeMap<String, ConfigGroup> modules = config.getModules();
         modules.get("network")
                 .addParam("inputNetworkFile",
-                        String.format("%s/%soutput_network.xml%s", this.matsimOutputDir, this.runId, this.compressionFileEnd));
+                String.format("%s/%soutput_network.xml%s", this.matsimOutputDir, this.runId, this.compressionFileEnd));
         modules.get("transit")
                 .addParam("transitScheduleFile",
-                        String.format("%s/%soutput_transitSchedule.xml%s", this.matsimOutputDir, this.runId, this.compressionFileEnd));
+                String.format("%s/%soutput_transitSchedule.xml%s", this.matsimOutputDir, this.runId, this.compressionFileEnd));
         modules.get("transit")
                 .addParam("vehiclesFile",
-                        String.format("%s/%soutput_transitVehicles.xml%s", this.matsimOutputDir, this.runId, this.compressionFileEnd));
+                String.format("%s/%soutput_transitVehicles.xml%s", this.matsimOutputDir, this.runId, this.compressionFileEnd));
         modules.get("plans")
                 .addParam("inputPlansFile",
                         String.format("%s/%soutput_plans.xml%s", this.matsimOutputDir, this.runId, this.compressionFileEnd));
         modules.get("households")
                 .addParam("inputFile",
-                        String.format("%s/%soutput_households.xml%s", this.matsimOutputDir, this.runId, this.compressionFileEnd));
+                String.format("%s/%soutput_households.xml%s", this.matsimOutputDir, this.runId, this.compressionFileEnd));
         modules.get("facilities")
                 .addParam("inputFacilitiesFile",
-                        String.format("%s/%soutput_facilities.xml%s", this.matsimOutputDir, this.runId, this.compressionFileEnd));
+                String.format("%s/%soutput_facilities.xml%s", this.matsimOutputDir, this.runId, this.compressionFileEnd));
         modules.get("vehicles")
                 .addParam("vehiclesFile",
                         String.format("%s/%soutput_vehicles.xml%s", this.matsimOutputDir, this.runId, this.compressionFileEnd));
