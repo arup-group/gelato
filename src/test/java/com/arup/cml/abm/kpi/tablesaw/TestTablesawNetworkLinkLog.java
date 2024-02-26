@@ -1,7 +1,6 @@
 package com.arup.cml.abm.kpi.tablesaw;
 
-import com.arup.cml.abm.kpi.data.LinkLog;
-import com.arup.cml.abm.kpi.data.exceptions.LinkLogPassengerConsistencyException;
+import com.arup.cml.abm.kpi.domain.LinkLogConsistencyException;
 import org.junit.Test;
 import tech.tablesaw.api.Row;
 import tech.tablesaw.api.Table;
@@ -76,16 +75,31 @@ public class TestTablesawNetworkLinkLog {
                 .as("Number of people in vehicle should have been recorded as `1`");
     }
 
-    @Test(expected = LinkLogPassengerConsistencyException.class)
+    @Test(expected = LinkLogConsistencyException.class)
     public void throwsExceptionWhenPassengerWantsToLeaveUnrecordedVehicle() {
         new TablesawNetworkLinkLog().personAlightsVehicle("badVehicle", "someDude");
     }
 
-    @Test(expected = LinkLogPassengerConsistencyException.class)
+    @Test(expected = LinkLogConsistencyException.class)
     public void throwsExceptionWhenPersonWantsToLeaveVehicleTheyDidntBoard() {
         TablesawNetworkLinkLog linkLog = new TablesawNetworkLinkLog();
         linkLog.personBoardsVehicle("someVehicle", "someDude");
-        linkLog.personAlightsVehicle("someVehicle", "someRandomDude");
+        linkLog.personAlightsVehicle("someVehicle", "nonBoardingDude");
+    }
+
+    @Test
+    public void completeLinkLogEntryTracksPassengerIds() {
+        TablesawNetworkLinkLog linkLog = new TablesawNetworkLinkLog();
+        linkLog.personBoardsVehicle("someVehicle", "somePerson");
+        linkLog.createLinkLogEntry("someVehicle", "someLink", 12.0);
+        linkLog.completeLinkLogEntry("someVehicle", 24.0);
+
+        Table vehicleOccupantsTable = linkLog.getVehicleOccupancyTable();
+        assertTableHasSingleRow(vehicleOccupantsTable);
+        Row vehicleOccupantsEntry = vehicleOccupantsTable.row(0);
+        assertThat(vehicleOccupantsEntry.getString("agentId"))
+                .isEqualTo("somePerson")
+                .as("Agent in the vehicle should have been recorded as 'somePerson'");
     }
 
     private static void assertTableHasSingleRow(Table table) {

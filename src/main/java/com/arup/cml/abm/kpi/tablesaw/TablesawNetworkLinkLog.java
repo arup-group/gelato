@@ -1,17 +1,12 @@
 package com.arup.cml.abm.kpi.tablesaw;
 
-import com.arup.cml.abm.kpi.data.exceptions.LinkLogPassengerConsistencyException;
 import com.arup.cml.abm.kpi.domain.LinkLogConsistencyException;
 import com.arup.cml.abm.kpi.domain.NetworkLinkLog;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import tech.tablesaw.api.*;
 
 import java.util.*;
 
 public class TablesawNetworkLinkLog implements NetworkLinkLog {
-
-    private static final Logger LOGGER = LogManager.getLogger(TablesawNetworkLinkLog.class);
 
     private final Map<String, String> vehicleModes = new HashMap<>();
 
@@ -22,8 +17,7 @@ public class TablesawNetworkLinkLog implements NetworkLinkLog {
 
     private Table linkLogTable;
     private Table vehicleOccupancyTable;
-    private int rowIndex = 0;
-//    private int vehicleOccupancyIndex = 0;
+    private int linkLogRowIndex = 0;
 
     public TablesawNetworkLinkLog() {
         linkLogTable = createLinkLogTable();
@@ -31,43 +25,34 @@ public class TablesawNetworkLinkLog implements NetworkLinkLog {
     }
 
     private Table createLinkLogTable() {
-        LOGGER.info("Creating Tablesaw Link Log tables");
-        LongColumn indexColumn = LongColumn.create("index");
-        StringColumn linkIDColumn = StringColumn.create("linkID");
-        StringColumn vehicleIDColumn = StringColumn.create("vehicleID");
-        StringColumn modeColumn = StringColumn.create("initialMode");
-        DoubleColumn startTimeColumn = DoubleColumn.create("startTime");
-        DoubleColumn endTimeColumn = DoubleColumn.create("endTime");
-        IntColumn numberOfPeopleColumn = IntColumn.create("numberOfPeople");
-
         return Table.create("Link Log").addColumns(
-                indexColumn,
-                linkIDColumn,
-                vehicleIDColumn,
-                modeColumn,
-                startTimeColumn,
-                endTimeColumn,
-                numberOfPeopleColumn
+                LongColumn.create("index"),
+                StringColumn.create("linkID"),
+                StringColumn.create("vehicleID"),
+                StringColumn.create("initialMode"),
+                DoubleColumn.create("startTime"),
+                DoubleColumn.create("endTime"),
+                IntColumn.create("numberOfPeople")
         );
     }
 
     private Table createVehicleOccupancyTable() {
-        LOGGER.info("Creating Tablesaw Vehicle Occupancy table");
-        LongColumn linkLogIndexColumn = LongColumn.create("linkLogIndex");
-        StringColumn agentIDColumn = StringColumn.create("agentId");
-        return Table.create("Vehicle Occupancy").addColumns(linkLogIndexColumn, agentIDColumn);
+        return Table.create("Vehicle Occupancy").addColumns(
+                LongColumn.create("linkLogIndex"),
+                StringColumn.create("agentId")
+        );
     }
 
     @Override
     public void createLinkLogEntry(String vehicleID, String linkID, double startTime) {
         Row row = linkLogTable.appendRow();
-        row.setLong("index", rowIndex);
+        row.setLong("index", linkLogRowIndex);
         row.setString("linkID", linkID);
         row.setString("vehicleID", vehicleID);
         row.setString("initialMode", vehicleModes.getOrDefault(vehicleID, "unknown"));
         row.setDouble("startTime", startTime);
-        vehicleLatestLogIndex.put(vehicleID, rowIndex);
-        rowIndex++;
+        vehicleLatestLogIndex.put(vehicleID, linkLogRowIndex);
+        linkLogRowIndex++;
     }
 
     @Override
@@ -77,7 +62,7 @@ public class TablesawNetworkLinkLog implements NetworkLinkLog {
         row.setDouble("endTime", endTime);
         row.setInt("numberOfPeople",
                 vehicleLatestOccupants.getOrDefault(vehicleID, new ArrayList<>()).size());
-        newVehicleOccupantsEntry(vehicleID, latestStateIndex);
+        updateVehicleOccupancyTable(vehicleID, latestStateIndex);
     }
 
     @Override
@@ -100,7 +85,7 @@ public class TablesawNetworkLinkLog implements NetworkLinkLog {
                 && vehicleLatestOccupants.get(vehicleID).contains(personID)) {
             vehicleLatestOccupants.get(vehicleID).remove(personID);
         } else {
-            throw new LinkLogPassengerConsistencyException(String.format(
+            throw new LinkLogConsistencyException(String.format(
                     "The requested person: `%s` cannot leave vehicle `%s` because they didn't board it",
                     personID,
                     vehicleID));
@@ -115,14 +100,14 @@ public class TablesawNetworkLinkLog implements NetworkLinkLog {
         return vehicleOccupancyTable;
     }
 
-    private void newVehicleOccupantsEntry(String vehicleID, long idx) {
+    private void updateVehicleOccupancyTable(String vehicleID, long idx) {
         System.out.println("" + vehicleID + "," + idx);
-//        List<String> currentOccupants = getLatestVehicleOccupants(vehicleID);
-//        for (String personID : currentOccupants) {
-//            vehicleOccupantsData.put(vehicleOccupancyIndex, "linkLogIndex", idx);
-//            vehicleOccupantsData.put(vehicleOccupancyIndex, "agentId", personID);
-//            vehicleOccupancyIndex++;
-//        }
+        List<String> currentOccupants = vehicleLatestOccupants.getOrDefault(vehicleID, new ArrayList<>());
+        for (String personID : currentOccupants) {
+            Row row = vehicleOccupancyTable.appendRow();
+            row.setLong("linkLogIndex", idx);
+            row.setString("agentId", personID);
+        }
     }
 
 }

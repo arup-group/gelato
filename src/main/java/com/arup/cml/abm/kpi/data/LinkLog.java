@@ -49,10 +49,10 @@ public class LinkLog implements NetworkLinkLog {
         long latestStateIndex = this.vehicleLatestLogIndex.get(vehicleID);
         linkLogData.put(latestStateIndex, "endTime", endTime);
         linkLogData.put(latestStateIndex, "numberOfPeople", vehicleLatestOccupants.getOrDefault(vehicleID, new ArrayList<>()).size());
-        newVehicleOccupantsEntry(vehicleID, latestStateIndex);
+        updateVehicleOccupantsTable(vehicleID, latestStateIndex);
     }
 
-    private void newVehicleOccupantsEntry(String vehicleID, long idx) {
+    private void updateVehicleOccupantsTable(String vehicleID, long idx) {
         List<String> currentOccupants = getLatestVehicleOccupants(vehicleID);
         for (String personID : currentOccupants) {
             vehicleOccupantsData.put(vehicleOccupancyIndex, "linkLogIndex", idx);
