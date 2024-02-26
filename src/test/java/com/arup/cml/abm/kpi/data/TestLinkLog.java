@@ -17,7 +17,7 @@ public class TestLinkLog {
         LinkLog linkLog = new LinkLog();
         assertThat(linkLog.getLinkLogData().isEmpty()).isTrue().as("Link log table should be empty initially");
 
-        linkLog.newLinkLogEntry("someVehicle", "someLink", 12.0);
+        linkLog.createLinkLogEntry("someVehicle", "someLink", 12.0);
 
         Table<Long, String, Object> linkLogTable = linkLog.getLinkLogData();
         assertThat(linkLogTable.rowMap().size())
@@ -34,7 +34,7 @@ public class TestLinkLog {
         assertThat(linkLog.getLinkLogData().isEmpty()).isTrue().as("Link log table should be empty initially");
 
         linkLog.recordVehicleMode("someVehicle", "someMode");
-        linkLog.newLinkLogEntry("someVehicle", "someLink", 12.0);
+        linkLog.createLinkLogEntry("someVehicle", "someLink", 12.0);
 
         Table<Long, String, Object> linkLogTable = linkLog.getLinkLogData();
         assertThat(linkLogTable.rowMap().size())
@@ -49,7 +49,7 @@ public class TestLinkLog {
     public void completeLinkLogEntryHasEndTimeAndTracksPassengerNumber() {
         LinkLog linkLog = new LinkLog();
         linkLog.personBoardsVehicle("someVehicle", "somePerson");
-        linkLog.newLinkLogEntry("someVehicle", "someLink", 12.0);
+        linkLog.createLinkLogEntry("someVehicle", "someLink", 12.0);
         linkLog.completeLinkLogEntry("someVehicle", 24.0);
 
         Table<Long, String, Object> linkLogTable = linkLog.getLinkLogData();
@@ -69,7 +69,7 @@ public class TestLinkLog {
     public void completeLinkLogEntryTracksPassengerIds() {
         LinkLog linkLog = new LinkLog();
         linkLog.personBoardsVehicle("someVehicle", "somePerson");
-        linkLog.newLinkLogEntry("someVehicle", "someLink", 12.0);
+        linkLog.createLinkLogEntry("someVehicle", "someLink", 12.0);
         linkLog.completeLinkLogEntry("someVehicle", 24.0);
 
         Table<Long, String, Object> linkLogVehicleOccupantsTable = linkLog.getVehicleOccupantsData();
@@ -84,7 +84,7 @@ public class TestLinkLog {
     @Test
     public void personCanEnterVehicleThatIsAlreadyMoving() {
         LinkLog linkLog = new LinkLog();
-        linkLog.newLinkLogEntry("someVehicle", "someLink", 12.0);
+        linkLog.createLinkLogEntry("someVehicle", "someLink", 12.0);
         linkLog.personBoardsVehicle("someVehicle", "somePerson");
         linkLog.completeLinkLogEntry("someVehicle", 24.0);
 
@@ -101,7 +101,7 @@ public class TestLinkLog {
     public void linkLogRecordsMultiplePeopleBoardingAtOnce() {
         LinkLog linkLog = new LinkLog();
         // bus enters a link
-        linkLog.newLinkLogEntry("PartyBus", "someLink", 12.0);
+        linkLog.createLinkLogEntry("PartyBus", "someLink", 12.0);
         // time to get this party started
         linkLog.personBoardsVehicle("PartyBus", "partyPerson1");
         linkLog.personBoardsVehicle("PartyBus", "partyPerson2");
@@ -122,7 +122,7 @@ public class TestLinkLog {
     public void linkLogVehicleOccupantsTableRecordsMultiplePeopleBoardingAtOnce() {
         LinkLog linkLog = new LinkLog();
         // bus enters a link
-        linkLog.newLinkLogEntry("PartyBus", "someLink", 12.0);
+        linkLog.createLinkLogEntry("PartyBus", "someLink", 12.0);
         // time to get this party started
         linkLog.personBoardsVehicle("PartyBus", "partyPerson1");
         linkLog.personBoardsVehicle("PartyBus", "partyPerson2");
@@ -151,18 +151,18 @@ public class TestLinkLog {
         LinkLog linkLog = new LinkLog();
         // driver hops on and bus starts
         linkLog.personBoardsVehicle("PartyBus", "driver");
-        linkLog.newLinkLogEntry("PartyBus", "startLink", 0.0);
+        linkLog.createLinkLogEntry("PartyBus", "startLink", 0.0);
         linkLog.completeLinkLogEntry("PartyBus", 5.0);
         // gerry gets on
-        linkLog.newLinkLogEntry("PartyBus", "gerryLinkBoard", 5.0);
+        linkLog.createLinkLogEntry("PartyBus", "gerryLinkBoard", 5.0);
         linkLog.personBoardsVehicle("PartyBus", "gerry");
         linkLog.completeLinkLogEntry("PartyBus", 10.0);
         // gerry leaves
-        linkLog.newLinkLogEntry("PartyBus", "gerryLinkAlight", 10.0);
+        linkLog.createLinkLogEntry("PartyBus", "gerryLinkAlight", 10.0);
         linkLog.personAlightsVehicle("PartyBus", "gerry");
         linkLog.completeLinkLogEntry("PartyBus", 15.0);
         // bus completes its travel
-        linkLog.newLinkLogEntry("PartyBus", "endLink", 15.0);
+        linkLog.createLinkLogEntry("PartyBus", "endLink", 15.0);
         linkLog.completeLinkLogEntry("PartyBus", 20.0);
 
         Table<Long, String, Object> linkLogTable = linkLog.getLinkLogData();
@@ -188,18 +188,18 @@ public class TestLinkLog {
         LinkLog linkLog = new LinkLog();
         // driver hops on and bus starts
         linkLog.personBoardsVehicle("PartyBus", "driver");
-        linkLog.newLinkLogEntry("PartyBus", "startLink", 0.0);
+        linkLog.createLinkLogEntry("PartyBus", "startLink", 0.0);
         linkLog.completeLinkLogEntry("PartyBus", 5.0);
         // gerry gets on
-        linkLog.newLinkLogEntry("PartyBus", "gerryLinkBoard", 5.0);
+        linkLog.createLinkLogEntry("PartyBus", "gerryLinkBoard", 5.0);
         linkLog.personBoardsVehicle("PartyBus", "gerry");
         linkLog.completeLinkLogEntry("PartyBus", 10.0);
         // gerry leaves
-        linkLog.newLinkLogEntry("PartyBus", "gerryLinkAlight", 10.0);
+        linkLog.createLinkLogEntry("PartyBus", "gerryLinkAlight", 10.0);
         linkLog.personAlightsVehicle("PartyBus", "gerry");
         linkLog.completeLinkLogEntry("PartyBus", 15.0);
         // bus completes its travel
-        linkLog.newLinkLogEntry("PartyBus", "endLink", 15.0);
+        linkLog.createLinkLogEntry("PartyBus", "endLink", 15.0);
         linkLog.completeLinkLogEntry("PartyBus", 20.0);
 
         Table<Long, String, Object> linkLogVehicleOccupantsTable = linkLog.getVehicleOccupantsData();
@@ -228,7 +228,7 @@ public class TestLinkLog {
     @Test
     public void defaultsToZeroPassengersWhenTryingToCompleteLogOfUnrecordedVehicle() {
         LinkLog linkLog = new LinkLog();
-        linkLog.newLinkLogEntry("someVehicle", "someLink", 12.0);
+        linkLog.createLinkLogEntry("someVehicle", "someLink", 12.0);
         linkLog.completeLinkLogEntry("someVehicle", 24.0);
 
         Table<Long, String, Object> linkLogTable = linkLog.getLinkLogData();

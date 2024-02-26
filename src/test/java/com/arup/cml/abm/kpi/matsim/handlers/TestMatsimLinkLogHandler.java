@@ -65,7 +65,7 @@ public class TestMatsimLinkLogHandler {
                 new VehicleEntersTrafficEvent(eventTime, gerry, link, gerryVehicle, mode, 1.0)
         );
 
-        verify(mockLinkLog).newLinkLogEntry(gerryVehicle.toString(), link.toString(), eventTime);
+        verify(mockLinkLog).createLinkLogEntry(gerryVehicle.toString(), link.toString(), eventTime);
     }
 
     @Test
@@ -87,7 +87,7 @@ public class TestMatsimLinkLogHandler {
 
         linkLogHandler.handleEvent(new LinkEnterEvent(eventTime, gerryVehicle, link));
 
-        verify(mockLinkLog).newLinkLogEntry(gerryVehicle.toString(), link.toString(), eventTime);
+        verify(mockLinkLog).createLinkLogEntry(gerryVehicle.toString(), link.toString(), eventTime);
     }
 
     @Test

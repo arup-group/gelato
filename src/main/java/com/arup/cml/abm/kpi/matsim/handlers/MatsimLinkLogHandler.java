@@ -27,7 +27,7 @@ public class MatsimLinkLogHandler implements
     @Override
     public void handleEvent(LinkEnterEvent event) {
         incrementEventCount(event);
-        linkLog.newLinkLogEntry(
+        linkLog.createLinkLogEntry(
                 event.getVehicleId().toString(),
                 event.getLinkId().toString(),
                 event.getTime()
@@ -65,7 +65,7 @@ public class MatsimLinkLogHandler implements
     public void handleEvent(VehicleEntersTrafficEvent event) {
         incrementEventCount(event);
         linkLog.recordVehicleMode(event.getVehicleId().toString(), event.getNetworkMode());
-        linkLog.newLinkLogEntry(
+        linkLog.createLinkLogEntry(
                 event.getVehicleId().toString(),
                 event.getLinkId().toString(),
                 event.getTime()
