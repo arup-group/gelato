@@ -1,6 +1,7 @@
 package com.arup.cml.abm.kpi.matsim.handlers;
 
 import com.arup.cml.abm.kpi.data.LinkLog;
+import com.arup.cml.abm.kpi.domain.NetworkLinkLog;
 import com.google.common.collect.ImmutableMap;
 import org.matsim.api.core.v01.events.*;
 import org.matsim.api.core.v01.events.handler.*;
@@ -17,10 +18,10 @@ public class MatsimLinkLogHandler implements
         LinkEnterEventHandler,
         LinkLeaveEventHandler {
 
-    private LinkLog linkLog;
+    private NetworkLinkLog linkLog;
     private final Map<String, AtomicInteger> eventCounts = new HashMap<>();
 
-    public MatsimLinkLogHandler(LinkLog linkLog) {
+    public MatsimLinkLogHandler(NetworkLinkLog linkLog) {
         this.linkLog = linkLog;
     }
 
