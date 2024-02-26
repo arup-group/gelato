@@ -1,12 +1,11 @@
 package com.arup.cml.abm.kpi.builders;
 
 import org.junit.rules.TemporaryFolder;
-import org.matsim.core.utils.io.IOUtils;
 import tech.tablesaw.api.StringColumn;
 import tech.tablesaw.api.Table;
+import tech.tablesaw.columns.Column;
 import tech.tablesaw.io.csv.CsvWriteOptions;
 
-import java.io.InputStream;
 import java.nio.file.Path;
 
 public class TripsBuilder {
@@ -41,7 +40,18 @@ public class TripsBuilder {
         this.tmpDir = tmpDir;
     }
 
+    public void fillWithDudValues() {
+        for (Column col : trips.columns()) {
+            col.append("dud");
+        }
+    }
+
     public String build() {
+        if (trips.isEmpty()) {
+            // empty table gets into trouble reading all the columns, if the table is empty, it is assumed it's not
+            // being used, so filling it with dud vales, just for the shape is ok
+            fillWithDudValues();
+        }
         String tripsPath = String.valueOf(Path.of(tmpDir.getRoot().getAbsolutePath(), "output_trips.csv"));
         CsvWriteOptions options = CsvWriteOptions.builder(tripsPath).separator(';').build();
         trips.write().usingOptions(options);

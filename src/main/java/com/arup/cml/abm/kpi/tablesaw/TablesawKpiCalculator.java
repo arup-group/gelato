@@ -64,11 +64,13 @@ public class TablesawKpiCalculator implements KpiCalculator {
         columnMapping.put("dep_time", ColumnType.STRING);
         columnMapping.put("trav_time", ColumnType.STRING);
         columnMapping.put("wait_time", ColumnType.STRING);
-        legs = readCSVInputStream(legsInputStream, columnMapping).setName("Legs");
+        this.legs = readCSVInputStream(legsInputStream, columnMapping).setName("Legs");
         columnMapping.put("first_pt_boarding_stop", ColumnType.STRING);
-        trips = readCSVInputStream(tripsInputStream, columnMapping).setName("Trips");
+        columnMapping.put("start_facility_id", ColumnType.STRING);
         createPeopleTables(population, scoring);
         createFacilitiesTable(facilities);
+        this.trips = fixFacilitiesInTripsTable(
+                activityFacilities, readCSVInputStream(tripsInputStream, columnMapping).setName("Trips"));
         createNetworkLinkTables(network);
         createTransitTables(schedule);
         createVehicleTable(vehicles);
@@ -665,7 +667,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
         StringColumn linkIDColumn = StringColumn.create("linkID");
         DoubleColumn xColumn = DoubleColumn.create("x");
         DoubleColumn yColumn = DoubleColumn.create("y");
-        StringColumn activityTypesColumn = StringColumn.create("activityTypes");
+        StringColumn activityTypeColumn = StringColumn.create("activityType");
 
         facilities.getFacilities().forEach((facilityId, activityFacility) -> {
             activityFacility.getActivityOptions().forEach((activityName, activityOption) -> {
@@ -673,7 +675,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
                 linkIDColumn.append(activityFacility.getLinkId().toString());
                 xColumn.append(activityFacility.getCoord().getX());
                 yColumn.append(activityFacility.getCoord().getY());
-                activityTypesColumn.append(activityOption.getType());
+                activityTypeColumn.append(activityOption.getType());
             });
         });
 
@@ -683,8 +685,34 @@ public class TablesawKpiCalculator implements KpiCalculator {
                         linkIDColumn,
                         xColumn,
                         yColumn,
-                        activityTypesColumn
+                        activityTypeColumn
                 );
+    }
+
+    private Table fixFacilitiesInTripsTable(Table activityFacilities, Table trips) {
+        if (trips.column("start_facility_id").countMissing() != 0) {
+            LOGGER.warn("`start_facility_id` column in `trips` table has missing values. We will try to fix that now.");
+            trips.removeColumns("start_facility_id");
+            Table startActivityTable = activityFacilities.selectColumns("linkID", "activityType", "facilityID");
+            startActivityTable.column("linkID").setName("start_link");
+            startActivityTable.column("activityType").setName("start_activity_type");
+            startActivityTable.column("facilityID").setName("start_facility_id");
+            trips = trips
+                    .joinOn("start_link", "start_activity_type")
+                    .inner(startActivityTable);
+        }
+        if (trips.column("end_facility_id").countMissing() != 0) {
+            LOGGER.warn("`end_facility_id` column in `trips` table has missing values. We will try to fix that now.");
+            trips.removeColumns("end_facility_id");
+            Table endActivityTable = activityFacilities.selectColumns("linkID", "activityType", "facilityID");
+            endActivityTable.column("linkID").setName("end_link");
+            endActivityTable.column("activityType").setName("end_activity_type");
+            endActivityTable.column("facilityID").setName("end_facility_id");
+            trips = trips
+                    .joinOn("end_link", "end_activity_type")
+                    .inner(endActivityTable);
+        }
+        return trips;
     }
 
     private void createPeopleTables(Population population, ScoringConfigGroup scoring) {
