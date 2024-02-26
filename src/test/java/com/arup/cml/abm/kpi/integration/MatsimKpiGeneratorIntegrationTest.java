@@ -98,10 +98,12 @@ public class MatsimKpiGeneratorIntegrationTest {
                     .contains(kpiFile)
                     .as(format("Check KPI output file '%s' exists", kpiFile));
             File expectedKpiFile = new File(format("%s/expected-%s", expectedKpiDirectory, kpiFile));
-            File currentKpiFile = new File(format("%s/%s", kpiDirectory, kpiFile));
-            long expected = CRCChecksum.getCRCFromFile(expectedKpiFile.toString());
-            long current = CRCChecksum.getCRCFromFile(currentKpiFile.toString());
-            assertThat(expected).isEqualTo(current).as(format("Check %s KPI data matches expectation", kpiFile));
+            File actualKpiFile = new File(format("%s/%s", kpiDirectory, kpiFile));
+            long expectedFieChecksum = CRCChecksum.getCRCFromFile(expectedKpiFile.toString());
+            long actualFileChecksum = CRCChecksum.getCRCFromFile(actualKpiFile.toString());
+            assertThat(expectedFieChecksum)
+                    .isEqualTo(actualFileChecksum)
+                    .as(format("Check %s KPI data matches expectation", kpiFile));
         }
     }
 }
