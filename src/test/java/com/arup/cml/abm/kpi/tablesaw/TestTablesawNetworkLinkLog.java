@@ -1,5 +1,7 @@
 package com.arup.cml.abm.kpi.tablesaw;
 
+import com.arup.cml.abm.kpi.data.LinkLog;
+import com.arup.cml.abm.kpi.data.exceptions.LinkLogPassengerConsistencyException;
 import org.junit.Test;
 import tech.tablesaw.api.Row;
 import tech.tablesaw.api.Table;
@@ -72,6 +74,18 @@ public class TestTablesawNetworkLinkLog {
         assertThat(linkLogEntry.getInt("numberOfPeople"))
                 .isEqualTo(1)
                 .as("Number of people in vehicle should have been recorded as `1`");
+    }
+
+    @Test(expected = LinkLogPassengerConsistencyException.class)
+    public void throwsExceptionWhenPassengerWantsToLeaveUnrecordedVehicle() {
+        new TablesawNetworkLinkLog().personAlightsVehicle("badVehicle", "someDude");
+    }
+
+    @Test(expected = LinkLogPassengerConsistencyException.class)
+    public void throwsExceptionWhenPersonWantsToLeaveVehicleTheyDidntBoard() {
+        TablesawNetworkLinkLog linkLog = new TablesawNetworkLinkLog();
+        linkLog.personBoardsVehicle("someVehicle", "someDude");
+        linkLog.personAlightsVehicle("someVehicle", "someRandomDude");
     }
 
     private static void assertTableHasSingleRow(Table table) {

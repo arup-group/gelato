@@ -78,9 +78,6 @@ public class TablesawNetworkLinkLog implements NetworkLinkLog {
         row.setInt("numberOfPeople",
                 vehicleLatestOccupants.getOrDefault(vehicleID, new ArrayList<>()).size());
         newVehicleOccupantsEntry(vehicleID, latestStateIndex);
-//        linkLogData.put(latestStateIndex, "endTime", endTime);
-//        linkLogData.put(latestStateIndex, "numberOfPeople", vehicleLatestOccupants.getOrDefault(vehicleID, new ArrayList<>()).size());
-//        newVehicleOccupantsEntry(vehicleID, latestStateIndex);
     }
 
     @Override
@@ -99,9 +96,8 @@ public class TablesawNetworkLinkLog implements NetworkLinkLog {
 
     @Override
     public void personAlightsVehicle(String vehicleID, String personID) throws LinkLogConsistencyException {
-//        List<String> latestOccupants = getLatestVehicleOccupants(vehicleID);
-//        vehicleLatestOccupants.get(vehicleID);
-        if (vehicleLatestOccupants.containsKey(vehicleID)) {
+        if (vehicleLatestOccupants.containsKey(vehicleID)
+                && vehicleLatestOccupants.get(vehicleID).contains(personID)) {
             vehicleLatestOccupants.get(vehicleID).remove(personID);
         } else {
             throw new LinkLogPassengerConsistencyException(String.format(
