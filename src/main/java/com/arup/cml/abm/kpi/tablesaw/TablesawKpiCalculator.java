@@ -843,17 +843,18 @@ public class TablesawKpiCalculator implements KpiCalculator {
                     vehicle.getType().getCapacity().getSeats() + vehicle.getType().getCapacity().getStandingRoom()
             );
 
-            ptLineIDColumn.append(
-                    Objects.requireNonNullElse(
-                            vehicle.getAttributes().getAttribute("PTLineID"),
-                            "Null"
-                    ).toString());
-            ptRouteIDColumn.append(
-                    Objects.requireNonNullElse(
-                            vehicle.getAttributes().getAttribute("PTRouteID"),
-                            "Null"
-                    ).toString());
-//            ptRouteIDColumn.append(vehicle.getAttributes().getAttribute("PTRouteID").toString());
+            Object ptLineId = vehicle.getAttributes().getAttribute("PTLineID");
+            if (ptLineId != null) {
+                ptLineIDColumn.append(ptLineId.toString());
+            } else {
+                ptLineIDColumn.appendMissing();
+            }
+            Object ptRouteId = vehicle.getAttributes().getAttribute("PTRouteID");
+            if (ptRouteId != null) {
+                ptRouteIDColumn.append(ptRouteId.toString());
+            } else {
+                ptRouteIDColumn.appendMissing();
+            }
         });
 
         vehicles = Table.create("Vehicles")
@@ -861,8 +862,8 @@ public class TablesawKpiCalculator implements KpiCalculator {
                         vehicleIDColumn,
                         modeColumn,
                         capacityColumn,
-                        StringColumn.create("PTLineID"),
-                        StringColumn.create("PTRouteID")
+                        ptLineIDColumn,
+                        ptRouteIDColumn
                 );
     }
 
