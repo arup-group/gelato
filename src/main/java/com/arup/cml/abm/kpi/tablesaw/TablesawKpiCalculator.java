@@ -14,6 +14,7 @@ import org.matsim.core.config.groups.ScoringConfigGroup;
 import org.matsim.core.population.PopulationUtils;
 import org.matsim.core.utils.io.IOUtils;
 import org.matsim.core.utils.misc.Time;
+import org.matsim.facilities.ActivityFacilities;
 import org.matsim.pt.transitSchedule.api.TransitSchedule;
 import org.matsim.utils.objectattributes.attributable.Attributes;
 import org.matsim.vehicles.Vehicles;
@@ -39,6 +40,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
     private static final Logger LOGGER = LogManager.getLogger(TablesawKpiCalculator.class);
     private final Table legs;
     private final Table trips;
+    private Table activityFacilities;
     private Table personModeScores;
     private Table networkLinks;
     private Table networkLinkModes;
@@ -51,7 +53,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
     private CompressionType compressionType;
 
     public TablesawKpiCalculator(Network network, TransitSchedule schedule, Vehicles vehicles, LinkLog linkLog,
-                                 Population population, ScoringConfigGroup scoring,
+                                 Population population, ScoringConfigGroup scoring, ActivityFacilities facilities,
                                  InputStream legsInputStream, InputStream tripsInputStream,
                                  Path outputDirectory, CompressionType compressionType) {
         this.compressionType = compressionType;
@@ -66,6 +68,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
         columnMapping.put("first_pt_boarding_stop", ColumnType.STRING);
         trips = readCSVInputStream(tripsInputStream, columnMapping).setName("Trips");
         createPeopleTables(population, scoring);
+        createFacilitiesTable(facilities);
         createNetworkLinkTables(network);
         createTransitTables(schedule);
         createVehicleTable(vehicles);
@@ -656,6 +659,33 @@ public class TablesawKpiCalculator implements KpiCalculator {
             return table;
         }
     }
+    private void createFacilitiesTable(ActivityFacilities facilities) {
+        LOGGER.info("Creating Facilities Table");
+        StringColumn facilityIDColumn = StringColumn.create("facilityID");
+        StringColumn linkIDColumn = StringColumn.create("linkID");
+        DoubleColumn xColumn = DoubleColumn.create("x");
+        DoubleColumn yColumn = DoubleColumn.create("y");
+        StringColumn activityTypesColumn = StringColumn.create("activityTypes");
+
+        facilities.getFacilities().forEach((facilityId, activityFacility) -> {
+            activityFacility.getActivityOptions().forEach((activityName, activityOption) -> {
+                facilityIDColumn.append(facilityId.toString());
+                linkIDColumn.append(activityFacility.getLinkId().toString());
+                xColumn.append(activityFacility.getCoord().getX());
+                yColumn.append(activityFacility.getCoord().getY());
+                activityTypesColumn.append(activityOption.getType());
+            });
+        });
+
+        this.activityFacilities = Table.create("Activity Facilities")
+                .addColumns(
+                        facilityIDColumn,
+                        linkIDColumn,
+                        xColumn,
+                        yColumn,
+                        activityTypesColumn
+                );
+    }
 
     private void createPeopleTables(Population population, ScoringConfigGroup scoring) {
         LOGGER.info("Creating Population Mode Scoring Table");
@@ -983,6 +1013,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
 
         this.writeTableCompressed(legs, String.format("%s/supporting-data-legs.csv", outputDir), this.compressionType);
         this.writeTableCompressed(trips, String.format("%s/supporting-data-trips.csv", outputDir), this.compressionType);
+        this.writeTableCompressed(activityFacilities, String.format("%s/supporting-data-activity-facilities.csv", outputDir), this.compressionType);
         this.writeTableCompressed(personModeScores, String.format("%s/supporting-data-person-mode-score-parameters.csv", outputDir), this.compressionType);
         this.writeTableCompressed(linkLog, String.format("%s/supporting-data-linkLog.csv", outputDir), this.compressionType);
         this.writeTableCompressed(linkLogVehicleOccupancy, String.format("%s/supporting-data-vehicleOccupancy.csv", outputDir), this.compressionType);

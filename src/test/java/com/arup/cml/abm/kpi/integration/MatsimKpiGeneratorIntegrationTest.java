@@ -68,6 +68,7 @@ public class MatsimKpiGeneratorIntegrationTest {
                 "intermediate-affordability.csv" + COMPRESSION_FILE_EXTENSION,
                 "intermediate-travel-time.csv" + COMPRESSION_FILE_EXTENSION,
                 "intermediate-access-to-mobility-services.csv" + COMPRESSION_FILE_EXTENSION,
+                "intermediate-ghg-emissions.csv" + COMPRESSION_FILE_EXTENSION,
                 "supporting-data-vehicles.csv" + COMPRESSION_FILE_EXTENSION,
                 "supporting-data-scheduleRoutes.csv" + COMPRESSION_FILE_EXTENSION,
                 "supporting-data-scheduleStops.csv" + COMPRESSION_FILE_EXTENSION,
@@ -77,7 +78,8 @@ public class MatsimKpiGeneratorIntegrationTest {
                 "supporting-data-linkLog.csv" + COMPRESSION_FILE_EXTENSION,
                 "supporting-data-trips.csv" + COMPRESSION_FILE_EXTENSION,
                 "supporting-data-legs.csv" + COMPRESSION_FILE_EXTENSION,
-                "supporting-data-person-mode-score-parameters.csv" + COMPRESSION_FILE_EXTENSION
+                "supporting-data-person-mode-score-parameters.csv" + COMPRESSION_FILE_EXTENSION,
+                "supporting-data-activity-facilities.csv" + COMPRESSION_FILE_EXTENSION,
         };
         for (int i = 0; i < expectedSupportingFiles.length; i++) {
             assertThat(generatedFiles)

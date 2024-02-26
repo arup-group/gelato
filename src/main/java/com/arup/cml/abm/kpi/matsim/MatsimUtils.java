@@ -14,6 +14,8 @@ import org.matsim.core.config.ReflectiveConfigGroup;
 import org.matsim.core.config.groups.*;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.io.IOUtils;
+import org.matsim.facilities.ActivityFacilities;
+import org.matsim.facilities.FacilitiesFromPopulation;
 import org.matsim.pt.config.TransitConfigGroup;
 import org.matsim.pt.transitSchedule.api.TransitSchedule;
 import org.matsim.vehicles.*;
@@ -32,6 +34,7 @@ public class MatsimUtils {
     private Network matsimNetwork;
     private TransitSchedule matsimTransitSchedule;
     private Vehicles matsimVehicles;
+    private ActivityFacilities facilities;
     private ScoringConfigGroup scoring;
     private Population population;
     private String runId;
@@ -57,7 +60,17 @@ public class MatsimUtils {
         this.matsimTransitSchedule = matsimScenario.getTransitSchedule();
         this.matsimVehicles = collectVehicles(matsimScenario);
         this.population = matsimScenario.getPopulation();
+        this.facilities = getOrGenerateFacilities(matsimScenario, matsimConfig, population);
         this.scoring = matsimConfig.scoring();
+    }
+
+    private ActivityFacilities getOrGenerateFacilities(Scenario scenario, Config config, Population pop) {
+        if (scenario.getActivityFacilities().getFacilities().isEmpty()) {
+            config.facilities().setFacilitiesSource(FacilitiesConfigGroup.FacilitiesSource.onePerActivityLinkInPlansFile);
+            FacilitiesFromPopulation facilitiesFromPopulation = new FacilitiesFromPopulation(scenario);
+            facilitiesFromPopulation.run(pop);
+        }
+        return scenario.getActivityFacilities();
     }
 
     private Config getConfig(String matsimInputConfig) {
@@ -124,6 +137,10 @@ public class MatsimUtils {
 
     public ScoringConfigGroup getScoring() {
         return scoring;
+    }
+
+    public ActivityFacilities getFacilities() {
+        return facilities;
     }
 
     public Population getPopulation() {
