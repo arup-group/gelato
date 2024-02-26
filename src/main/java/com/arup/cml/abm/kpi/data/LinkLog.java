@@ -89,10 +89,6 @@ public class LinkLog implements NetworkLinkLog {
     }
 
     private List<String> getLatestVehicleOccupants(String vehicleID) {
-        if (vehicleLatestOccupants.containsKey(vehicleID)) {
-            return vehicleLatestOccupants.get(vehicleID);
-        } else {
-            return new ArrayList<>();
-        }
+        return vehicleLatestOccupants.getOrDefault(vehicleID, new ArrayList<>());
     }
 }
