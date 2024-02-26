@@ -16,10 +16,7 @@ import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.io.IOUtils;
 import org.matsim.pt.config.TransitConfigGroup;
 import org.matsim.pt.transitSchedule.api.TransitSchedule;
-import org.matsim.vehicles.Vehicle;
-import org.matsim.vehicles.VehicleType;
-import org.matsim.vehicles.VehicleUtils;
-import org.matsim.vehicles.Vehicles;
+import org.matsim.vehicles.*;
 
 import java.io.File;
 import java.io.InputStream;
@@ -153,6 +150,18 @@ public class MatsimUtils {
         return this.compressionFileEnd;
     }
 
+    private void setDefaultsForEngineInformationIfNotAvailable(
+            VehicleType vehicleType, String defaultFuelType, Double defaultEmissionsFactor) {
+        Object fuelType = vehicleType.getEngineInformation().getAttributes().getAttribute("fuelType");
+        if (fuelType == null) {
+            vehicleType.getEngineInformation().getAttributes().putAttribute("fuelType", defaultFuelType);
+        }
+        Object emissionsFactor = vehicleType.getEngineInformation().getAttributes().getAttribute("emissionsFactor");
+        if (emissionsFactor == null) {
+            vehicleType.getEngineInformation().getAttributes().putAttribute("emissionsFactor", defaultEmissionsFactor);
+        }
+    }
+
     private Vehicles collectVehicles(Scenario scenario) {
         // get civilian vehicles
         Vehicles vehicles = scenario.getVehicles();
@@ -168,13 +177,13 @@ public class MatsimUtils {
                         // update existing
                         Vehicle existingVehicle = vehicles.getVehicles().get(departure.getVehicleId());
                         existingVehicle.getType().setNetworkMode(route.getTransportMode());
-                        existingVehicle.getAttributes().putAttribute("PTLineID", lineId);
-                        existingVehicle.getAttributes().putAttribute("PTRouteID", routeId);
+                        existingVehicle.getAttributes().putAttribute("PTLineID", lineId.toString());
+                        existingVehicle.getAttributes().putAttribute("PTRouteID", routeId.toString());
                     } else {
                         Vehicle transitVehicle = transitVehicles.getVehicles().get(departure.getVehicleId());
                         transitVehicle.getType().setNetworkMode(route.getTransportMode());
-                        transitVehicle.getAttributes().putAttribute("PTLineID", lineId);
-                        transitVehicle.getAttributes().putAttribute("PTRouteID", routeId);
+                        transitVehicle.getAttributes().putAttribute("PTLineID", lineId.toString());
+                        transitVehicle.getAttributes().putAttribute("PTRouteID", routeId.toString());
                         if (!vehicles.getVehicleTypes().containsKey(transitVehicle.getType().getId())) {
                             vehicles.addVehicleType(transitVehicle.getType());
                         }
@@ -216,6 +225,13 @@ public class MatsimUtils {
             }
         }
 
+        // check fuel types and emissions, set defaults if missing
+        vehicles.getVehicleTypes().forEach((vehicleTypeId, vehicleType) -> {
+            switch (vehicleType.getNetworkMode()) {
+                case "car" -> setDefaultsForEngineInformationIfNotAvailable(vehicleType, "petrol", 0.222);
+                case "bus" -> setDefaultsForEngineInformationIfNotAvailable(vehicleType, "cng", 1.372);
+            }
+        });
         return vehicles;
     }
 }

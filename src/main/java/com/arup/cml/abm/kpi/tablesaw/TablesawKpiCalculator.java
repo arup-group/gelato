@@ -15,8 +15,10 @@ import org.matsim.core.population.PopulationUtils;
 import org.matsim.core.utils.io.IOUtils;
 import org.matsim.core.utils.misc.Time;
 import org.matsim.pt.transitSchedule.api.TransitSchedule;
+import org.matsim.utils.objectattributes.attributable.Attributes;
 import org.matsim.vehicles.Vehicles;
 import tech.tablesaw.api.*;
+import tech.tablesaw.columns.Column;
 import tech.tablesaw.io.csv.CsvReadOptions;
 import tech.tablesaw.io.csv.CsvWriteOptions;
 import tech.tablesaw.selection.Selection;
@@ -411,19 +413,15 @@ public class TablesawKpiCalculator implements KpiCalculator {
                 .inner(networkLinks.selectColumns("linkID", "length"));
         table.addColumns(table.numberColumn("length").divide(1000).setName("distance_km"));
 
-        // total distance by mode
-        table = table.summarize("distance_km", sum).by("mode");
+        // total distance by vehicle
+        table = table.summarize("distance_km", sum).by("vehicleID");
 
-        // add and apply emissions factors
-        // TODO move Vehicle type/mode : Emission factor mapping to a config
-        Table emissionsFactors = Table.create("Emissions Factors").addColumns(
-                StringColumn.create("mode", new String[]{"car", "bus"}),
-                DoubleColumn.create("factor", new double[]{0.222, 1.372})
-        );
+        table = table
+                .joinOn("vehicleID")
+                .inner(vehicles.selectColumns("vehicleID", "emissionsFactor"));
 
-        table = table.joinOn("mode").inner(emissionsFactors);
         table.addColumns(table.numberColumn("Sum [distance_km]")
-                .multiply(table.numberColumn("factor"))
+                .multiply(table.numberColumn("emissionsFactor"))
                 .setName("emissions"));
 
         double emissionsTotal = round(table.numberColumn("emissions").sum(), 2);
@@ -833,6 +831,8 @@ public class TablesawKpiCalculator implements KpiCalculator {
         StringColumn vehicleIDColumn = StringColumn.create("vehicleID");
         StringColumn modeColumn = StringColumn.create("mode");
         IntColumn capacityColumn = IntColumn.create("capacity");
+        StringColumn fuelTypeColumn = StringColumn.create("fuelType");
+        DoubleColumn emissionsFactorColumn = DoubleColumn.create("emissionsFactor");
         StringColumn ptLineIDColumn = StringColumn.create("PTLineID");
         StringColumn ptRouteIDColumn = StringColumn.create("PTRouteID");
 
@@ -842,19 +842,10 @@ public class TablesawKpiCalculator implements KpiCalculator {
             capacityColumn.append(
                     vehicle.getType().getCapacity().getSeats() + vehicle.getType().getCapacity().getStandingRoom()
             );
-
-            Object ptLineId = vehicle.getAttributes().getAttribute("PTLineID");
-            if (ptLineId != null) {
-                ptLineIDColumn.append(ptLineId.toString());
-            } else {
-                ptLineIDColumn.appendMissing();
-            }
-            Object ptRouteId = vehicle.getAttributes().getAttribute("PTRouteID");
-            if (ptRouteId != null) {
-                ptRouteIDColumn.append(ptRouteId.toString());
-            } else {
-                ptRouteIDColumn.appendMissing();
-            }
+            appendAttributeValueOrMissing(vehicle.getType().getEngineInformation().getAttributes(), "fuelType", fuelTypeColumn);
+            appendAttributeValueOrMissing(vehicle.getType().getEngineInformation().getAttributes(), "emissionsFactor", emissionsFactorColumn);
+            appendAttributeValueOrMissing(vehicle.getAttributes(), "PTLineID", ptLineIDColumn);
+            appendAttributeValueOrMissing(vehicle.getAttributes(), "PTRouteID", ptRouteIDColumn);
         });
 
         vehicles = Table.create("Vehicles")
@@ -862,9 +853,20 @@ public class TablesawKpiCalculator implements KpiCalculator {
                         vehicleIDColumn,
                         modeColumn,
                         capacityColumn,
+                        fuelTypeColumn,
+                        emissionsFactorColumn,
                         ptLineIDColumn,
                         ptRouteIDColumn
                 );
+    }
+
+    private static void appendAttributeValueOrMissing(Attributes attributes, String attributeName, Column column) {
+        Object attributeValue = attributes.getAttribute(attributeName);
+        if (attributeValue != null) {
+            column.append(attributeValue);
+        } else {
+            column.appendMissing();
+        }
     }
 
     private void createLinkLogTables(LinkLog _linkLog) {
