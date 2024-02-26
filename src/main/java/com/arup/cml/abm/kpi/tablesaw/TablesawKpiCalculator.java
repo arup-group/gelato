@@ -415,21 +415,26 @@ public class TablesawKpiCalculator implements KpiCalculator {
         table = table.summarize("distance_km", sum).by("mode");
 
         // add and apply emissions factors
+        // TODO move Vehicle type/mode : Emission factor mapping to a config
         Table emissionsFactors = Table.create("Emissions Factors").addColumns(
                 StringColumn.create("mode", new String[]{"car", "bus"}),
                 DoubleColumn.create("factor", new double[]{0.222, 1.372})
         );
-
-        // todo intermediate output that has emissions and emissions per capita
-        // (emissions divided by total number of agents in sim)?
-        // Final KPI will be emissions per capita that will be scaled.
 
         table = table.joinOn("mode").inner(emissionsFactors);
         table.addColumns(table.numberColumn("Sum [distance_km]")
                 .multiply(table.numberColumn("factor"))
                 .setName("emissions"));
 
-        double kpi = round(table.numberColumn("emissions").sum(), 2);
+        double emissionsTotal = round(table.numberColumn("emissions").sum(), 2);
+        double emissionsPerCapita = round(emissionsTotal / personModeScores.column("person").size(), 2);
+        writeContentToFile(
+                String.format("%s/intermediate-ghg-emissions.csv", outputDirectory),
+                String.format("emissions_total,emissions_per_capita\n%f,%f", emissionsTotal, emissionsPerCapita),
+                this.compressionType);
+
+        // TODO Add Scaling
+        double kpi = emissionsPerCapita;
         writeContentToFile(String.format("%s/kpi-ghg-emissions.csv", outputDirectory), String.valueOf(kpi), this.compressionType);
         return kpi;
     }
