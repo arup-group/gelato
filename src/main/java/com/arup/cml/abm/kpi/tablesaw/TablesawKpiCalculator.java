@@ -56,9 +56,6 @@ public class TablesawKpiCalculator implements KpiCalculator {
                                  Path outputDirectory,
                                  CompressionType compressionType) {
         this.compressionType = compressionType;
-        // TODO: 24/01/2024 replace this ASAP with a representation of the network
-        // that isn't from the MATSim API (a map, or dedicated domain object, or
-        // whatever)
         Map<String, ColumnType> columnMapping = new HashMap<>();
         columnMapping.put("dep_time", ColumnType.STRING);
         columnMapping.put("trav_time", ColumnType.STRING);
@@ -519,9 +516,19 @@ public class TablesawKpiCalculator implements KpiCalculator {
         LOGGER.info("Creating Link Log Table");
 
         if (networkLinkLog instanceof TablesawNetworkLinkLog) {
+            LOGGER.info("Link Log Tablesaw tables already exist - will only perform basic data cleaning");
             TablesawNetworkLinkLog tsLinkLog = (TablesawNetworkLinkLog)networkLinkLog;
             linkLogTable = tsLinkLog.getLinkLogTable();
             vehicleOccupancyTable = tsLinkLog.getVehicleOccupancyTable();
+            int rowsBeforeCleaning = linkLogTable.rowCount();
+            linkLogTable = linkLogTable.dropWhere(linkLogTable.doubleColumn("endTime").isMissing());
+            int rowsAfterCleaning = linkLogTable.rowCount();
+            if (rowsAfterCleaning != rowsBeforeCleaning) {
+                LOGGER.warn("{} missing 'endTime' data points were encountered - some vehicles " +
+                                "were stuck and did not complete their journey. These Link Log entries will " +
+                                "be deleted.",
+                        rowsBeforeCleaning - rowsAfterCleaning);
+            }
         } else if (networkLinkLog instanceof LinkLog) {
             LinkLog gauvaLinkLog = (LinkLog)networkLinkLog;
             LongColumn indexColumn = LongColumn.create("index");
