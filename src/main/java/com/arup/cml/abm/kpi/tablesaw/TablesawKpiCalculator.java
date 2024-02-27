@@ -33,8 +33,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Consumer;
 
-import static tech.tablesaw.aggregate.AggregateFunctions.mean;
-import static tech.tablesaw.aggregate.AggregateFunctions.sum;
+import static tech.tablesaw.aggregate.AggregateFunctions.*;
 
 public class TablesawKpiCalculator implements KpiCalculator {
     private static final Logger LOGGER = LogManager.getLogger(TablesawKpiCalculator.class);
@@ -625,10 +624,57 @@ public class TablesawKpiCalculator implements KpiCalculator {
     }
 
     @Override
-    public Table writeMobilitySpaceUsage(Path outputDirectory) {
+    public double writeMobilitySpaceUsage(Path outputDirectory) {
         // TODO: implement KPI
         LOGGER.info("Writing Mobility Space Usage KPI to {}", outputDirectory);
-        return Table.create("");
+
+        Table carTrips = trips
+                .where(trips.stringColumn("longest_distance_mode").isEqualTo("car"));
+
+        Table peopleInFacilities = carTrips
+                .summarize("person", countUnique)
+                .by("start_facility_id", "start_activity_type");
+        Table tripsToFacilities = carTrips
+                .summarize("trip_id", countUnique)
+                .by("start_facility_id", "start_activity_type");
+
+        Table intermediate = peopleInFacilities
+                .joinOn("start_facility_id", "start_activity_type")
+                .inner(tripsToFacilities)
+                .setName("Mobility Space Usage");
+        intermediate.column("Count Unique [person]").setName("max_occupancy");
+        intermediate.column("Count Unique [trip_id]").setName("total_trips");
+
+        // calculate parking space demand with parking factor: 11.5
+        // https://www.interparking-france.com/en/what-are-the-dimensions-of-a-parking-space/
+        intermediate.addColumns(
+                intermediate.numberColumn("max_occupancy")
+                        .multiply(11.5)
+                        .setName("parking_space_demand")
+        );
+        this.writeTableCompressed(intermediate, String.format("%s/intermediate-mobility-space-usage.csv", outputDirectory), this.compressionType);
+
+        // compute kpi number one, demand by activity type
+        Table kpi = intermediate
+                .summarize("parking_space_demand", "total_trips", sum)
+                .by("start_activity_type")
+                .setName("Mobility Space Usage");
+        kpi.column("Sum [parking_space_demand]").setName("parking_space_demand");
+        kpi.column("Sum [total_trips]").setName("total_trips");
+
+        kpi.addColumns(
+                kpi.numberColumn("parking_space_demand")
+                        .multiply(kpi.numberColumn("total_trips")
+                                .divide(kpi.numberColumn("total_trips").sum()))
+                        .setName("weighted_demand")
+        );
+        this.writeTableCompressed(intermediate, String.format("%s/kpi-mobility-space-usage-per-activity-type.csv", outputDirectory), this.compressionType);
+
+        double finalKpi = kpi.numberColumn("parking_space_demand").sum()
+                / personModeScores.column("person").size();
+        // TODO Add Scaling
+        writeContentToFile(String.format("%s/kpi-mobility-space-usage.csv", outputDirectory), String.valueOf(finalKpi), this.compressionType);
+        return finalKpi;
     }
 
     private DoubleColumn round(DoubleColumn column, int decimalPoints) {
@@ -661,6 +707,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
             return table;
         }
     }
+
     private void createFacilitiesTable(ActivityFacilities facilities) {
         LOGGER.info("Creating Facilities Table");
         StringColumn facilityIDColumn = StringColumn.create("facilityID");

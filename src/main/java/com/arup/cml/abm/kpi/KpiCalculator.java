@@ -27,5 +27,5 @@ public interface KpiCalculator {
 
     Table writeCongestionKpi(Path directory);
 
-    Table writeMobilitySpaceUsage(Path outputDirectory);
+    double writeMobilitySpaceUsage(Path outputDirectory);
 }
