@@ -57,12 +57,12 @@ public class TablesawNetworkLinkLog implements NetworkLinkLog {
 
     @Override
     public void completeLinkLogEntry(String vehicleID, double endTime) {
-        int latestStateIndex = this.vehicleLatestLogIndex.get(vehicleID);
+        int latestStateIndex = vehicleLatestLogIndex.get(vehicleID);
         Row row = linkLogTable.row(latestStateIndex);
         row.setDouble("endTime", endTime);
-        row.setInt("numberOfPeople",
-                vehicleLatestOccupants.getOrDefault(vehicleID, new ArrayList<>()).size());
-        updateVehicleOccupancyTable(vehicleID, latestStateIndex);
+        List<String> currentVehicleOccupants = vehicleLatestOccupants.getOrDefault(vehicleID, new ArrayList<>());
+        row.setInt("numberOfPeople", currentVehicleOccupants.size());
+        updateVehicleOccupancyTable(latestStateIndex, currentVehicleOccupants);
     }
 
     @Override
@@ -92,6 +92,14 @@ public class TablesawNetworkLinkLog implements NetworkLinkLog {
         }
     }
 
+    private void updateVehicleOccupancyTable(long linkLogIndex, List<String> vehicleOccupants) {
+        for (String personID : vehicleOccupants) {
+            Row row = vehicleOccupancyTable.appendRow();
+            row.setLong("linkLogIndex", linkLogIndex);
+            row.setString("agentId", personID);
+        }
+    }
+
     public Table getLinkLogTable() {
         return linkLogTable;
     }
@@ -99,15 +107,4 @@ public class TablesawNetworkLinkLog implements NetworkLinkLog {
     public Table getVehicleOccupancyTable() {
         return vehicleOccupancyTable;
     }
-
-    private void updateVehicleOccupancyTable(String vehicleID, long idx) {
-        System.out.println("" + vehicleID + "," + idx);
-        List<String> currentOccupants = vehicleLatestOccupants.getOrDefault(vehicleID, new ArrayList<>());
-        for (String personID : currentOccupants) {
-            Row row = vehicleOccupancyTable.appendRow();
-            row.setLong("linkLogIndex", idx);
-            row.setString("agentId", personID);
-        }
-    }
-
 }
