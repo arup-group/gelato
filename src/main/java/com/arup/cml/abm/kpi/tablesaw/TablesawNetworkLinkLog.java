@@ -9,12 +9,9 @@ import java.util.*;
 public class TablesawNetworkLinkLog implements NetworkLinkLog {
 
     private final Map<String, String> vehicleModes = new HashMap<>();
-
     // points to the index of the most recent reference of that vehicle ID in the Link Log
     private final Map<String, Integer> vehicleLatestLogIndex = new HashMap<>();
-
     private final Map<String, List<String>> vehicleLatestOccupants = new HashMap<>();
-
     private Table linkLogTable;
     private Table vehicleOccupancyTable;
     private int linkLogRowIndex = 0;
@@ -86,7 +83,7 @@ public class TablesawNetworkLinkLog implements NetworkLinkLog {
             vehicleLatestOccupants.get(vehicleID).remove(personID);
         } else {
             throw new LinkLogConsistencyException(String.format(
-                    "The requested person: `%s` cannot leave vehicle `%s` because they didn't board it",
+                    "Person '%s' cannot leave vehicle '%s' because they didn't board it",
                     personID,
                     vehicleID));
         }
