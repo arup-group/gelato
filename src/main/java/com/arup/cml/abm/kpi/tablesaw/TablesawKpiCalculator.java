@@ -633,22 +633,23 @@ public class TablesawKpiCalculator implements KpiCalculator {
         // TODO: implement KPI
         LOGGER.info("Writing Mobility Space Usage KPI to {}", outputDirectory);
 
-        Table carTrips = trips
-                .where(trips.stringColumn("longest_distance_mode").isEqualTo("car"));
+        Table carActivities = activities
+                .where(activities.stringColumn("access_mode").isEqualTo("car")
+                        .or(activities.stringColumn("egress_mode").isEqualTo("car")));
 
-        Table peopleInFacilities = carTrips
+        Table peopleInFacilities = carActivities
                 .summarize("person", countUnique)
-                .by("start_facility_id", "start_activity_type");
-        Table tripsToFacilities = carTrips
-                .summarize("trip_id", countUnique)
-                .by("start_facility_id", "start_activity_type");
+                .by("facility_id", "activity_type");
+        Table tripsToFacilities = carActivities
+                .summarize("access_trip_id", countNonMissing)
+                .by("facility_id", "activity_type");
 
         Table intermediate = peopleInFacilities
-                .joinOn("start_facility_id", "start_activity_type")
+                .joinOn("facility_id", "activity_type")
                 .inner(tripsToFacilities)
                 .setName("Mobility Space Usage");
         intermediate.column("Count Unique [person]").setName("max_occupancy");
-        intermediate.column("Count Unique [trip_id]").setName("total_trips");
+        intermediate.column("Count [access_trip_id]").setName("total_trips");
 
         // calculate parking space demand with parking factor: 11.5
         // https://www.interparking-france.com/en/what-are-the-dimensions-of-a-parking-space/
@@ -662,7 +663,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
         // compute kpi number one, demand by activity type
         Table kpi = intermediate
                 .summarize("parking_space_demand", "total_trips", sum)
-                .by("start_activity_type")
+                .by("activity_type")
                 .setName("Mobility Space Usage");
         kpi.column("Sum [parking_space_demand]").setName("parking_space_demand");
         kpi.column("Sum [total_trips]").setName("total_trips");
@@ -678,6 +679,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
         double finalKpi = kpi.numberColumn("parking_space_demand").sum()
                 / personModeScores.column("person").size();
         // TODO Add Scaling
+        finalKpi = round(finalKpi, 2);
         writeContentToFile(String.format("%s/kpi-mobility-space-usage.csv", outputDirectory), String.valueOf(finalKpi), this.compressionType);
         return finalKpi;
     }
@@ -776,7 +778,9 @@ public class TablesawKpiCalculator implements KpiCalculator {
                         StringColumn.create("access_mode"),
                         StringColumn.create("egress_mode"),
                         StringColumn.create("start_time"),
-                        StringColumn.create("end_time")
+                        StringColumn.create("end_time"),
+                        StringColumn.create("access_trip_id"),
+                        StringColumn.create("egress_trip_id")
                 );
 
         for (String person : trips.stringColumn("person").unique()) {
@@ -791,13 +795,16 @@ public class TablesawKpiCalculator implements KpiCalculator {
                 personActivities.stringColumn("facility_id").append(thisTrip.getString("start_facility_id"));
                 personActivities.stringColumn("egress_mode").append(thisTrip.getString("longest_distance_mode"));
                 personActivities.stringColumn("end_time").append(thisTrip.getString("dep_time"));
+                personActivities.stringColumn("egress_trip_id").append(thisTrip.getString("trip_id"));
                 // access mode and start time comes from the previous trip
                 if (i == 0) {
                     personActivities.stringColumn("access_mode").appendMissing();
                     personActivities.stringColumn("start_time").appendMissing();
+                    personActivities.stringColumn("access_trip_id").appendMissing();
                 } else {
                     Row previousTrip = personTrips.row(i - 1);
                     personActivities.stringColumn("access_mode").append(previousTrip.getString("longest_distance_mode"));
+                    personActivities.stringColumn("access_trip_id").append(previousTrip.getString("trip_id"));
                     int arrivalTime = (int) (Time.parseTime(previousTrip.getString("dep_time"))
                             + Time.parseTime(previousTrip.getString("trav_time")));
                     personActivities.stringColumn("start_time").append(integerToStringDate(arrivalTime));
@@ -809,11 +816,13 @@ public class TablesawKpiCalculator implements KpiCalculator {
             personActivities.stringColumn("activity_type").append(lastTrip.getString("end_activity_type"));
             personActivities.stringColumn("facility_id").append(lastTrip.getString("end_facility_id"));
             personActivities.stringColumn("access_mode").append(lastTrip.getString("longest_distance_mode"));
+            personActivities.stringColumn("access_trip_id").append(lastTrip.getString("trip_id"));
             int arrivalTime = (int) (Time.parseTime(lastTrip.getString("dep_time"))
                     + Time.parseTime(lastTrip.getString("trav_time")));
             personActivities.stringColumn("start_time").append(integerToStringDate(arrivalTime));
             personActivities.stringColumn("egress_mode").appendMissing();
             personActivities.stringColumn("end_time").appendMissing();
+            personActivities.stringColumn("egress_trip_id").appendMissing();
 
             // finally append the activities of this person
             activities.append(personActivities);

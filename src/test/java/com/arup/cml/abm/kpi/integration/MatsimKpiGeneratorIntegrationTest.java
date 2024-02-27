@@ -104,6 +104,8 @@ public class MatsimKpiGeneratorIntegrationTest {
                 "kpi-access-to-mobility-services-access-to-rail.csv" + COMPRESSION_FILE_EXTENSION,
                 "kpi-access-to-mobility-services-access-to-pt-and-pt-used.csv" + COMPRESSION_FILE_EXTENSION,
                 "kpi-ghg-emissions.csv" + COMPRESSION_FILE_EXTENSION,
+                "kpi-mobility-space-usage-per-activity-type.csv" + COMPRESSION_FILE_EXTENSION,
+                "kpi-mobility-space-usage.csv" + COMPRESSION_FILE_EXTENSION,
         };
         for (int i = 0; i < expectedKpiFiles.length; i++) {
             String kpiFile = expectedKpiFiles[i];
