@@ -30,6 +30,9 @@ import java.io.OutputStream;
 import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -39,6 +42,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
     private static final Logger LOGGER = LogManager.getLogger(TablesawKpiCalculator.class);
     private final Table legs;
     private final Table trips;
+    private final Table activities;
     private Table activityFacilities;
     private Table personModeScores;
     private Table networkLinks;
@@ -70,6 +74,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
         createFacilitiesTable(facilities);
         this.trips = fixFacilitiesInTripsTable(
                 activityFacilities, readCSVInputStream(tripsInputStream, columnMapping).setName("Trips"));
+        this.activities = createActivitiesTable(trips);
         createNetworkLinkTables(network);
         createTransitTables(schedule);
         createVehicleTable(vehicles);
@@ -762,6 +767,68 @@ public class TablesawKpiCalculator implements KpiCalculator {
         return trips;
     }
 
+    private Table createActivitiesTable(Table trips) {
+        Table activities = Table.create("Activities")
+                .addColumns(
+                        StringColumn.create("person"),
+                        StringColumn.create("activity_type"),
+                        StringColumn.create("facility_id"),
+                        StringColumn.create("access_mode"),
+                        StringColumn.create("egress_mode"),
+                        StringColumn.create("start_time"),
+                        StringColumn.create("end_time")
+                );
+
+        for (String person : trips.stringColumn("person").unique()) {
+            Table personTrips = trips
+                    .where(trips.stringColumn("person").isEqualTo(person))
+                    .sortAscendingOn("trip_number");
+            Table personActivities = activities.emptyCopy();
+            for (int i = 0; i < personTrips.rowCount(); i++) {
+                Row thisTrip = personTrips.row(i);
+                personActivities.stringColumn("person").append(person);
+                personActivities.stringColumn("activity_type").append(thisTrip.getString("start_activity_type"));
+                personActivities.stringColumn("facility_id").append(thisTrip.getString("start_facility_id"));
+                personActivities.stringColumn("egress_mode").append(thisTrip.getString("longest_distance_mode"));
+                personActivities.stringColumn("end_time").append(thisTrip.getString("dep_time"));
+                // access mode and start time comes from the previous trip
+                if (i == 0) {
+                    personActivities.stringColumn("access_mode").appendMissing();
+                    personActivities.stringColumn("start_time").appendMissing();
+                } else {
+                    Row previousTrip = personTrips.row(i - 1);
+                    personActivities.stringColumn("access_mode").append(previousTrip.getString("longest_distance_mode"));
+                    int arrivalTime = (int) (Time.parseTime(previousTrip.getString("dep_time"))
+                            + Time.parseTime(previousTrip.getString("trav_time")));
+                    personActivities.stringColumn("start_time").append(integerToStringDate(arrivalTime));
+                }
+            }
+            // last row of activities table
+            Row lastTrip = personTrips.row(personTrips.rowCount() - 1);
+            personActivities.stringColumn("person").append(person);
+            personActivities.stringColumn("activity_type").append(lastTrip.getString("end_activity_type"));
+            personActivities.stringColumn("facility_id").append(lastTrip.getString("end_facility_id"));
+            personActivities.stringColumn("access_mode").append(lastTrip.getString("longest_distance_mode"));
+            int arrivalTime = (int) (Time.parseTime(lastTrip.getString("dep_time"))
+                    + Time.parseTime(lastTrip.getString("trav_time")));
+            personActivities.stringColumn("start_time").append(integerToStringDate(arrivalTime));
+            personActivities.stringColumn("egress_mode").appendMissing();
+            personActivities.stringColumn("end_time").appendMissing();
+
+            // finally append the activities of this person
+            activities.append(personActivities);
+        }
+
+        return activities;
+    }
+
+    private String integerToStringDate(int time) {
+        DateTimeFormatter formatter =
+                DateTimeFormatter.ofPattern("HH:mm:ss").withZone(ZoneId.of("UTC"));
+        Instant instant = Instant.ofEpochMilli((long) (time * 1000));
+        return formatter.format(instant);
+    }
+
     private void createPeopleTables(Population population, ScoringConfigGroup scoring) {
         LOGGER.info("Creating Population Mode Scoring Table");
 
@@ -1089,6 +1156,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
         this.writeTableCompressed(legs, String.format("%s/supporting-data-legs.csv", outputDir), this.compressionType);
         this.writeTableCompressed(trips, String.format("%s/supporting-data-trips.csv", outputDir), this.compressionType);
         this.writeTableCompressed(activityFacilities, String.format("%s/supporting-data-activity-facilities.csv", outputDir), this.compressionType);
+        this.writeTableCompressed(activityFacilities, String.format("%s/supporting-data-activities.csv", outputDir), this.compressionType);
         this.writeTableCompressed(personModeScores, String.format("%s/supporting-data-person-mode-score-parameters.csv", outputDir), this.compressionType);
         this.writeTableCompressed(linkLog, String.format("%s/supporting-data-linkLog.csv", outputDir), this.compressionType);
         this.writeTableCompressed(linkLogVehicleOccupancy, String.format("%s/supporting-data-vehicleOccupancy.csv", outputDir), this.compressionType);

@@ -80,6 +80,7 @@ public class MatsimKpiGeneratorIntegrationTest {
                 "supporting-data-legs.csv" + COMPRESSION_FILE_EXTENSION,
                 "supporting-data-person-mode-score-parameters.csv" + COMPRESSION_FILE_EXTENSION,
                 "supporting-data-activity-facilities.csv" + COMPRESSION_FILE_EXTENSION,
+                "supporting-data-activities.csv" + COMPRESSION_FILE_EXTENSION,
         };
         for (int i = 0; i < expectedSupportingFiles.length; i++) {
             assertThat(generatedFiles)

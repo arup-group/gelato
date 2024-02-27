@@ -7,6 +7,7 @@ import tech.tablesaw.columns.Column;
 import tech.tablesaw.io.csv.CsvWriteOptions;
 
 import java.nio.file.Path;
+import java.util.Arrays;
 
 public class TripsBuilder {
     TemporaryFolder tmpDir;
@@ -41,8 +42,13 @@ public class TripsBuilder {
     }
 
     public void fillWithDudValues() {
+        String[] timeCols = new String[]{"dep_time", "trav_time", "wait_time"};
         for (Column col : trips.columns()) {
-            col.append("dud");
+            if (Arrays.asList(timeCols).contains(col.name())) {
+                col.append("00:00:00");
+            } else {
+                col.append("dud");
+            }
         }
     }
 
