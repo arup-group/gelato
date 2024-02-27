@@ -4,6 +4,7 @@ import com.arup.cml.abm.kpi.domain.LinkLogConsistencyException;
 import org.junit.Test;
 import tech.tablesaw.api.Row;
 import tech.tablesaw.api.Table;
+import tech.tablesaw.selection.BitmapBackedSelection;
 import tech.tablesaw.selection.Selection;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -217,17 +218,28 @@ public class TestTablesawNetworkLinkLog {
         //     3  |          endLink  |   PartyBus  |      unknown  |         15  |       20  |               1  |
         assertTableRowCount(linkLogTable, 4);
         Selection filter = linkLogTable.stringColumn("linkID").isEqualTo("startLink")
-                        .and(linkLogTable.intColumn("numberOfPeople").isEqualTo(1));
-        assertTableContainsRow(linkLogTable, filter);
+                        .and(linkLogTable.intColumn("numberOfPeople").isEqualTo(1))
+                        .and(linkLogTable.stringColumn("vehicleID").isEqualTo("PartyBus"));
+        assertTableContainsRow(linkLogTable, filter, "linkID='startLink', numberOfPeople=1, vehicleID='PartyBus'");
+
         filter = linkLogTable.stringColumn("linkID").isEqualTo("gerryLinkBoard")
-                .and(linkLogTable.intColumn("numberOfPeople").isEqualTo(2));
-        assertTableContainsRow(linkLogTable, filter);
+                .and(linkLogTable.intColumn("numberOfPeople").isEqualTo(2))
+                .and(linkLogTable.stringColumn("vehicleID").isEqualTo("PartyBus"));
+        assertTableContainsRow(linkLogTable,
+                filter,
+                "linkID='gerryLinkBoard', numberOfPeople=2, vehicleID='PartyBus'");
+
         filter = linkLogTable.stringColumn("linkID").isEqualTo("gerryLinkAlight")
-                .and(linkLogTable.intColumn("numberOfPeople").isEqualTo(1));
-        assertTableContainsRow(linkLogTable, filter);
+                .and(linkLogTable.intColumn("numberOfPeople").isEqualTo(1))
+                .and(linkLogTable.stringColumn("vehicleID").isEqualTo("PartyBus"));
+        assertTableContainsRow(linkLogTable,
+                filter,
+                "linkID='gerryLinkAlight', numberOfPeople=1, vehicleID='PartyBus'");
+
         filter = linkLogTable.stringColumn("linkID").isEqualTo("endLink")
-                .and(linkLogTable.intColumn("numberOfPeople").isEqualTo(1));
-        assertTableContainsRow(linkLogTable, filter);
+                .and(linkLogTable.intColumn("numberOfPeople").isEqualTo(1))
+                .and(linkLogTable.stringColumn("vehicleID").isEqualTo("PartyBus"));
+        assertTableContainsRow(linkLogTable, filter, "linkID='endLink', numberOfPeople=1, vehicleID='PartyBus'");
     }
 
     @Test
@@ -262,23 +274,23 @@ public class TestTablesawNetworkLinkLog {
         assertTableRowCount(linkLogVehicleOccupantsTable, 5);
         Selection filter = linkLogVehicleOccupantsTable.longColumn("linkLogIndex").isEqualTo(0)
                 .and(linkLogVehicleOccupantsTable.stringColumn("agentId").isEqualTo("driver"));
-        assertTableContainsRow(linkLogVehicleOccupantsTable, filter);
+        assertTableContainsRow(linkLogVehicleOccupantsTable, filter, "linkLogIndex=0, agentId='driver'");
 
         filter = linkLogVehicleOccupantsTable.longColumn("linkLogIndex").isEqualTo(1)
                 .and(linkLogVehicleOccupantsTable.stringColumn("agentId").isEqualTo("driver"));
-        assertTableContainsRow(linkLogVehicleOccupantsTable, filter);
+        assertTableContainsRow(linkLogVehicleOccupantsTable, filter, "linkLogIndex=1, agentId='driver'");
 
         filter = linkLogVehicleOccupantsTable.longColumn("linkLogIndex").isEqualTo(1)
                 .and(linkLogVehicleOccupantsTable.stringColumn("agentId").isEqualTo("gerry"));
-        assertTableContainsRow(linkLogVehicleOccupantsTable, filter);
+        assertTableContainsRow(linkLogVehicleOccupantsTable, filter, "linkLogIndex=1, agentId='gerry'");
 
         filter = linkLogVehicleOccupantsTable.longColumn("linkLogIndex").isEqualTo(2)
                 .and(linkLogVehicleOccupantsTable.stringColumn("agentId").isEqualTo("driver"));
-        assertTableContainsRow(linkLogVehicleOccupantsTable, filter);
+        assertTableContainsRow(linkLogVehicleOccupantsTable, filter, "linkLogIndex=2, agentId='driver'");
 
         filter = linkLogVehicleOccupantsTable.longColumn("linkLogIndex").isEqualTo(3)
                 .and(linkLogVehicleOccupantsTable.stringColumn("agentId").isEqualTo("driver"));
-        assertTableContainsRow(linkLogVehicleOccupantsTable, filter);
+        assertTableContainsRow(linkLogVehicleOccupantsTable, filter, "linkLogIndex=3, agentId='driver'");
     }
 
     ///////////////////////////////////////////////////////
@@ -297,7 +309,18 @@ public class TestTablesawNetworkLinkLog {
                 .isEqualTo(expectedRowCount);
     }
 
+    private static void assertTableContainsRow(Table table, Selection filter, String filterDescription) {
+        try {
+            assertTableHasSingleRow(table.where(filter));
+        } catch (AssertionError e) {
+            String description = filterDescription == null ? filter.toString() : filterDescription;
+            String detailedFailureMessage =
+                    String.format("Unmatched filter was (%s) and the table being queried was %n%s", description, table);
+            throw new AssertionError(detailedFailureMessage, e);
+        }
+    }
+
     private static void assertTableContainsRow(Table table, Selection filter) {
-        assertTableHasSingleRow(table.where(filter));
+        assertTableContainsRow(table, filter, null);
     }
 }
