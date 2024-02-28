@@ -30,7 +30,6 @@ public class MatsimUtils {
     private Path matsimOutputDir;
     private Config matsimConfig;
     private Scenario matsimScenario;
-
     private Network matsimNetwork;
     private TransitSchedule matsimTransitSchedule;
     private Vehicles matsimVehicles;
@@ -51,14 +50,14 @@ public class MatsimUtils {
 
     public MatsimUtils(Path matsimOutputDir, Path matsimConfigFile) {
         this.matsimOutputDir = matsimOutputDir;
-        this.matsimConfig = getConfig(matsimConfigFile.toString());
+        this.matsimConfig = buildConfig(matsimConfigFile.toString());
         this.matsimScenario = ScenarioUtils.loadScenario(matsimConfig);
         this.matsimNetwork = matsimScenario.getNetwork();
         this.matsimTransitSchedule = matsimScenario.getTransitSchedule();
         this.matsimVehicles = collectVehicles(matsimScenario);
     }
 
-    private Config getConfig(String matsimInputConfig) {
+    private Config buildConfig(String matsimInputConfig) {
         Config config = ConfigUtils.createConfig();
         TreeMap<String, ConfigGroup> configuredModules = config.getModules();
         for (ConfigGroup module : configuredModules.values().stream().toList()) {
@@ -66,8 +65,7 @@ public class MatsimUtils {
                 LOGGER.info("Config group {} is read as is", module);
             } else {
                 ReflectiveConfigGroup relaxedModule =
-                        new ReflectiveConfigGroup(module.getName(), true) {
-                        };
+                        new ReflectiveConfigGroup(module.getName(), true) {};
                 config.removeModule(module.getName());
                 config.addModule(relaxedModule);
             }
@@ -75,6 +73,8 @@ public class MatsimUtils {
         ConfigUtils.loadConfig(config, String.format(matsimInputConfig));
         this.runId = getRunId(config.controller().getRunId());
         this.compressionFileEnd = config.controller().getCompressionType().fileEnding;
+        // don't load the (often large) plans - we don't use them
+        config.plans().setInputFile(null);
         setOutputFilePaths(config);
         return config;
     }
@@ -87,25 +87,22 @@ public class MatsimUtils {
         TreeMap<String, ConfigGroup> modules = config.getModules();
         modules.get("network")
                 .addParam("inputNetworkFile",
-                        String.format("%s/%soutput_network.xml%s", this.matsimOutputDir, this.runId, this.compressionFileEnd));
+                        String.format("%s/%soutput_network.xml%s", matsimOutputDir, runId, compressionFileEnd));
         modules.get("transit")
                 .addParam("transitScheduleFile",
-                        String.format("%s/%soutput_transitSchedule.xml%s", this.matsimOutputDir, this.runId, this.compressionFileEnd));
+                        String.format("%s/%soutput_transitSchedule.xml%s", matsimOutputDir, runId, compressionFileEnd));
         modules.get("transit")
                 .addParam("vehiclesFile",
-                        String.format("%s/%soutput_transitVehicles.xml%s", this.matsimOutputDir, this.runId, this.compressionFileEnd));
-        modules.get("plans")
-                .addParam("inputPlansFile",
-                        String.format("%s/%soutput_plans.xml%s", this.matsimOutputDir, this.runId, this.compressionFileEnd));
+                        String.format("%s/%soutput_transitVehicles.xml%s", matsimOutputDir, runId, compressionFileEnd));
         modules.get("households")
                 .addParam("inputFile",
-                        String.format("%s/%soutput_households.xml%s", this.matsimOutputDir, this.runId, this.compressionFileEnd));
+                        String.format("%s/%soutput_households.xml%s", matsimOutputDir, runId, compressionFileEnd));
         modules.get("facilities")
                 .addParam("inputFacilitiesFile",
-                        String.format("%s/%soutput_facilities.xml%s", this.matsimOutputDir, this.runId, this.compressionFileEnd));
+                        String.format("%s/%soutput_facilities.xml%s", matsimOutputDir, runId, compressionFileEnd));
         modules.get("vehicles")
                 .addParam("vehiclesFile",
-                        String.format("%s/%soutput_vehicles.xml%s", this.matsimOutputDir, this.runId, this.compressionFileEnd));
+                        String.format("%s/%soutput_vehicles.xml%s", matsimOutputDir, runId, compressionFileEnd));
     }
 
     public Network getMatsimNetwork() {
@@ -123,21 +120,29 @@ public class MatsimUtils {
     public InputStream getMatsimLegsCSVInputStream() {
         return IOUtils.getInputStream(
                 IOUtils.resolveFileOrResource(
-                        String.format("%s/%soutput_legs.csv%s", this.matsimOutputDir, runId, compressionFileEnd)));
+                        String.format("%s/%soutput_legs.csv%s", matsimOutputDir, runId, compressionFileEnd)));
     }
 
     public InputStream getMatsimTripsCSVInputStream() {
         return IOUtils.getInputStream(
                 IOUtils.resolveFileOrResource(
-                        String.format("%s/%soutput_trips.csv%s", this.matsimOutputDir, runId, compressionFileEnd)));
+                        String.format("%s/%soutput_trips.csv%s", matsimOutputDir, runId, compressionFileEnd)));
     }
 
     public String getRunId() {
-        return this.runId;
+        return runId;
     }
 
     public String getCompressionFileEnd() {
-        return this.compressionFileEnd;
+        return compressionFileEnd;
+    }
+
+    public Config getMatsimConfig() {
+        return matsimConfig;
+    }
+
+    public Scenario getMatsimScenario() {
+        return matsimScenario;
     }
 
     private Vehicles collectVehicles(Scenario scenario) {
@@ -172,7 +177,7 @@ public class MatsimUtils {
         });
 
         // reading DRT vehicles if relevant matsim output found
-        String drtVehiclesPath = String.format("%s/drt_vehicles.xml.gz", this.matsimOutputDir);
+        String drtVehiclesPath = String.format("%s/drt_vehicles.xml.gz", matsimOutputDir);
         File drtFile = new File(drtVehiclesPath);
         if (drtFile.exists()) {
             LOGGER.info("DRT Vehicles File was found and will be used to label DRT vehicles");

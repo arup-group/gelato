@@ -4,7 +4,6 @@ import com.arup.cml.abm.kpi.domain.LinkLogConsistencyException;
 import org.junit.Test;
 import tech.tablesaw.api.Row;
 import tech.tablesaw.api.Table;
-import tech.tablesaw.selection.BitmapBackedSelection;
 import tech.tablesaw.selection.Selection;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
