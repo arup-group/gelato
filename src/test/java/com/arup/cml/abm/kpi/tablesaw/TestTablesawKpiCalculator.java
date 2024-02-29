@@ -14,7 +14,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 import java.nio.file.Path;
 
-public class TablesawKpiCalculatorTest {
+public class TestTablesawKpiCalculator {
 
     @Rule
     public TemporaryFolder tmpDir = new TemporaryFolder();

@@ -1,12 +1,13 @@
 package com.arup.cml.abm.kpi.matsim.run;
 
 import com.arup.cml.abm.kpi.KpiCalculator;
-import com.arup.cml.abm.kpi.data.LinkLog;
 import com.arup.cml.abm.kpi.data.MoneyLog;
+import com.arup.cml.abm.kpi.domain.NetworkLinkLog;
 import com.arup.cml.abm.kpi.matsim.MatsimUtils;
 import com.arup.cml.abm.kpi.matsim.handlers.MatsimLinkLogHandler;
 import com.arup.cml.abm.kpi.matsim.handlers.MatsimPersonMoneyHandler;
 import com.arup.cml.abm.kpi.tablesaw.TablesawKpiCalculator;
+import com.arup.cml.abm.kpi.tablesaw.TablesawNetworkLinkLog;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.logging.log4j.LogManager;
@@ -24,7 +25,7 @@ import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-@Command(name = "MatsimKpiGenerator", version = "0.0.2-alpha", mixinStandardHelpOptions = true)
+@Command(name = "MatsimKpiGenerator", version = "0.0.3-alpha", mixinStandardHelpOptions = true)
 public class MatsimKpiGenerator implements Runnable {
     private static final Logger LOGGER = LogManager.getLogger(MatsimKpiGenerator.class);
     public static final String EOL = "\n";
@@ -58,7 +59,7 @@ public class MatsimKpiGenerator implements Runnable {
         // object graph "manually" here. Switching to a DI framework in future should
         // be pretty straightforward if we need to.
         MatsimUtils matsimUtils = new MatsimUtils(matsimOutputDirectory, matsimConfigFile);
-        LinkLog linkLog = new LinkLog();
+        NetworkLinkLog linkLog = new TablesawNetworkLinkLog();
         MatsimLinkLogHandler matsimLinkLogHandler = new MatsimLinkLogHandler(linkLog);
         MoneyLog moneyLog = new MoneyLog();
         MatsimPersonMoneyHandler matsimPersonMoneyHandler = new MatsimPersonMoneyHandler(moneyLog);
@@ -78,7 +79,7 @@ public class MatsimKpiGenerator implements Runnable {
 
         KpiCalculator kpiCalculator = new TablesawKpiCalculator(
                 matsimUtils.getMatsimNetwork(), matsimUtils.getTransitSchedule(), matsimUtils.getMatsimVehicles(),
-                linkLog, matsimUtils.getPopulation(), moneyLog, matsimUtils.getScoring(), matsimUtils.getFacilities(),
+                linkLog, matsimUtils.getMatsimPersonsCSVInputStream(), moneyLog, matsimUtils.getScoring(), matsimUtils.getFacilities(),
                 matsimUtils.getMatsimLegsCSVInputStream(),  matsimUtils.getMatsimTripsCSVInputStream(),
                 outputDir, CompressionType.gzip
                 );

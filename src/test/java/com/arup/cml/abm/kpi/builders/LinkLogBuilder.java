@@ -6,7 +6,7 @@ public class LinkLogBuilder {
 
     public LinkLogBuilder withEntry(String vehicleID, String linkID, double startTime, double endTime) {
         linkLog.recordVehicleMode(vehicleID, "car");
-        linkLog.newLinkLogEntry(vehicleID, linkID, startTime);
+        linkLog.createLinkLogEntry(vehicleID, linkID, startTime);
         linkLog.completeLinkLogEntry(vehicleID, endTime);
         return this;
     }
