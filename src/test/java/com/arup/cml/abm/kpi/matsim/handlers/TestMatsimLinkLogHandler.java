@@ -1,6 +1,7 @@
 package com.arup.cml.abm.kpi.matsim.handlers;
 
 import com.arup.cml.abm.kpi.data.LinkLog;
+import com.arup.cml.abm.kpi.domain.NetworkLinkLog;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Test;
 import org.matsim.api.core.v01.Id;
@@ -23,10 +24,11 @@ public class TestMatsimLinkLogHandler {
     private final double eventTime = 0;
     private final Id<Link> link = Id.createLinkId("link_A_B");
     private final String mode = "car";
+    private LinkLog mockLinkLog;
 
     @Test
     public void recordsBoardingVehicle() {
-        LinkLog mockLinkLog = Mockito.mock(LinkLog.class);
+        NetworkLinkLog mockLinkLog = Mockito.mock(NetworkLinkLog.class);
         MatsimLinkLogHandler linkLogHandler = new MatsimLinkLogHandler(mockLinkLog);
 
         linkLogHandler.handleEvent(new PersonEntersVehicleEvent(eventTime, gerry, gerryVehicle));
@@ -36,7 +38,7 @@ public class TestMatsimLinkLogHandler {
 
     @Test
     public void recordsPersonLeavingVehicle() {
-        LinkLog mockLinkLog = Mockito.mock(LinkLog.class);
+        NetworkLinkLog mockLinkLog = Mockito.mock(NetworkLinkLog.class);
         MatsimLinkLogHandler linkLogHandler = new MatsimLinkLogHandler(mockLinkLog);
 
         linkLogHandler.handleEvent(new PersonLeavesVehicleEvent(eventTime, gerry, gerryVehicle));
@@ -46,7 +48,7 @@ public class TestMatsimLinkLogHandler {
 
     @Test
     public void recordsVehicleModeWhenWhenVehicleJoinsTraffic() {
-        LinkLog mockLinkLog = Mockito.mock(LinkLog.class);
+        NetworkLinkLog mockLinkLog = Mockito.mock(NetworkLinkLog.class);
         MatsimLinkLogHandler linkLogHandler = new MatsimLinkLogHandler(mockLinkLog);
 
         linkLogHandler.handleEvent(
@@ -58,19 +60,19 @@ public class TestMatsimLinkLogHandler {
 
     @Test
     public void createsLinkLogEntryWhenVehicleJoinsTraffic() {
-        LinkLog mockLinkLog = Mockito.mock(LinkLog.class);
+        NetworkLinkLog mockLinkLog = Mockito.mock(NetworkLinkLog.class);
         MatsimLinkLogHandler linkLogHandler = new MatsimLinkLogHandler(mockLinkLog);
 
         linkLogHandler.handleEvent(
                 new VehicleEntersTrafficEvent(eventTime, gerry, link, gerryVehicle, mode, 1.0)
         );
 
-        verify(mockLinkLog).newLinkLogEntry(gerryVehicle.toString(), link.toString(), eventTime);
+        verify(mockLinkLog).createLinkLogEntry(gerryVehicle.toString(), link.toString(), eventTime);
     }
 
     @Test
     public void updatesLogEntryWhenVehicleLeavesTraffic() {
-        LinkLog mockLinkLog = Mockito.mock(LinkLog.class);
+        NetworkLinkLog mockLinkLog = Mockito.mock(NetworkLinkLog.class);
         MatsimLinkLogHandler linkLogHandler = new MatsimLinkLogHandler(mockLinkLog);
 
         linkLogHandler.handleEvent(
@@ -82,17 +84,17 @@ public class TestMatsimLinkLogHandler {
 
     @Test
     public void createsNewLinkLogWhenVehicleEntersNewLink() {
-        LinkLog mockLinkLog = Mockito.mock(LinkLog.class);
+        NetworkLinkLog mockLinkLog = Mockito.mock(NetworkLinkLog.class);
         MatsimLinkLogHandler linkLogHandler = new MatsimLinkLogHandler(mockLinkLog);
 
         linkLogHandler.handleEvent(new LinkEnterEvent(eventTime, gerryVehicle, link));
 
-        verify(mockLinkLog).newLinkLogEntry(gerryVehicle.toString(), link.toString(), eventTime);
+        verify(mockLinkLog).createLinkLogEntry(gerryVehicle.toString(), link.toString(), eventTime);
     }
 
     @Test
     public void updatesLinkLogEntryWhenVehicleLeavesLink() {
-        LinkLog mockLinkLog = Mockito.mock(LinkLog.class);
+        NetworkLinkLog mockLinkLog = Mockito.mock(NetworkLinkLog.class);
         MatsimLinkLogHandler linkLogHandler = new MatsimLinkLogHandler(mockLinkLog);
 
         linkLogHandler.handleEvent(new LinkLeaveEvent(eventTime, gerryVehicle, link));
@@ -119,8 +121,5 @@ public class TestMatsimLinkLogHandler {
             int eventCount = linkLogHandler.getEventCounts().get(linkLeaveEvent.getEventType()).get();
             assertThat(eventCount).isEqualTo(i).as(String.format("Event count should be {}", i));
         }
-
-
-
     }
 }

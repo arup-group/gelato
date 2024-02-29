@@ -1,6 +1,6 @@
 package com.arup.cml.abm.kpi.matsim.handlers;
 
-import com.arup.cml.abm.kpi.data.LinkLog;
+import com.arup.cml.abm.kpi.domain.NetworkLinkLog;
 import com.google.common.collect.ImmutableMap;
 import org.matsim.api.core.v01.events.*;
 import org.matsim.api.core.v01.events.handler.*;
@@ -17,17 +17,17 @@ public class MatsimLinkLogHandler implements
         LinkEnterEventHandler,
         LinkLeaveEventHandler {
 
-    private LinkLog linkLog;
+    private NetworkLinkLog linkLog;
     private final Map<String, AtomicInteger> eventCounts = new HashMap<>();
 
-    public MatsimLinkLogHandler(LinkLog linkLog) {
+    public MatsimLinkLogHandler(NetworkLinkLog linkLog) {
         this.linkLog = linkLog;
     }
 
     @Override
     public void handleEvent(LinkEnterEvent event) {
         incrementEventCount(event);
-        linkLog.newLinkLogEntry(
+        linkLog.createLinkLogEntry(
                 event.getVehicleId().toString(),
                 event.getLinkId().toString(),
                 event.getTime()
@@ -65,7 +65,7 @@ public class MatsimLinkLogHandler implements
     public void handleEvent(VehicleEntersTrafficEvent event) {
         incrementEventCount(event);
         linkLog.recordVehicleMode(event.getVehicleId().toString(), event.getNetworkMode());
-        linkLog.newLinkLogEntry(
+        linkLog.createLinkLogEntry(
                 event.getVehicleId().toString(),
                 event.getLinkId().toString(),
                 event.getTime()

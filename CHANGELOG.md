@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Docker image now accepts optional runtime JVM parameters ([#36](https://github.com/arup-group/gelato/issues/36))
 - README now includes JVM memory tuning instructions ([#48](https://github.com/arup-group/gelato/issues/48))
+- Gelato now uses less memory ([#52](https://github.com/arup-group/gelato/issues/52))
 
 
 ## [0.0.2-alpha] - 2024-02-21

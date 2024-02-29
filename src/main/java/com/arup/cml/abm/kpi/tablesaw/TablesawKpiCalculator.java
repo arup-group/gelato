@@ -1,6 +1,7 @@
 package com.arup.cml.abm.kpi.tablesaw;
 
 import com.arup.cml.abm.kpi.KpiCalculator;
+import com.arup.cml.abm.kpi.domain.NetworkLinkLog;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.arup.cml.abm.kpi.data.LinkLog;
@@ -23,7 +24,6 @@ import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -43,16 +43,19 @@ public class TablesawKpiCalculator implements KpiCalculator {
     private Table scheduleRoutes;
     private Table vehicles;
 
-    private Table linkLog;
-    private Table linkLogVehicleOccupancy;
+    private Table linkLogTable;
+    private Table vehicleOccupancyTable;
     private CompressionType compressionType;
 
-    public TablesawKpiCalculator(Network network, TransitSchedule schedule, Vehicles vehicles, LinkLog linkLog,
-                                 InputStream legsInputStream, InputStream tripsInputStream, Path outputDirectory, CompressionType compressionType) {
+    public TablesawKpiCalculator(Network network,
+                                 TransitSchedule schedule,
+                                 Vehicles vehicles,
+                                 NetworkLinkLog linkLog,
+                                 InputStream legsInputStream,
+                                 InputStream tripsInputStream,
+                                 Path outputDirectory,
+                                 CompressionType compressionType) {
         this.compressionType = compressionType;
-        // TODO: 24/01/2024 replace this ASAP with a representation of the network
-        // that isn't from the MATSim API (a map, or dedicated domain object, or
-        // whatever)
         Map<String, ColumnType> columnMapping = new HashMap<>();
         columnMapping.put("dep_time", ColumnType.STRING);
         columnMapping.put("trav_time", ColumnType.STRING);
@@ -136,7 +139,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
         LOGGER.info("Writing Occupancy Rate KPI to {}", outputDirectory);
 
         // add capacity of the vehicle
-        Table table = linkLog
+        Table table = linkLogTable
                 .joinOn("vehicleID")
                 .inner(vehicles.selectColumns("vehicleID", "capacity"));
 
@@ -176,7 +179,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
         LOGGER.info("Writing Vehicle KM KPI to {}", outputDirectory);
 
         // add link length to the link log table
-        Table table = linkLog
+        Table table = linkLogTable
                 .joinOn("linkID")
                 .inner(networkLinks.selectColumns("linkID", "length"));
 
@@ -222,7 +225,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
 
         // add length of links to log
         Table table =
-                linkLog
+                linkLogTable
                         .joinOn("linkID")
                         .inner(networkLinks.selectColumns("linkID", "length"));
 
@@ -276,9 +279,9 @@ public class TablesawKpiCalculator implements KpiCalculator {
 
         // compute travel time on links
         Table table =
-                linkLog.addColumns(
-                        linkLog.doubleColumn("endTime")
-                                .subtract(linkLog.doubleColumn("startTime"))
+                linkLogTable.addColumns(
+                        linkLogTable.doubleColumn("endTime")
+                                .subtract(linkLogTable.doubleColumn("startTime"))
                                 .setName("travelTime")
                 );
 
@@ -509,60 +512,96 @@ public class TablesawKpiCalculator implements KpiCalculator {
                 );
     }
 
-    private void createLinkLogTables(LinkLog _linkLog) {
+    private void createLinkLogTables(NetworkLinkLog networkLinkLog) {
         LOGGER.info("Creating Link Log Table");
-        LongColumn indexColumn = LongColumn.create("index");
-        StringColumn linkIDColumn = StringColumn.create("linkID");
-        StringColumn vehicleIDColumn = StringColumn.create("vehicleID");
-        StringColumn modeColumn = StringColumn.create("initialMode");
-        DoubleColumn startTimeColumn = DoubleColumn.create("startTime");
-        DoubleColumn endTimeColumn = DoubleColumn.create("endTime");
-        IntColumn numberOfPeopleColumn = IntColumn.create("numberOfPeople");
 
-        int missingValues = 0;
-        for (Map.Entry<Long, Map<String, Object>> entry : _linkLog.getLinkLogData().rowMap().entrySet()) {
-            indexColumn.append(entry.getKey());
-            linkIDColumn.append(entry.getValue().get("linkID").toString());
-            vehicleIDColumn.append(entry.getValue().get("vehicleID").toString());
-            modeColumn.append(entry.getValue().get("mode").toString());
-            startTimeColumn.append((Double) entry.getValue().get("startTime"));
-            if (entry.getValue().containsKey("endTime")) {
-                endTimeColumn.append((Double) entry.getValue().get("endTime"));
-                numberOfPeopleColumn.append((Integer) entry.getValue().get("numberOfPeople"));
-            } else {
-                endTimeColumn.append(-1);
-                numberOfPeopleColumn.append(0);
-                if (missingValues == 0) {
-                    LOGGER.warn("A missing `endTime` was encountered. This message is shown only once.");
-                }
-                missingValues++;
+        if (networkLinkLog instanceof TablesawNetworkLinkLog) {
+            LOGGER.info("Link Log Tablesaw tables already exist - will only perform basic data cleaning");
+            TablesawNetworkLinkLog tsLinkLog = (TablesawNetworkLinkLog)networkLinkLog;
+            linkLogTable = tsLinkLog.getLinkLogTable();
+            vehicleOccupancyTable = tsLinkLog.getVehicleOccupancyTable();
+            int rowsBeforeCleaning = linkLogTable.rowCount();
+            linkLogTable = linkLogTable.dropWhere(linkLogTable.doubleColumn("endTime").isMissing());
+            int rowsAfterCleaning = linkLogTable.rowCount();
+            if (rowsAfterCleaning != rowsBeforeCleaning) {
+                LOGGER.warn("{} missing 'endTime' data points were encountered - some vehicles " +
+                                "were stuck and did not complete their journey. These Link Log entries will " +
+                                "be deleted.",
+                        rowsBeforeCleaning - rowsAfterCleaning);
             }
+        } else if (networkLinkLog instanceof LinkLog) {
+            LinkLog gauvaLinkLog = (LinkLog)networkLinkLog;
+            LongColumn indexColumn = LongColumn.create("index");
+            StringColumn linkIDColumn = StringColumn.create("linkID");
+            StringColumn vehicleIDColumn = StringColumn.create("vehicleID");
+            StringColumn modeColumn = StringColumn.create("initialMode");
+            DoubleColumn startTimeColumn = DoubleColumn.create("startTime");
+            DoubleColumn endTimeColumn = DoubleColumn.create("endTime");
+            IntColumn numberOfPeopleColumn = IntColumn.create("numberOfPeople");
+
+            int openLinkLogEntryCount = 0;
+            for (Map.Entry<Long, Map<String, Object>> entry : gauvaLinkLog.getLinkLogData().rowMap().entrySet()) {
+                indexColumn.append(entry.getKey());
+                linkIDColumn.append(entry.getValue().get("linkID").toString());
+                vehicleIDColumn.append(entry.getValue().get("vehicleID").toString());
+                modeColumn.append(entry.getValue().get("mode").toString());
+                startTimeColumn.append((Double) entry.getValue().get("startTime"));
+                if (entry.getValue().containsKey("endTime")) {
+                    endTimeColumn.append((Double) entry.getValue().get("endTime"));
+                    numberOfPeopleColumn.append((Integer) entry.getValue().get("numberOfPeople"));
+                } else {
+                    endTimeColumn.append(-1);
+                    numberOfPeopleColumn.append(0);
+                    if (openLinkLogEntryCount == 0) {
+                        LOGGER.warn("A missing `endTime` was encountered. This message is shown only once.");
+                    }
+                    openLinkLogEntryCount++;
+                }
+            }
+
+            linkLogTable = Table.create("Link Log")
+                    .addColumns(
+                            indexColumn,
+                            linkIDColumn,
+                            vehicleIDColumn,
+                            modeColumn,
+                            startTimeColumn,
+                            endTimeColumn,
+                            numberOfPeopleColumn
+                    );
+            if (openLinkLogEntryCount > 0) {
+                LOGGER.warn("{} missing `endTime` data points were encountered - some vehicles " +
+                                "were stuck and did not complete their journey. These Link Log entries will be deleted.",
+                        openLinkLogEntryCount);
+                linkLogTable = linkLogTable.where(linkLogTable.doubleColumn("endTime").isNotEqualTo(-1));
+            }
+
+            LOGGER.info("Creating Link Log Vehicle Occupancy Table");
+            LongColumn linkLogIndexColumn = LongColumn.create("linkLogIndex");
+            StringColumn agentIDColumn = StringColumn.create("agentId");
+
+            for (Map.Entry<Long, Map<String, Object>> entry : gauvaLinkLog.getVehicleOccupantsData().rowMap()
+                    .entrySet()) {
+                linkLogIndexColumn.append((long) entry.getValue().get("linkLogIndex"));
+                agentIDColumn.append(entry.getValue().get("agentId").toString());
+            }
+            vehicleOccupancyTable = Table.create("Vehicle Occupancy")
+                    .addColumns(
+                            linkLogIndexColumn,
+                            agentIDColumn
+                    );
         }
 
-        linkLog = Table.create("Link Log")
-                .addColumns(
-                        indexColumn,
-                        linkIDColumn,
-                        vehicleIDColumn,
-                        modeColumn,
-                        startTimeColumn,
-                        endTimeColumn,
-                        numberOfPeopleColumn
-                );
-        if (missingValues > 0) {
-            LOGGER.warn("{} missing `endTime` data points were encountered - some vehicles " +
-                            "were stuck and did not complete their journey. These Link Log entries will be deleted.",
-                    missingValues);
-            linkLog = linkLog.where(linkLog.doubleColumn("endTime").isNotEqualTo(-1));
-        }
+        fixVehicleModesInLinkLog();
+    }
 
-        // fix vehicle modes with vehicle table
-        linkLog = linkLog
+    private void fixVehicleModesInLinkLog() {
+        linkLogTable = linkLogTable
                 .joinOn("vehicleID")
                 .leftOuter(vehicles.selectColumns("vehicleID", "mode"));
-        int mismatchedModes = linkLog.where(
-                linkLog.stringColumn("initialMode")
-                        .isNotEqualTo(linkLog.stringColumn("mode")
+        int mismatchedModes = linkLogTable.where(
+                linkLogTable.stringColumn("initialMode")
+                        .isNotEqualTo(linkLogTable.stringColumn("mode")
                         )
         ).stringColumn("vehicleID").countUnique();
         if (mismatchedModes > 0) {
@@ -571,27 +610,9 @@ public class TablesawKpiCalculator implements KpiCalculator {
                             "The modes in the Link Log will be updated with the modes from the Vehicle Table.",
                     mismatchedModes));
         }
-        linkLog.removeColumns("initialMode");
-
-        LOGGER.info("Creating Link Log Vehicle Occupancy Table");
-        LongColumn linkLogIndexColumn = LongColumn.create("linkLogIndex");
-        StringColumn agentIDColumn = StringColumn.create("agentId");
-
-        for (Map.Entry<Long, Map<String, Object>> entry : _linkLog.getVehicleOccupantsData().rowMap()
-                .entrySet()) {
-            linkLogIndexColumn.append((long) entry.getValue().get("linkLogIndex"));
-            agentIDColumn.append(entry.getValue().get("agentId").toString());
-        }
-        linkLogVehicleOccupancy = Table.create("Vehicle Occupancy")
-                .addColumns(
-                        linkLogIndexColumn,
-                        agentIDColumn
-                );
+        linkLogTable.removeColumns("initialMode");
     }
 
-    public Table readCSVInputStream(InputStream inputStream) {
-        return readCSVInputStream(inputStream, Collections.emptyMap());
-    }
 
     public Table readCSVInputStream(InputStream inputStream, Map<String, ColumnType> columnMapping) {
         // TODO Make separator accessible from outside
@@ -623,8 +644,8 @@ public class TablesawKpiCalculator implements KpiCalculator {
 
         this.writeTableCompressed(legs, String.format("%s/supporting-data-legs.csv", outputDir), this.compressionType);
         this.writeTableCompressed(trips, String.format("%s/supporting-data-trips.csv", outputDir), this.compressionType);
-        this.writeTableCompressed(linkLog, String.format("%s/supporting-data-linkLog.csv", outputDir), this.compressionType);
-        this.writeTableCompressed(linkLogVehicleOccupancy, String.format("%s/supporting-data-vehicleOccupancy.csv", outputDir), this.compressionType);
+        this.writeTableCompressed(linkLogTable, String.format("%s/supporting-data-linkLog.csv", outputDir), this.compressionType);
+        this.writeTableCompressed(vehicleOccupancyTable, String.format("%s/supporting-data-vehicleOccupancy.csv", outputDir), this.compressionType);
         this.writeTableCompressed(networkLinks, String.format("%s/supporting-data-networkLinks.csv", outputDir), this.compressionType);
         this.writeTableCompressed(networkLinkModes, String.format("%s/supporting-data-networkLinkModes.csv", outputDir), this.compressionType);
         this.writeTableCompressed(scheduleStops, String.format("%s/supporting-data-scheduleStops.csv", outputDir), this.compressionType);
