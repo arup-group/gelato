@@ -9,11 +9,8 @@ import com.arup.cml.abm.kpi.data.LinkLog;
 import com.arup.cml.abm.kpi.matsim.run.MatsimKpiGenerator;
 
 import org.matsim.api.core.v01.network.Network;
-import org.matsim.api.core.v01.population.Person;
-import org.matsim.api.core.v01.population.Population;
 import org.matsim.core.config.groups.ControllerConfigGroup.CompressionType;
 import org.matsim.core.config.groups.ScoringConfigGroup;
-import org.matsim.core.population.PopulationUtils;
 import org.matsim.core.utils.io.IOUtils;
 import org.matsim.core.utils.misc.Time;
 import org.matsim.facilities.ActivityFacilities;
@@ -39,7 +36,6 @@ import java.util.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 
@@ -76,9 +72,14 @@ public class TablesawKpiCalculator implements KpiCalculator {
                                  CompressionType compressionType) {
         this.compressionType = compressionType;
         createPeopleTables(personInputStream, scoring);
-        createFacilitiesTable(facilities);
         this.legs = readLegs(legsInputStream, personModeScores, moneyLog);
-        this.trips = readTrips(tripsInputStream, legs);
+        if (facilities.getFacilities().isEmpty()) {
+            this.trips = readTrips(tripsInputStream, legs);
+            this.activityFacilities = createFacilitiesTableFromTrips(trips);
+        } else {
+            this.activityFacilities = createFacilitiesTable(facilities);
+            this.trips = readTrips(tripsInputStream, legs, activityFacilities);
+        }
         this.activities = createActivitiesTable(trips);
         createNetworkLinkTables(network);
         createTransitTables(schedule);
@@ -87,7 +88,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
         writeIntermediateData(outputDirectory);
     }
 
-    private Map<String, ColumnType> getLegsColumnMap () {
+    private Map<String, ColumnType> getLegsColumnMap() {
         Map<String, ColumnType> columnMapping = new HashMap<>();
         columnMapping.put("person", ColumnType.STRING);
         columnMapping.put("dep_time", ColumnType.STRING);
@@ -96,10 +97,14 @@ public class TablesawKpiCalculator implements KpiCalculator {
         return columnMapping;
     }
 
-    private Map<String, ColumnType> getTripsColumnMap () {
+    private Map<String, ColumnType> getTripsColumnMap() {
         Map<String, ColumnType> columnMapping = getLegsColumnMap();
         columnMapping.put("first_pt_boarding_stop", ColumnType.STRING);
         columnMapping.put("start_facility_id", ColumnType.STRING);
+        columnMapping.put("start_x", ColumnType.DOUBLE);
+        columnMapping.put("start_y", ColumnType.DOUBLE);
+        columnMapping.put("end_x", ColumnType.DOUBLE);
+        columnMapping.put("end_y", ColumnType.DOUBLE);
         return columnMapping;
     }
 
@@ -109,9 +114,39 @@ public class TablesawKpiCalculator implements KpiCalculator {
         return legs;
     }
 
-    private Table readTrips(InputStream tripsInputStream, Table legs) {
+    private Table readTrips(InputStream tripsInputStream, Table legs, Table activityFacilities) {
         trips = readCSVInputStream(tripsInputStream, getTripsColumnMap()).setName("Trips");
         trips = fixFacilitiesInTripsTable(activityFacilities, trips);
+        trips = addCostToTrips(legs, trips);
+        return trips;
+    }
+
+    private Table readTrips(InputStream tripsInputStream, Table legs) {
+        trips = readCSVInputStream(tripsInputStream, getTripsColumnMap()).setName("Trips");
+        if (trips.column("start_facility_id").countMissing() != 0
+                || trips.column("end_facility_id").countMissing() != 0) {
+            trips.removeColumns("start_facility_id", "end_facility_id");
+            StringColumn start_facility_id = StringColumn.create("start_facility_id");
+            StringColumn end_facility_id = StringColumn.create("end_facility_id");
+            trips.forEach(new Consumer<Row>() {
+                @Override
+                public void accept(Row row) {
+                    start_facility_id.append(
+                            String.format("%s_%s",
+                                    row.getString("start_activity_type"),
+                                    row.getString("start_link")
+                            )
+                    );
+                    end_facility_id.append(
+                            String.format("%s_%s",
+                                    row.getString("end_activity_type"),
+                                    row.getString("end_link")
+                            )
+                    );
+                }
+            });
+            trips.addColumns(start_facility_id, end_facility_id);
+        }
         trips = addCostToTrips(legs, trips);
         return trips;
     }
@@ -279,6 +314,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
         kpi.replaceColumn(
                 round(
                         kpi.doubleColumn("Percents").multiply(100).setName("Percents"), 2));
+        kpi = kpi.sortDescendingOn("Percents");
         kpi.setName("Modal Split");
         this.writeTableCompressed(kpi, String.format("%s/kpi-modal-split.csv", outputDirectory), compressionType);
     }
@@ -734,7 +770,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
         }
     }
 
-    private void createFacilitiesTable(ActivityFacilities facilities) {
+    private Table createFacilitiesTable(ActivityFacilities facilities) {
         LOGGER.info("Creating Facilities Table");
         StringColumn facilityIDColumn = StringColumn.create("facilityID");
         StringColumn linkIDColumn = StringColumn.create("linkID");
@@ -752,7 +788,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
             });
         });
 
-        this.activityFacilities = Table.create("Activity Facilities")
+        return Table.create("Activity Facilities")
                 .addColumns(
                         facilityIDColumn,
                         linkIDColumn,
@@ -760,6 +796,41 @@ public class TablesawKpiCalculator implements KpiCalculator {
                         yColumn,
                         activityTypeColumn
                 );
+    }
+
+    private Table createFacilitiesTableFromTrips(Table trips) {
+        LOGGER.info("Creating Facilities Table");
+        StringColumn facilityIDColumn = StringColumn.create("facilityID");
+        StringColumn linkIDColumn = StringColumn.create("linkID");
+        DoubleColumn xColumn = DoubleColumn.create("x");
+        DoubleColumn yColumn = DoubleColumn.create("y");
+        StringColumn activityTypeColumn = StringColumn.create("activityType");
+
+        for (Row row : trips) {
+            // start activities
+            facilityIDColumn.append(row.getString("start_facility_id"));
+            linkIDColumn.append(row.getString("start_link"));
+            xColumn.append(row.getDouble("start_x"));
+            yColumn.append(row.getDouble("start_y"));
+            activityTypeColumn.append(row.getString("start_activity_type"));
+            // end activities
+            facilityIDColumn.append(row.getString("end_facility_id"));
+            linkIDColumn.append(row.getString("end_link"));
+            xColumn.append(row.getDouble("end_x"));
+            yColumn.append(row.getDouble("end_y"));
+            activityTypeColumn.append(row.getString("end_activity_type"));
+        }
+
+        Table table = Table.create("Activity Facilities")
+                .addColumns(
+                        facilityIDColumn,
+                        linkIDColumn,
+                        xColumn,
+                        yColumn,
+                        activityTypeColumn
+                );
+        table = table.dropDuplicateRows();
+        return table;
     }
 
     private Table fixFacilitiesInTripsTable(Table activityFacilities, Table trips) {
@@ -924,35 +995,46 @@ public class TablesawKpiCalculator implements KpiCalculator {
     private void createPeopleTables(InputStream personInputStream, ScoringConfigGroup scoring) {
         LOGGER.info("Creating Population Mode Scoring Table");
 
-        StringColumn personIDColumn = StringColumn.create("person");
-        StringColumn incomeColumn = StringColumn.create("income");
-        StringColumn subpopulationColumn = StringColumn.create("subpopulation");
+        Map<String, ColumnType> columnMapping = new HashMap<>();
+        columnMapping.put("person", ColumnType.STRING);
+
+        personModeScores = readCSVInputStream(personInputStream, columnMapping).setName("Person Mode Scoring Parameters");
+        if (!personModeScores.columnNames().contains("income")) {
+            StringColumn incomeColumn = StringColumn.create("income",
+                    Collections.nCopies(personModeScores.column("person").size(), "unknown"));
+            personModeScores.addColumns(incomeColumn);
+        }
+        if (!personModeScores.columnNames().contains("subpopulation")) {
+            StringColumn incomeColumn = StringColumn.create("subpopulation",
+                    Collections.nCopies(personModeScores.column("person").size(), null));
+            personModeScores.addColumns(incomeColumn);
+        }
+
+        StringColumn personColumn = StringColumn.create("person");
         StringColumn modeColumn = StringColumn.create("mode");
         DoubleColumn monetaryDistanceRateColumn = DoubleColumn.create("monetaryDistanceRate");
         DoubleColumn dailyMonetaryConstantColumn = DoubleColumn.create("dailyMonetaryConstant");
-
-        // TODO read population attribute table from personInputStream
-        for (Person person : population.getPersons().values()) {
-            ScoringConfigGroup.ScoringParameterSet scoringParams = scoring.getScoringParameters(PopulationUtils.getSubpopulation(person));
+        for (Row row : personModeScores) {
+            String person = row.getString("person");
+            String subpopulation = row.getString("subpopulation");
+            ScoringConfigGroup.ScoringParameterSet scoringParams = scoring.getScoringParameters(subpopulation);
             for (ScoringConfigGroup.ModeParams modeParams : scoringParams.getModes().values()) {
-                personIDColumn.append(person.getId().toString());
-                incomeColumn.append(
-                        person.getAttributes().getAsMap().getOrDefault("income", "Unknown").toString());
-                subpopulationColumn.append(PopulationUtils.getSubpopulation(person));
+                personColumn.append(person);
                 modeColumn.append(modeParams.getMode());
                 monetaryDistanceRateColumn.append(modeParams.getMonetaryDistanceRate());
                 dailyMonetaryConstantColumn.append(modeParams.getDailyMonetaryConstant());
             }
         }
-
-        personModeScores = Table.create("Person Mode Scoring Parameters")
-                .addColumns(
-                        personIDColumn,
-                        incomeColumn,
-                        subpopulationColumn,
-                        modeColumn,
-                        monetaryDistanceRateColumn,
-                        dailyMonetaryConstantColumn
+        personModeScores = personModeScores
+                .joinOn("person")
+                .rightOuter(Table
+                        .create("temp")
+                        .addColumns(
+                                personColumn,
+                                modeColumn,
+                                monetaryDistanceRateColumn,
+                                dailyMonetaryConstantColumn
+                        )
                 );
 
         // attempt to parse income to a numeric column
@@ -1140,7 +1222,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
 
         if (networkLinkLog instanceof TablesawNetworkLinkLog) {
             LOGGER.info("Link Log Tablesaw tables already exist - will only perform basic data cleaning");
-            TablesawNetworkLinkLog tsLinkLog = (TablesawNetworkLinkLog)networkLinkLog;
+            TablesawNetworkLinkLog tsLinkLog = (TablesawNetworkLinkLog) networkLinkLog;
             linkLogTable = tsLinkLog.getLinkLogTable();
             vehicleOccupancyTable = tsLinkLog.getVehicleOccupancyTable();
             int rowsBeforeCleaning = linkLogTable.rowCount();
@@ -1153,7 +1235,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
                         rowsBeforeCleaning - rowsAfterCleaning);
             }
         } else if (networkLinkLog instanceof LinkLog) {
-            LinkLog gauvaLinkLog = (LinkLog)networkLinkLog;
+            LinkLog gauvaLinkLog = (LinkLog) networkLinkLog;
             LongColumn indexColumn = LongColumn.create("index");
             StringColumn linkIDColumn = StringColumn.create("linkID");
             StringColumn vehicleIDColumn = StringColumn.create("vehicleID");
@@ -1268,7 +1350,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
         this.writeTableCompressed(legs, String.format("%s/supporting-data-legs.csv", outputDir), this.compressionType);
         this.writeTableCompressed(trips, String.format("%s/supporting-data-trips.csv", outputDir), this.compressionType);
         this.writeTableCompressed(activityFacilities, String.format("%s/supporting-data-activity-facilities.csv", outputDir), this.compressionType);
-        this.writeTableCompressed(activityFacilities, String.format("%s/supporting-data-activities.csv", outputDir), this.compressionType);
+        this.writeTableCompressed(activities, String.format("%s/supporting-data-activities.csv", outputDir), this.compressionType);
         this.writeTableCompressed(personModeScores, String.format("%s/supporting-data-person-mode-score-parameters.csv", outputDir), this.compressionType);
         this.writeTableCompressed(linkLogTable, String.format("%s/supporting-data-linkLog.csv", outputDir), this.compressionType);
         this.writeTableCompressed(vehicleOccupancyTable, String.format("%s/supporting-data-vehicleOccupancy.csv", outputDir), this.compressionType);

@@ -1,6 +1,7 @@
 package com.arup.cml.abm.kpi.builders;
 
 import org.junit.rules.TemporaryFolder;
+import tech.tablesaw.api.DoubleColumn;
 import tech.tablesaw.api.StringColumn;
 import tech.tablesaw.api.Table;
 import tech.tablesaw.columns.Column;
@@ -28,11 +29,11 @@ public class TripsBuilder {
             StringColumn.create("end_activity_type"),
             StringColumn.create("end_facility_id"),
             StringColumn.create("start_link"),
-            StringColumn.create("start_x"),
-            StringColumn.create("start_y"),
+            DoubleColumn.create("start_x"),
+            DoubleColumn.create("start_y"),
             StringColumn.create("end_link"),
-            StringColumn.create("end_x"),
-            StringColumn.create("end_y"),
+            DoubleColumn.create("end_x"),
+            DoubleColumn.create("end_y"),
             StringColumn.create("first_pt_boarding_stop"),
             StringColumn.create("last_pt_egress_stop")
     );
@@ -43,9 +44,12 @@ public class TripsBuilder {
 
     public void fillWithDudValues() {
         String[] timeCols = new String[]{"dep_time", "trav_time", "wait_time"};
+        String[] numberCols = new String[]{"start_x", "start_y", "end_x", "end_y"};
         for (Column col : trips.columns()) {
             if (Arrays.asList(timeCols).contains(col.name())) {
                 col.append("00:00:00");
+            } else if (Arrays.asList(numberCols).contains(col.name())) {
+                col.append(1.0);
             } else {
                 col.append("dud");
             }

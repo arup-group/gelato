@@ -15,7 +15,6 @@ import org.matsim.core.config.groups.*;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.io.IOUtils;
 import org.matsim.facilities.ActivityFacilities;
-import org.matsim.facilities.FacilitiesFromPopulation;
 import org.matsim.pt.config.TransitConfigGroup;
 import org.matsim.pt.transitSchedule.api.TransitSchedule;
 import org.matsim.vehicles.*;
@@ -59,18 +58,8 @@ public class MatsimUtils {
         this.matsimTransitSchedule = matsimScenario.getTransitSchedule();
         this.matsimVehicles = collectVehicles(matsimScenario);
         this.population = matsimScenario.getPopulation();
-        this.facilities = getOrGenerateFacilities(matsimScenario, matsimConfig, population);
+        this.facilities = matsimScenario.getActivityFacilities();
         this.scoring = matsimConfig.scoring();
-    }
-
-    private ActivityFacilities getOrGenerateFacilities(Scenario scenario, Config config, Population pop) {
-        // TODO atm facilities cannot be generated because the population object is empty
-        if (scenario.getActivityFacilities().getFacilities().isEmpty()) {
-            config.facilities().setFacilitiesSource(FacilitiesConfigGroup.FacilitiesSource.onePerActivityLinkInPlansFile);
-            FacilitiesFromPopulation facilitiesFromPopulation = new FacilitiesFromPopulation(scenario);
-            facilitiesFromPopulation.run(pop);
-        }
-        return scenario.getActivityFacilities();
     }
 
     private Config buildConfig(String matsimInputConfig) {
