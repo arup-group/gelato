@@ -1,6 +1,7 @@
 package com.arup.cml.abm.kpi.tablesaw;
 
 import com.arup.cml.abm.kpi.KpiCalculator;
+import com.arup.cml.abm.kpi.data.MoneyLog;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.arup.cml.abm.kpi.data.LinkLog;
@@ -40,8 +41,8 @@ import static tech.tablesaw.aggregate.AggregateFunctions.*;
 
 public class TablesawKpiCalculator implements KpiCalculator {
     private static final Logger LOGGER = LogManager.getLogger(TablesawKpiCalculator.class);
-    private final Table legs;
-    private final Table trips;
+    private Table legs;
+    private Table trips;
     private final Table activities;
     private Table activityFacilities;
     private Table personModeScores;
@@ -56,24 +57,17 @@ public class TablesawKpiCalculator implements KpiCalculator {
     private CompressionType compressionType;
 
     public TablesawKpiCalculator(Network network, TransitSchedule schedule, Vehicles vehicles, LinkLog linkLog,
-                                 Population population, ScoringConfigGroup scoring, ActivityFacilities facilities,
-                                 InputStream legsInputStream, InputStream tripsInputStream,
+                                 Population population, MoneyLog moneyLog, ScoringConfigGroup scoring,
+                                 ActivityFacilities facilities, InputStream legsInputStream, InputStream tripsInputStream,
                                  Path outputDirectory, CompressionType compressionType) {
         this.compressionType = compressionType;
         // TODO: 24/01/2024 replace this ASAP with a representation of the network
         // that isn't from the MATSim API (a map, or dedicated domain object, or
         // whatever)
-        Map<String, ColumnType> columnMapping = new HashMap<>();
-        columnMapping.put("dep_time", ColumnType.STRING);
-        columnMapping.put("trav_time", ColumnType.STRING);
-        columnMapping.put("wait_time", ColumnType.STRING);
-        this.legs = readCSVInputStream(legsInputStream, columnMapping).setName("Legs");
-        columnMapping.put("first_pt_boarding_stop", ColumnType.STRING);
-        columnMapping.put("start_facility_id", ColumnType.STRING);
         createPeopleTables(population, scoring);
         createFacilitiesTable(facilities);
-        this.trips = fixFacilitiesInTripsTable(
-                activityFacilities, readCSVInputStream(tripsInputStream, columnMapping).setName("Trips"));
+        this.legs = readLegs(legsInputStream, personModeScores, moneyLog);
+        this.trips = readTrips(tripsInputStream, legs);
         this.activities = createActivitiesTable(trips);
         createNetworkLinkTables(network);
         createTransitTables(schedule);
@@ -82,22 +76,44 @@ public class TablesawKpiCalculator implements KpiCalculator {
         writeIntermediateData(outputDirectory);
     }
 
+    private Map<String, ColumnType> getLegsColumnMap () {
+        Map<String, ColumnType> columnMapping = new HashMap<>();
+        columnMapping.put("person", ColumnType.STRING);
+        columnMapping.put("dep_time", ColumnType.STRING);
+        columnMapping.put("trav_time", ColumnType.STRING);
+        columnMapping.put("wait_time", ColumnType.STRING);
+        return columnMapping;
+    }
+
+    private Map<String, ColumnType> getTripsColumnMap () {
+        Map<String, ColumnType> columnMapping = getLegsColumnMap();
+        columnMapping.put("first_pt_boarding_stop", ColumnType.STRING);
+        columnMapping.put("start_facility_id", ColumnType.STRING);
+        return columnMapping;
+    }
+
+    private Table readLegs(InputStream legsInputStream, Table personModeScores, MoneyLog moneyLog) {
+        legs = readCSVInputStream(legsInputStream, getLegsColumnMap()).setName("Legs");
+        legs = addCostToLegs(legs, personModeScores, moneyLog);
+        return legs;
+    }
+
+    private Table readTrips(InputStream tripsInputStream, Table legs) {
+        trips = readCSVInputStream(tripsInputStream, getTripsColumnMap()).setName("Trips");
+        trips = fixFacilitiesInTripsTable(activityFacilities, trips);
+        trips = addCostToTrips(legs, trips);
+        return trips;
+    }
+
     @Override
     public double writeAffordabilityKpi(Path outputDirectory) {
         LOGGER.info("Writing Affordability KPI to {}", outputDirectory);
 
-        // join personal monetary costs, constant and per distance unit
+        // join personal income / subpop info
         Table table = legs
                 .joinOn("person", "mode")
-                .inner(personModeScores);
+                .inner(personModeScores.selectColumns("person", "mode", "income", "income_numeric", "subpopulation"));
 
-        // compute monetary cost for each leg
-        table.addColumns(
-                table.intColumn("distance")
-                        .multiply(table.doubleColumn("monetaryDistanceRate"))
-                        .add(table.doubleColumn("dailyMonetaryConstant"))
-                        .abs()
-                        .setName("monetaryCostOfTravel"));
         table = table
                 .selectColumns("person", "income", "income_numeric", "subpopulation", "monetaryCostOfTravel")
                 .setName("Monetary Travel Costs");
@@ -769,7 +785,71 @@ public class TablesawKpiCalculator implements KpiCalculator {
         return trips;
     }
 
+    private Table addCostToLegs(Table legs, Table personModeScores, MoneyLog moneyLog) {
+        // Add Costs to Legs
+        // join personal monetary costs, constant and per distance unit
+        legs = legs
+                .joinOn("person", "mode")
+                .inner(personModeScores
+                        .selectColumns("person", "mode", "monetaryDistanceRate", "dailyMonetaryConstant"));
+
+        // compute monetary cost for each leg from scoring params
+        legs.addColumns(
+                legs.intColumn("distance")
+                        .multiply(legs.doubleColumn("monetaryDistanceRate"))
+                        .add(legs.doubleColumn("dailyMonetaryConstant"))
+                        .abs()
+                        .setName("monetaryCostOfTravel"));
+        legs.removeColumns("monetaryDistanceRate", "dailyMonetaryConstant");
+
+        // add contribution from person money events
+        // first create time columns in seconds
+        DoubleColumn dep_time_seconds = DoubleColumn.create("dep_time_seconds");
+        DoubleColumn trav_time_seconds = DoubleColumn.create("trav_time_seconds");
+        legs.stringColumn("dep_time")
+                .forEach(time -> dep_time_seconds.append(
+                        (int) Time.parseTime(time)));
+        legs.stringColumn("trav_time")
+                .forEach(time -> trav_time_seconds.append(
+                        (int) Time.parseTime(time)));
+        DoubleColumn arr_time_seconds = dep_time_seconds.add(trav_time_seconds).setName("arr_time_seconds");
+        legs.addColumns(dep_time_seconds, arr_time_seconds);
+        for (String person : moneyLog.getMoneyLogData().keySet()) {
+            for (Map.Entry<Double, Double> costEntry : moneyLog.getMoneyLogData(person).entrySet()) {
+                Double time = costEntry.getKey();
+                Double cost = costEntry.getValue();
+                legs.doubleColumn("monetaryCostOfTravel").set(
+                        legs.stringColumn("person").isEqualTo(person)
+                                .and(legs.doubleColumn("dep_time_seconds").isLessThan(time)
+                                        .and(legs.doubleColumn("arr_time_seconds").isGreaterThanOrEqualTo(time))),
+                        legs.doubleColumn("monetaryCostOfTravel").add(cost)
+                );
+            }
+        }
+        legs.removeColumns(dep_time_seconds, arr_time_seconds);
+        return legs;
+    }
+
+    private Table addCostToTrips(Table legs, Table trips) {
+        if (!legs.columnNames().contains("monetaryCostOfTravel")) {
+            throw new RuntimeException("Add costs to legs before attempting to add them to trips");
+        }
+
+        Table combinedTripCost = legs
+                .summarize("monetaryCostOfTravel", sum)
+                .by("trip_id");
+        combinedTripCost.column("Sum [monetaryCostOfTravel]").setName("monetaryCostOfTravel");
+
+        // Add Costs to Trips
+        trips = trips
+                .joinOn("trip_id")
+                .inner(combinedTripCost);
+
+        return trips;
+    }
+
     private Table createActivitiesTable(Table trips) {
+        LOGGER.info("Creating Activities Table");
         Table activities = Table.create("Activities")
                 .addColumns(
                         StringColumn.create("person"),

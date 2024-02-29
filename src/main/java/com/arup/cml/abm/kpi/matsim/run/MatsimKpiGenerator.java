@@ -2,8 +2,10 @@ package com.arup.cml.abm.kpi.matsim.run;
 
 import com.arup.cml.abm.kpi.KpiCalculator;
 import com.arup.cml.abm.kpi.data.LinkLog;
+import com.arup.cml.abm.kpi.data.MoneyLog;
 import com.arup.cml.abm.kpi.matsim.MatsimUtils;
 import com.arup.cml.abm.kpi.matsim.handlers.MatsimLinkLogHandler;
+import com.arup.cml.abm.kpi.matsim.handlers.MatsimPersonMoneyHandler;
 import com.arup.cml.abm.kpi.tablesaw.TablesawKpiCalculator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -58,8 +60,11 @@ public class MatsimKpiGenerator implements Runnable {
         MatsimUtils matsimUtils = new MatsimUtils(matsimOutputDirectory, matsimConfigFile);
         LinkLog linkLog = new LinkLog();
         MatsimLinkLogHandler matsimLinkLogHandler = new MatsimLinkLogHandler(linkLog);
+        MoneyLog moneyLog = new MoneyLog();
+        MatsimPersonMoneyHandler matsimPersonMoneyHandler = new MatsimPersonMoneyHandler(moneyLog);
         EventsManager eventsManager = EventsUtils.createEventsManager();
         eventsManager.addHandler(matsimLinkLogHandler);
+        eventsManager.addHandler(matsimPersonMoneyHandler);
 
         String eventsFile = String.format("%s/%soutput_events.xml%s",
                 matsimOutputDirectory,
@@ -69,10 +74,11 @@ public class MatsimKpiGenerator implements Runnable {
         LOGGER.info("Streaming MATSim events from {}", eventsFile);
         new MatsimEventsReader(eventsManager).readFile(eventsFile);
         summariseEventsHandled(eventsFile, matsimLinkLogHandler.getEventCounts());
+        summariseEventsHandled(eventsFile, matsimPersonMoneyHandler.getEventCounts());
 
         KpiCalculator kpiCalculator = new TablesawKpiCalculator(
                 matsimUtils.getMatsimNetwork(), matsimUtils.getTransitSchedule(), matsimUtils.getMatsimVehicles(),
-                linkLog, matsimUtils.getPopulation(), matsimUtils.getScoring(), matsimUtils.getFacilities(),
+                linkLog, matsimUtils.getPopulation(), moneyLog, matsimUtils.getScoring(), matsimUtils.getFacilities(),
                 matsimUtils.getMatsimLegsCSVInputStream(),  matsimUtils.getMatsimTripsCSVInputStream(),
                 outputDir, CompressionType.gzip
                 );

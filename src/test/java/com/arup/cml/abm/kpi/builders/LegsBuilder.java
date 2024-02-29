@@ -1,12 +1,14 @@
 package com.arup.cml.abm.kpi.builders;
 
 import org.junit.rules.TemporaryFolder;
+import tech.tablesaw.api.IntColumn;
 import tech.tablesaw.api.StringColumn;
 import tech.tablesaw.api.Table;
 import tech.tablesaw.columns.Column;
 import tech.tablesaw.io.csv.CsvWriteOptions;
 
 import java.nio.file.Path;
+import java.util.Arrays;
 
 public class LegsBuilder {
     TemporaryFolder tmpDir;
@@ -16,7 +18,7 @@ public class LegsBuilder {
             StringColumn.create("dep_time"),
             StringColumn.create("trav_time"),
             StringColumn.create("wait_time"),
-            StringColumn.create("distance"),
+            IntColumn.create("distance"),
             StringColumn.create("mode"),
             StringColumn.create("start_link"),
             StringColumn.create("start_x"),
@@ -36,8 +38,13 @@ public class LegsBuilder {
     }
 
     public void fillWithDudValues() {
+        String[] intCols = new String[]{"distance"};
         for (Column col : legs.columns()) {
-            col.append("dud");
+            if (Arrays.asList(intCols).contains(col.name())) {
+                col.append(0);
+            } else {
+                col.append("dud");
+            }
         }
     }
 

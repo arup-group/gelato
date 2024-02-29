@@ -1,5 +1,27 @@
 # KPI Data Requirements and Expectations
 
+## Affordability
+
+This metric relies on `modeParams` being set correctly in the MATSim config and `PersonMoneyEvent`s in the output
+events file.
+
+For `modeParams`, make sure you set the `dailyMonetaryConstant` and/or `monetaryDistanceRate` to non zero values, 
+for the modes that make sense (i.e. walking will not actually cost any money to perform)
+```xml
+<parameterset type="modeParams" >
+    <param name="constant" value="0.0" />
+    <param name="dailyMonetaryConstant" value="-1.0" />  <!--here-->
+    <param name="dailyUtilityConstant" value="0.0" />
+    <param name="marginalUtilityOfDistance_util_m" value="0.0" />
+    <param name="marginalUtilityOfTraveling_util_hr" value="0.0" />
+    <param name="mode" value="car" />
+    <param name="monetaryDistanceRate" value="-1.0" />  <!--here-->
+</parameterset>
+```
+
+If `PersonMoneyEvent`s are present in the events file, they will contribute to the cost of the relevant trip performed 
+by an agent.
+
 ## GHG Emissions
 
 You can set your own emissions factors and fuel types for vehicles in the model to be used in the calculation.
