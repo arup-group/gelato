@@ -40,11 +40,8 @@ by an agent.
 
 ### Income Information
 This metric is strongly dependent on the income information set for agents.
-In particular a low income bracket needs to be identifiable to compute the metric.
-It is expected that your data has either of the following:
-- agents an `income` attribute with numeric values
-- agents an `income` attribute with string values and one of the categories is `low`
-- agents with a `subpopulation` attribute with string values and one of the categories is `low income`
+It is expected that your persons data has an `income` column with numeric values or
+a `subpopulation` column with string values, where one of the categories is `low income`
 
 ## GHG Emissions
 
