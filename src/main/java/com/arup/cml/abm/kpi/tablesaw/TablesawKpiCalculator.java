@@ -109,19 +109,24 @@ public class TablesawKpiCalculator implements KpiCalculator {
     }
 
     private Table readLegs(InputStream legsInputStream, Table personModeScores, MoneyLog moneyLog) {
+        LOGGER.info("Reading legs file from stream");
         legs = readCSVInputStream(legsInputStream, getLegsColumnMap()).setName("Legs");
         legs = addCostToLegs(legs, personModeScores, moneyLog);
+        LOGGER.info("Finished reading legs file");
         return legs;
     }
 
     private Table readTrips(InputStream tripsInputStream, Table legs, Table activityFacilities) {
+        LOGGER.info("Reading trips file from stream with an activities table");
         trips = readCSVInputStream(tripsInputStream, getTripsColumnMap()).setName("Trips");
         trips = fixFacilitiesInTripsTable(activityFacilities, trips);
         trips = addCostToTrips(legs, trips);
+        LOGGER.info("Finished reading trips file");
         return trips;
     }
 
     private Table readTrips(InputStream tripsInputStream, Table legs) {
+        LOGGER.info("Reading trips file from stream without a activities table");
         trips = readCSVInputStream(tripsInputStream, getTripsColumnMap()).setName("Trips");
         if (trips.column("start_facility_id").countMissing() != 0
                 || trips.column("end_facility_id").countMissing() != 0) {
@@ -774,6 +779,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
             });
         });
 
+        LOGGER.info("Finished populating facilities table columns");
         return Table.create("Activity Facilities")
                 .addColumns(
                         facilityIDColumn,
@@ -785,7 +791,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
     }
 
     private Table createFacilitiesTableFromTrips(Table trips) {
-        LOGGER.info("Creating Facilities Table");
+        LOGGER.info("Creating Facilities Table from trips table");
         StringColumn facilityIDColumn = StringColumn.create("facilityID");
         StringColumn linkIDColumn = StringColumn.create("linkID");
         DoubleColumn xColumn = DoubleColumn.create("x");
@@ -816,10 +822,12 @@ public class TablesawKpiCalculator implements KpiCalculator {
                         activityTypeColumn
                 );
         table = table.dropDuplicateRows();
+        LOGGER.info("Finished creating Facilities Table from trips table");
         return table;
     }
 
     private Table fixFacilitiesInTripsTable(Table activityFacilities, Table trips) {
+        LOGGER.info("Fixing facilities in trips table");
         if (trips.column("start_facility_id").countMissing() != 0) {
             LOGGER.warn("`start_facility_id` column in `trips` table has missing values. We will try to fix that now.");
             trips.removeColumns("start_facility_id");
@@ -842,10 +850,12 @@ public class TablesawKpiCalculator implements KpiCalculator {
                     .joinOn("end_link", "end_activity_type")
                     .inner(endActivityTable);
         }
+        LOGGER.info("Finished fixing facilities in trips table");
         return trips;
     }
 
     private Table addCostToLegs(Table legs, Table personModeScores, MoneyLog moneyLog) {
+        LOGGER.info("Adding costs to legs table");
         // Add Costs to Legs
         // join personal monetary costs, constant and per distance unit
         legs = legs
@@ -853,7 +863,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
                 .inner(personModeScores
                         .selectColumns("person", "mode", "monetaryDistanceRate", "dailyMonetaryConstant"));
 
-        // compute monetary cost for each leg from scoring params
+        LOGGER.info("Compute monetary cost for each leg from scoring params");
         legs.addColumns(
                 legs.intColumn("distance")
                         .multiply(legs.doubleColumn("monetaryDistanceRate"))
@@ -862,18 +872,21 @@ public class TablesawKpiCalculator implements KpiCalculator {
                         .setName("monetaryCostOfTravel"));
         legs.removeColumns("monetaryDistanceRate", "dailyMonetaryConstant");
 
-        // add contribution from person money events
-        // first create time columns in seconds
+        LOGGER.info("Adding contribution from person money events");
+        LOGGER.info("Create a time columns in seconds");
         DoubleColumn dep_time_seconds = DoubleColumn.create("dep_time_seconds");
         DoubleColumn trav_time_seconds = DoubleColumn.create("trav_time_seconds");
+        LOGGER.info("Adding dep_time column");
         legs.stringColumn("dep_time")
                 .forEach(time -> dep_time_seconds.append(
                         (int) Time.parseTime(time)));
+        LOGGER.info("Adding trav_time column");
         legs.stringColumn("trav_time")
                 .forEach(time -> trav_time_seconds.append(
                         (int) Time.parseTime(time)));
         DoubleColumn arr_time_seconds = dep_time_seconds.add(trav_time_seconds).setName("arr_time_seconds");
         legs.addColumns(dep_time_seconds, arr_time_seconds);
+        LOGGER.info("Iterating over the money log");
         for (String person : moneyLog.getMoneyLogData().keySet()) {
             for (Map.Entry<Double, Double> costEntry : moneyLog.getMoneyLogData(person).entrySet()) {
                 Double time = costEntry.getKey();
@@ -886,11 +899,14 @@ public class TablesawKpiCalculator implements KpiCalculator {
                 );
             }
         }
+        LOGGER.info("Finished iterating over the money log");
         legs.removeColumns(dep_time_seconds, arr_time_seconds);
+        LOGGER.info("Finished adding costs to legs table");
         return legs;
     }
 
     private Table addCostToTrips(Table legs, Table trips) {
+        LOGGER.info("Adding costs to trips");
         if (!legs.columnNames().contains("monetaryCostOfTravel")) {
             throw new RuntimeException("Add costs to legs before attempting to add them to trips");
         }
@@ -905,6 +921,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
                 .joinOn("trip_id")
                 .inner(combinedTripCost);
 
+        LOGGER.info("Finished adding costs to trips");
         return trips;
     }
 
@@ -967,6 +984,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
             // finally append the activities of this person
             activities.append(personActivities);
         }
+        LOGGER.info("Finished creating Activities Table");
 
         return activities;
     }
@@ -985,11 +1003,16 @@ public class TablesawKpiCalculator implements KpiCalculator {
         columnMapping.put("person", ColumnType.STRING);
         columnMapping.put("income", ColumnType.DOUBLE);
 
+        LOGGER.info("Reading persons file into a Table");
         personModeScores = readCSVInputStream(personInputStream, columnMapping).setName("Person Mode Scoring Parameters");
+        LOGGER.info(String.format("Crceated a persons table with %s rows", personModeScores.rowCount()));
+
         if (!personModeScores.columnNames().contains("income")) {
+            LOGGER.info("Found no `income` column in the persons table - creating one");
             personModeScores.addColumns(DoubleColumn.create("income"));
         }
         if (!personModeScores.columnNames().contains("subpopulation")) {
+            LOGGER.info("Found no `subpopulation` column in the persons table - creating one");
             StringColumn incomeColumn = StringColumn.create("subpopulation",
                     Collections.nCopies(personModeScores.column("person").size(), null));
             personModeScores.addColumns(incomeColumn);
@@ -999,6 +1022,8 @@ public class TablesawKpiCalculator implements KpiCalculator {
         StringColumn modeColumn = StringColumn.create("mode");
         DoubleColumn monetaryDistanceRateColumn = DoubleColumn.create("monetaryDistanceRate");
         DoubleColumn dailyMonetaryConstantColumn = DoubleColumn.create("dailyMonetaryConstant");
+
+        LOGGER.info("Adding people to the person mode scores table");
         for (Row row : personModeScores) {
             String person = row.getString("person");
             String subpopulation = row.getString("subpopulation");
@@ -1010,6 +1035,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
                 dailyMonetaryConstantColumn.append(modeParams.getDailyMonetaryConstant());
             }
         }
+        LOGGER.info("Joining person mode scores table to a new temp table");
         personModeScores = personModeScores
                 .joinOn("person")
                 .rightOuter(Table
@@ -1021,6 +1047,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
                                 dailyMonetaryConstantColumn
                         )
                 );
+        LOGGER.info("Finished populating all person-related tables");
     }
 
     private void createNetworkLinkTables(Network network) {
@@ -1075,6 +1102,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
                         StringColumn.create("linkID", modesLinkIDColumn),
                         StringColumn.create("mode", modesColumn)
                 );
+        LOGGER.info("Finished creating Network Link Tables");
     }
 
     private void createTransitTables(TransitSchedule schedule) {
@@ -1176,6 +1204,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
                         ptLineIDColumn,
                         ptRouteIDColumn
                 );
+        LOGGER.info("Finished creating Vehicle Table");
     }
 
     private static void appendAttributeValueOrMissing(Attributes attributes, String attributeName, Column column) {
@@ -1201,8 +1230,8 @@ public class TablesawKpiCalculator implements KpiCalculator {
             int rowsAfterCleaning = linkLogTable.rowCount();
             if (rowsAfterCleaning != rowsBeforeCleaning) {
                 LOGGER.warn("{} missing 'endTime' data points were encountered - some vehicles " +
-                                "were stuck and did not complete their journey. These Link Log entries will " +
-                                "be deleted.",
+                                "were stuck and did not complete their journey. These Link Log entries were " +
+                                "deleted.",
                         rowsBeforeCleaning - rowsAfterCleaning);
             }
         } else if (networkLinkLog instanceof LinkLog) {
@@ -1269,9 +1298,11 @@ public class TablesawKpiCalculator implements KpiCalculator {
         }
 
         fixVehicleModesInLinkLog();
+        LOGGER.info("Finished creating link log tables");
     }
 
     private void fixVehicleModesInLinkLog() {
+        LOGGER.info("Fixing vehicles modes in link log table");
         linkLogTable = linkLogTable
                 .joinOn("vehicleID")
                 .leftOuter(vehicles.selectColumns("vehicleID", "mode"));
@@ -1287,10 +1318,12 @@ public class TablesawKpiCalculator implements KpiCalculator {
                     mismatchedModes));
         }
         linkLogTable.removeColumns("initialMode");
+        LOGGER.info("Finished fixing vehicles modes in link log table");
     }
 
 
     public Table readCSVInputStream(InputStream inputStream, Map<String, ColumnType> columnMapping) {
+        LOGGER.info(("Reading CSV input stream into a table"));
         // TODO Make separator accessible from outside
         CsvReadOptions.Builder builder = CsvReadOptions.builder(inputStream).separator(';').header(true)
                 .columnTypesPartial(column -> {
@@ -1303,14 +1336,17 @@ public class TablesawKpiCalculator implements KpiCalculator {
     }
 
     private void writeContentToFile(String path, String content, CompressionType compressionType) {
+        LOGGER.info(String.format("Writing file %s", path));
         try (Writer wr = IOUtils.getBufferedWriter(path.concat(compressionType.fileEnding))) {
             wr.write(content);
         } catch (IOException e) {
             LOGGER.warn("Failed to save content `{}` to file: `{}`", content, path);
         }
+        LOGGER.info(String.format("Finished writing file %s", path));
     }
 
     private void writeIntermediateData(Path outputDir) {
+        LOGGER.info("Writing intermediate data files");
         try {
             Files.createDirectories(outputDir);
         } catch (IOException e) {
@@ -1330,6 +1366,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
         this.writeTableCompressed(scheduleStops, String.format("%s/supporting-data-scheduleStops.csv", outputDir), this.compressionType);
         this.writeTableCompressed(scheduleRoutes, String.format("%s/supporting-data-scheduleRoutes.csv", outputDir), this.compressionType);
         this.writeTableCompressed(vehicles, String.format("%s/supporting-data-vehicles.csv", outputDir), this.compressionType);
+        LOGGER.info("Finished writing intermediate data files");
     }
 
     private OutputStream getCompressedOutputStream(String filepath, CompressionType compressionType) {
