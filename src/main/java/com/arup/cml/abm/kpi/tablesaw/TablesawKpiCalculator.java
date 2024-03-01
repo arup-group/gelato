@@ -109,15 +109,19 @@ public class TablesawKpiCalculator implements KpiCalculator {
     }
 
     private Table readLegs(InputStream legsInputStream, Table personModeScores, MoneyLog moneyLog) {
+        LOGGER.info("Reading legs file from stream");
         legs = readCSVInputStream(legsInputStream, getLegsColumnMap()).setName("Legs");
         legs = addCostToLegs(legs, personModeScores, moneyLog);
+        LOGGER.info("Finished reading legs file");
         return legs;
     }
 
     private Table readTrips(InputStream tripsInputStream, Table legs, Table activityFacilities) {
+        LOGGER.info("Reading trips file from stream");
         trips = readCSVInputStream(tripsInputStream, getTripsColumnMap()).setName("Trips");
         trips = fixFacilitiesInTripsTable(activityFacilities, trips);
         trips = addCostToTrips(legs, trips);
+        LOGGER.info("Finished reading trips file");
         return trips;
     }
 
@@ -782,6 +786,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
             });
         });
 
+        LOGGER.info("Finished populating facilities table columns");
         return Table.create("Activity Facilities")
                 .addColumns(
                         facilityIDColumn,
@@ -793,7 +798,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
     }
 
     private Table createFacilitiesTableFromTrips(Table trips) {
-        LOGGER.info("Creating Facilities Table");
+        LOGGER.info("Creating Facilities Table from trips table");
         StringColumn facilityIDColumn = StringColumn.create("facilityID");
         StringColumn linkIDColumn = StringColumn.create("linkID");
         DoubleColumn xColumn = DoubleColumn.create("x");
@@ -824,10 +829,12 @@ public class TablesawKpiCalculator implements KpiCalculator {
                         activityTypeColumn
                 );
         table = table.dropDuplicateRows();
+        LOGGER.info("Finished creating Facilities Table from trips table");
         return table;
     }
 
     private Table fixFacilitiesInTripsTable(Table activityFacilities, Table trips) {
+        LOGGER.info("Fixing facilities in trips table");
         if (trips.column("start_facility_id").countMissing() != 0) {
             LOGGER.warn("`start_facility_id` column in `trips` table has missing values. We will try to fix that now.");
             trips.removeColumns("start_facility_id");
@@ -850,6 +857,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
                     .joinOn("end_link", "end_activity_type")
                     .inner(endActivityTable);
         }
+        LOGGER.info("Finished fixing facilities in trips table");
         return trips;
     }
 
@@ -899,6 +907,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
     }
 
     private Table addCostToTrips(Table legs, Table trips) {
+        LOGGER.info("Adding costs to trips");
         if (!legs.columnNames().contains("monetaryCostOfTravel")) {
             throw new RuntimeException("Add costs to legs before attempting to add them to trips");
         }
@@ -913,6 +922,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
                 .joinOn("trip_id")
                 .inner(combinedTripCost);
 
+        LOGGER.info("Finished adding costs to trips");
         return trips;
     }
 
@@ -975,6 +985,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
             // finally append the activities of this person
             activities.append(personActivities);
         }
+        LOGGER.info("Finished creating Activities Table");
 
         return activities;
     }
@@ -1108,6 +1119,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
                         StringColumn.create("linkID", modesLinkIDColumn),
                         StringColumn.create("mode", modesColumn)
                 );
+        LOGGER.info("Finished creating Network Link Tables");
     }
 
     private void createTransitTables(TransitSchedule schedule) {
@@ -1209,6 +1221,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
                         ptLineIDColumn,
                         ptRouteIDColumn
                 );
+        LOGGER.info("Finished creating Vehicle Table");
     }
 
     private static void appendAttributeValueOrMissing(Attributes attributes, String attributeName, Column column) {
@@ -1234,8 +1247,8 @@ public class TablesawKpiCalculator implements KpiCalculator {
             int rowsAfterCleaning = linkLogTable.rowCount();
             if (rowsAfterCleaning != rowsBeforeCleaning) {
                 LOGGER.warn("{} missing 'endTime' data points were encountered - some vehicles " +
-                                "were stuck and did not complete their journey. These Link Log entries will " +
-                                "be deleted.",
+                                "were stuck and did not complete their journey. These Link Log entries were " +
+                                "deleted.",
                         rowsBeforeCleaning - rowsAfterCleaning);
             }
         } else if (networkLinkLog instanceof LinkLog) {
@@ -1302,9 +1315,11 @@ public class TablesawKpiCalculator implements KpiCalculator {
         }
 
         fixVehicleModesInLinkLog();
+        LOGGER.info("Finished creating link log tables");
     }
 
     private void fixVehicleModesInLinkLog() {
+        LOGGER.info("Fixing vehicles modes in link log table");
         linkLogTable = linkLogTable
                 .joinOn("vehicleID")
                 .leftOuter(vehicles.selectColumns("vehicleID", "mode"));
@@ -1320,6 +1335,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
                     mismatchedModes));
         }
         linkLogTable.removeColumns("initialMode");
+        LOGGER.info("Finished fixing vehicles modes in link log table");
     }
 
 
@@ -1336,14 +1352,17 @@ public class TablesawKpiCalculator implements KpiCalculator {
     }
 
     private void writeContentToFile(String path, String content, CompressionType compressionType) {
+        LOGGER.info(String.format("Writing file %s", path));
         try (Writer wr = IOUtils.getBufferedWriter(path.concat(compressionType.fileEnding))) {
             wr.write(content);
         } catch (IOException e) {
             LOGGER.warn("Failed to save content `{}` to file: `{}`", content, path);
         }
+        LOGGER.info(String.format("Finished writing file %s", path));
     }
 
     private void writeIntermediateData(Path outputDir) {
+        LOGGER.info("Writing intermediate data files");
         try {
             Files.createDirectories(outputDir);
         } catch (IOException e) {
@@ -1363,6 +1382,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
         this.writeTableCompressed(scheduleStops, String.format("%s/supporting-data-scheduleStops.csv", outputDir), this.compressionType);
         this.writeTableCompressed(scheduleRoutes, String.format("%s/supporting-data-scheduleRoutes.csv", outputDir), this.compressionType);
         this.writeTableCompressed(vehicles, String.format("%s/supporting-data-vehicles.csv", outputDir), this.compressionType);
+        LOGGER.info("Finished writing intermediate data files");
     }
 
     private OutputStream getCompressedOutputStream(String filepath, CompressionType compressionType) {
