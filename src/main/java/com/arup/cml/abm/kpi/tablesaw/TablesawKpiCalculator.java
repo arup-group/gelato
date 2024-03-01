@@ -498,7 +498,6 @@ public class TablesawKpiCalculator implements KpiCalculator {
 
     @Override
     public double writeTravelTimeKpi(Path outputDirectory) {
-        // TODO update method name KPI missing
         LOGGER.info("Writing Travel Time KPI to {}", outputDirectory);
 
         // convert H:M:S format to seconds
@@ -522,11 +521,9 @@ public class TablesawKpiCalculator implements KpiCalculator {
 
     @Override
     public Table writeAccessToMobilityServicesKpi(Path outputDirectory) {
-        // TODO update method name KPI missing
         LOGGER.info("Writing Access To Mobility Services KPI to {}", outputDirectory);
 
         // get home locations for persons
-        // todo persons table
         Table table = trips
                 .where(trips.stringColumn("start_activity_type").isEqualTo("home"))
                 .selectColumns("person", "start_activity_type", "start_x", "start_y", "first_pt_boarding_stop");
@@ -555,10 +552,13 @@ public class TablesawKpiCalculator implements KpiCalculator {
                 400.0,
                 "bus_access_400m"
         );
-        // todo add subway
         table = addPTAccessColumnWithinDistance(
                 table,
-                scheduleStops.where(scheduleStops.stringColumn("mode").isEqualTo("rail")),
+                scheduleStops.where(
+                        scheduleStops.stringColumn("mode").isEqualTo("rail").or(
+                                scheduleStops.stringColumn("mode").isEqualTo("subway")
+                        )
+                ),
                 800.0,
                 "rail_access_800m"
         );
@@ -680,7 +680,6 @@ public class TablesawKpiCalculator implements KpiCalculator {
 
     @Override
     public double writeMobilitySpaceUsageKpi(Path outputDirectory) {
-        // TODO: implement KPI
         LOGGER.info("Writing Mobility Space Usage KPI to {}", outputDirectory);
 
         Table carActivities = activities
