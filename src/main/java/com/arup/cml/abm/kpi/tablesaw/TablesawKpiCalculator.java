@@ -394,7 +394,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
     @Override
     public void writePassengerKMKpi(Path outputDirectory) {
         LOGGER.info("Writing Passenger KM KPI to {}", outputDirectory);
-        // to get to a passenger-km metric the easiest way is to go through legs
+
         Table intermediate = trips
                 .summarize("traveled_distance", sum)
                 .by("person")
