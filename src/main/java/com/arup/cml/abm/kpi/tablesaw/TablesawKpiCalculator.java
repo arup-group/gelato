@@ -466,13 +466,8 @@ public class TablesawKpiCalculator implements KpiCalculator {
     public double writeGHGKpi(Path outputDirectory) {
         LOGGER.info("Writing GHG KPIs to {}", outputDirectory);
 
-        // take car and bus link log events
-        Table table = linkLogTable
-                .where(linkLogTable.stringColumn("mode").isEqualTo("car")
-                        .or(linkLogTable.stringColumn("mode").isEqualTo("bus")));
-
         // add link length to the link log table
-        table = table
+        Table table = linkLogTable
                 .joinOn("linkID")
                 .inner(networkLinks.selectColumns("linkID", "length"));
         table.addColumns(table.numberColumn("length").divide(1000).setName("distance_km"));
