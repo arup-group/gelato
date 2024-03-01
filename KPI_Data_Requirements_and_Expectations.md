@@ -1,11 +1,26 @@
 # KPI Data Requirements and Expectations
 
+Below you can find additional information about data set-up for MATSim models in relation to each of the KPIs produced 
+by Gelato. 
+In general the following outputs from a MATSim model are expected on top of the MATSim config:
+
+- `output_network.xml.gz`
+- `output_transitSchedule.xml.gz`
+- `output_transitVehicles.xml.gz`
+- `output_households.xml.gz` (can be empty)
+- `output_facilities.xml.gz` (can be empty)
+- `output_vehicles.xml.gz`
+- `soutput_persons.csv.gz`
+- `soutput_legs.xml.gz`
+- `soutput_trips.xml.gz`
+- `drt_vehicles.xml.gz` (for simulations with DRT mode)
+
 ## Affordability
 
 This metric relies on `modeParams` being set correctly in the MATSim config and `PersonMoneyEvent`s in the output
 events file.
 
-For `modeParams`, make sure you set the `dailyMonetaryConstant` and/or `monetaryDistanceRate` to non zero values, 
+For `modeParams`, make sure you set the `dailyMonetaryConstant` and/or `monetaryDistanceRate` to non-zero values, 
 for the modes that make sense (i.e. walking will not actually cost any money to perform)
 ```xml
 <parameterset type="modeParams" >

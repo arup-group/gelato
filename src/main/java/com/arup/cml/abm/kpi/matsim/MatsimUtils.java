@@ -212,7 +212,7 @@ public class MatsimUtils {
         });
 
         // reading DRT vehicles if relevant matsim output found
-        String drtVehiclesPath = String.format("%s/drt_vehicles.xml.gz", matsimOutputDir);
+        String drtVehiclesPath = String.format("%s/%sdrt_vehicles.xml%s", matsimOutputDir, runId, compressionFileEnd);
         File drtFile = new File(drtVehiclesPath);
         if (drtFile.exists()) {
             LOGGER.info("DRT Vehicles File was found and will be used to label DRT vehicles");
