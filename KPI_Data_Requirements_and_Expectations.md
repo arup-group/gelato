@@ -82,3 +82,7 @@ The defaults we use are:
 
 - LGV: `"fuelType"="petrol"`, `"emissionsFactor"=0.317`
 - HGV: `"fuelType"="diesel"`, `"emissionsFactor"=0.761`
+
+# Access to Mobility Services
+
+The $(x, y)$ spatial coordinates are assumed to be in metre-based, distance-preserving projection.
