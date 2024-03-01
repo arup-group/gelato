@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- New KPIs: Affordability, Passenger km, GHG, Travel time , Access to mobility services, Mobility space usage
+- More supporting data tables: facilities, activities and person scores
 
 ### Fixed
 
@@ -18,7 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Docker image now accepts optional runtime JVM parameters ([#36](https://github.com/arup-group/gelato/issues/36))
 - README now includes JVM memory tuning instructions ([#48](https://github.com/arup-group/gelato/issues/48))
 - Gelato now uses less memory ([#52](https://github.com/arup-group/gelato/issues/52))
-
+- Tables: 
+  - transit stops now include mode of transport using the stop
+  - vehicles get fuel types and emission factors
+  - trips and legs have an additional column reporting monetary cost of the trip or leg
 
 ## [0.0.2-alpha] - 2024-02-21
 
