@@ -162,26 +162,28 @@ public class TablesawKpiCalculator implements KpiCalculator {
 
         // join personal income / subpop info
         Table table = legs
-                .joinOn("person", "mode")
-                .inner(personModeScores.selectColumns("person", "mode", "income", "income_numeric", "subpopulation"));
+                .joinOn("person")
+                .inner(personModeScores
+                        .selectColumns("person", "income", "subpopulation")
+                        .dropDuplicateRows());
 
         table = table
-                .selectColumns("person", "income", "income_numeric", "subpopulation", "monetaryCostOfTravel")
+                .selectColumns("person", "income", "subpopulation", "monetaryCostOfTravel")
                 .setName("Monetary Travel Costs");
 
         // we decide which income column we should use, and what name is given to as the low income bracket
         String incomeColumnName = null;
         String lowIncomeName = null;
-        if (table.column("income_numeric").countMissing() != table.column("income_numeric").size()) {
+        if (table.column("income").countMissing() != table.column("income").size()) {
             // numeric income values present, so we assign income percentiles and use this new column
-            double perc_25 = table.doubleColumn("income_numeric").percentile(25.0);
-            double perc_50 = table.doubleColumn("income_numeric").percentile(50.0);
-            double perc_75 = table.doubleColumn("income_numeric").percentile(75.0);
+            double perc_25 = table.doubleColumn("income").percentile(25.0);
+            double perc_50 = table.doubleColumn("income").percentile(50.0);
+            double perc_75 = table.doubleColumn("income").percentile(75.0);
             incomeColumnName = "income_bracket";
             lowIncomeName = "25th percentile";
             StringColumn incomeBracket = StringColumn.create(incomeColumnName);
             String finalLowIncomeName = lowIncomeName;
-            table.doubleColumn("income_numeric").forEach(new Consumer<Double>() {
+            table.doubleColumn("income").forEach(new Consumer<Double>() {
                 @Override
                 public void accept(Double income) {
                     if (income.isNaN()) {
@@ -199,17 +201,9 @@ public class TablesawKpiCalculator implements KpiCalculator {
             });
             table.addColumns(incomeBracket);
         } else {
-            lowIncomeName = findStringWithSubstring(table.stringColumn("income"), "low");
-            if (lowIncomeName != null) {
-                incomeColumnName = "income";
-            } else {
-                lowIncomeName = findStringWithSubstring(table.stringColumn("subpopulation"), "low income");
-                if (lowIncomeName != null) {
-                    incomeColumnName = "subpopulation";
-                }
-            }
+            lowIncomeName = findStringWithSubstring(table.stringColumn("subpopulation"), "low income");
+            incomeColumnName = "subpopulation";
             if (lowIncomeName == null) {
-                incomeColumnName = "subpopulation";
                 LOGGER.warn("Low Income category was not found anywhere. You will only receive intermediate outputs " +
                         "for the Affordability Kpi and they will be grouped by subpopulation. Let's hope you " +
                         "configured something for this sim!");
@@ -870,10 +864,15 @@ public class TablesawKpiCalculator implements KpiCalculator {
                 moneyLog.getMoneyLogData().size()));
         // Add Costs to Legs
         // join personal monetary costs, constant and per distance unit
+        personModeScores.column("mode").setName("score_mode");
         legs = legs
-                .joinOn("person", "mode")
+                .joinOn("person")
                 .inner(personModeScores
-                        .selectColumns("person", "mode", "monetaryDistanceRate", "dailyMonetaryConstant"));
+                        .selectColumns("person", "score_mode", "monetaryDistanceRate", "dailyMonetaryConstant"));
+        legs = legs.where(
+                legs.stringColumn("mode").isEqualTo(legs.stringColumn("score_mode"))
+        );
+        personModeScores.column("score_mode").setName("mode");
 
         LOGGER.info("Compute monetary cost for each leg from scoring params");
         legs.addColumns(
@@ -1013,6 +1012,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
 
         Map<String, ColumnType> columnMapping = new HashMap<>();
         columnMapping.put("person", ColumnType.STRING);
+        columnMapping.put("income", ColumnType.DOUBLE);
 
         LOGGER.info("Reading persons file into a Table");
         personModeScores = readCSVInputStream(personInputStream, columnMapping).setName("Person Mode Scoring Parameters");
@@ -1020,9 +1020,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
 
         if (!personModeScores.columnNames().contains("income")) {
             LOGGER.info("Found no `income` column in the persons table - creating one");
-            StringColumn incomeColumn = StringColumn.create("income",
-                    Collections.nCopies(personModeScores.column("person").size(), "unknown"));
-            personModeScores.addColumns(incomeColumn);
+            personModeScores.addColumns(DoubleColumn.create("income"));
         }
         if (!personModeScores.columnNames().contains("subpopulation")) {
             LOGGER.info("Found no `subpopulation` column in the persons table - creating one");
@@ -1060,21 +1058,6 @@ public class TablesawKpiCalculator implements KpiCalculator {
                                 dailyMonetaryConstantColumn
                         )
                 );
-
-        LOGGER.info("Parsing person incomes to double values");
-        // attempt to parse income to a numeric column
-        DoubleColumn incomeNumeric = DoubleColumn.create("income_numeric");
-        personModeScores.stringColumn("income").forEach(new Consumer<String>() {
-            @Override
-            public void accept(String aString) {
-                if (aString.matches("([0-9]*[.])?[0-9]+")) {
-                    incomeNumeric.append(Double.parseDouble(aString));
-                } else {
-                    incomeNumeric.appendMissing();
-                }
-            }
-        });
-        personModeScores.addColumns(incomeNumeric);
         LOGGER.info("Finished populating all person-related tables");
     }
 
@@ -1351,7 +1334,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
 
 
     public Table readCSVInputStream(InputStream inputStream, Map<String, ColumnType> columnMapping) {
-        LOGGER.info(("Reading CSV input stream into a table"));
+        LOGGER.info("Reading CSV input stream into a table");
         // TODO Make separator accessible from outside
         CsvReadOptions.Builder builder = CsvReadOptions.builder(inputStream).separator(';').header(true)
                 .columnTypesPartial(column -> {
