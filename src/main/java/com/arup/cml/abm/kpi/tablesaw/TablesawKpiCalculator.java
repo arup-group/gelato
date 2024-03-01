@@ -863,7 +863,11 @@ public class TablesawKpiCalculator implements KpiCalculator {
     }
 
     private Table addCostToLegs(Table legs, Table personModeScores, MoneyLog moneyLog) {
-        LOGGER.info("Adding costs to legs table");
+        LOGGER.info(String.format("Adding costs to legs table. Legs table has %s rows, personModeScores table " +
+                "has %s rows, moneyLog has %s entries",
+                legs.rowCount(),
+                personModeScores.rowCount(),
+                moneyLog.getMoneyLogData().size()));
         // Add Costs to Legs
         // join personal monetary costs, constant and per distance unit
         legs = legs
@@ -1012,7 +1016,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
 
         LOGGER.info("Reading persons file into a Table");
         personModeScores = readCSVInputStream(personInputStream, columnMapping).setName("Person Mode Scoring Parameters");
-        LOGGER.info(String.format("Crceated a persons table with %s rows", personModeScores.rowCount()));
+        LOGGER.info(String.format("Created a persons table with %s rows", personModeScores.rowCount()));
 
         if (!personModeScores.columnNames().contains("income")) {
             LOGGER.info("Found no `income` column in the persons table - creating one");
