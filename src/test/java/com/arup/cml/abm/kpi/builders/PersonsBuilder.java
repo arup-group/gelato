@@ -15,7 +15,7 @@ public class PersonsBuilder {
     TemporaryFolder tmpDir;
     Table persons = Table.create("persons").addColumns(
             StringColumn.create("person"),
-            StringColumn.create("income"),
+            DoubleColumn.create("income"),
             StringColumn.create("subpopulation")
     );
 
@@ -24,7 +24,7 @@ public class PersonsBuilder {
     }
 
     public void fillWithDudValues() {
-        String[] numberCols = new String[]{"monetaryDistanceRate", "dailyMonetaryConstant"};
+        String[] numberCols = new String[]{"income", "monetaryDistanceRate", "dailyMonetaryConstant"};
         for (Column col : persons.columns()) {
             if (Arrays.asList(numberCols).contains(col.name())) {
                 col.append(1.0);
