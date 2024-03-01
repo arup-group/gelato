@@ -992,13 +992,18 @@ public class TablesawKpiCalculator implements KpiCalculator {
         Map<String, ColumnType> columnMapping = new HashMap<>();
         columnMapping.put("person", ColumnType.STRING);
 
+        LOGGER.info("Reading persons file into a Table");
         personModeScores = readCSVInputStream(personInputStream, columnMapping).setName("Person Mode Scoring Parameters");
+        LOGGER.info(String.format("Crceated a persons table with %s rows", personModeScores.rowCount()));
+
         if (!personModeScores.columnNames().contains("income")) {
+            LOGGER.info("Found no `income` column in the persons table - creating one");
             StringColumn incomeColumn = StringColumn.create("income",
                     Collections.nCopies(personModeScores.column("person").size(), "unknown"));
             personModeScores.addColumns(incomeColumn);
         }
         if (!personModeScores.columnNames().contains("subpopulation")) {
+            LOGGER.info("Found no `subpopulation` column in the persons table - creating one");
             StringColumn incomeColumn = StringColumn.create("subpopulation",
                     Collections.nCopies(personModeScores.column("person").size(), null));
             personModeScores.addColumns(incomeColumn);
@@ -1008,6 +1013,8 @@ public class TablesawKpiCalculator implements KpiCalculator {
         StringColumn modeColumn = StringColumn.create("mode");
         DoubleColumn monetaryDistanceRateColumn = DoubleColumn.create("monetaryDistanceRate");
         DoubleColumn dailyMonetaryConstantColumn = DoubleColumn.create("dailyMonetaryConstant");
+
+        LOGGER.info("Adding people to the person mode scores table");
         for (Row row : personModeScores) {
             String person = row.getString("person");
             String subpopulation = row.getString("subpopulation");
@@ -1019,6 +1026,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
                 dailyMonetaryConstantColumn.append(modeParams.getDailyMonetaryConstant());
             }
         }
+        LOGGER.info("Joining person mode scores table to a new temp table");
         personModeScores = personModeScores
                 .joinOn("person")
                 .rightOuter(Table
@@ -1031,6 +1039,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
                         )
                 );
 
+        LOGGER.info("Parsing person incomes to double values");
         // attempt to parse income to a numeric column
         DoubleColumn incomeNumeric = DoubleColumn.create("income_numeric");
         personModeScores.stringColumn("income").forEach(new Consumer<String>() {
@@ -1044,6 +1053,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
             }
         });
         personModeScores.addColumns(incomeNumeric);
+        LOGGER.info("Finished populating all person-related tables");
     }
 
     private void createNetworkLinkTables(Network network) {
