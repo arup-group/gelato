@@ -502,7 +502,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
     }
 
     @Override
-    public double writeTravelTime(Path outputDirectory) {
+    public double writeTravelTimeKpi(Path outputDirectory) {
         // TODO update method name KPI missing
         LOGGER.info("Writing Travel Time KPI to {}", outputDirectory);
 
@@ -526,7 +526,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
     }
 
     @Override
-    public Table writeAccessToMobilityServices(Path outputDirectory) {
+    public Table writeAccessToMobilityServicesKpi(Path outputDirectory) {
         // TODO update method name KPI missing
         LOGGER.info("Writing Access To Mobility Services KPI to {}", outputDirectory);
 
@@ -684,7 +684,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
     }
 
     @Override
-    public double writeMobilitySpaceUsage(Path outputDirectory) {
+    public double writeMobilitySpaceUsageKpi(Path outputDirectory) {
         // TODO: implement KPI
         LOGGER.info("Writing Mobility Space Usage KPI to {}", outputDirectory);
 

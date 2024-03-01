@@ -21,11 +21,11 @@ public interface KpiCalculator {
 
     double writeGHGKpi(Path outputDirectory);
 
-    double writeTravelTime(Path outputDirectory);
+    double writeTravelTimeKpi(Path outputDirectory);
 
-    Table writeAccessToMobilityServices(Path outputDirectory);
+    Table writeAccessToMobilityServicesKpi(Path outputDirectory);
 
     Table writeCongestionKpi(Path directory);
 
-    double writeMobilitySpaceUsage(Path outputDirectory);
+    double writeMobilitySpaceUsageKpi(Path outputDirectory);
 }
