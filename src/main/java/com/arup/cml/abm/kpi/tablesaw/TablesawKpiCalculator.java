@@ -162,8 +162,10 @@ public class TablesawKpiCalculator implements KpiCalculator {
 
         // join personal income / subpop info
         Table table = legs
-                .joinOn("person", "mode")
-                .inner(personModeScores.selectColumns("person", "mode", "income", "subpopulation"));
+                .joinOn("person")
+                .inner(personModeScores
+                        .selectColumns("person", "income", "subpopulation")
+                        .dropDuplicateRows());
 
         table = table
                 .selectColumns("person", "income", "subpopulation", "monetaryCostOfTravel")
@@ -858,10 +860,15 @@ public class TablesawKpiCalculator implements KpiCalculator {
         LOGGER.info("Adding costs to legs table");
         // Add Costs to Legs
         // join personal monetary costs, constant and per distance unit
+        personModeScores.column("mode").setName("score_mode");
         legs = legs
-                .joinOn("person", "mode")
+                .joinOn("person")
                 .inner(personModeScores
-                        .selectColumns("person", "mode", "monetaryDistanceRate", "dailyMonetaryConstant"));
+                        .selectColumns("person", "score_mode", "monetaryDistanceRate", "dailyMonetaryConstant"));
+        legs = legs.where(
+                legs.stringColumn("mode").isEqualTo(legs.stringColumn("score_mode"))
+        );
+        personModeScores.column("score_mode").setName("mode");
 
         LOGGER.info("Compute monetary cost for each leg from scoring params");
         legs.addColumns(
@@ -1323,7 +1330,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
 
 
     public Table readCSVInputStream(InputStream inputStream, Map<String, ColumnType> columnMapping) {
-        LOGGER.info(("Reading CSV input stream into a table"));
+        LOGGER.info("Reading CSV input stream into a table");
         // TODO Make separator accessible from outside
         CsvReadOptions.Builder builder = CsvReadOptions.builder(inputStream).separator(';').header(true)
                 .columnTypesPartial(column -> {
