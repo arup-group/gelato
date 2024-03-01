@@ -17,6 +17,7 @@ In general the following outputs from a MATSim model are expected on top of the 
 
 ## Affordability
 
+### Cost of Travel
 This metric relies on `modeParams` being set correctly in the MATSim config and `PersonMoneyEvent`s in the output
 events file.
 
@@ -36,6 +37,14 @@ for the modes that make sense (i.e. walking will not actually cost any money to 
 
 If `PersonMoneyEvent`s are present in the events file, they will contribute to the cost of the relevant trip performed 
 by an agent.
+
+### Income Information
+This metric is strongly dependent on the income information set for agents.
+In particular a low income bracket needs to be identifiable to compute the metric.
+It is expected that your data has either of the following:
+- agents an `income` attribute with numeric values
+- agents an `income` attribute with string values and one of the categories is `low`
+- agents with a `subpopulation` attribute with string values and one of the categories is `low income`
 
 ## GHG Emissions
 
