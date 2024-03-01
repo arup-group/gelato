@@ -117,7 +117,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
     }
 
     private Table readTrips(InputStream tripsInputStream, Table legs, Table activityFacilities) {
-        LOGGER.info("Reading trips file from stream");
+        LOGGER.info("Reading trips file from stream with an activities table");
         trips = readCSVInputStream(tripsInputStream, getTripsColumnMap()).setName("Trips");
         trips = fixFacilitiesInTripsTable(activityFacilities, trips);
         trips = addCostToTrips(legs, trips);
@@ -126,6 +126,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
     }
 
     private Table readTrips(InputStream tripsInputStream, Table legs) {
+        LOGGER.info("Reading trips file from stream without a activities table");
         trips = readCSVInputStream(tripsInputStream, getTripsColumnMap()).setName("Trips");
         if (trips.column("start_facility_id").countMissing() != 0
                 || trips.column("end_facility_id").countMissing() != 0) {
@@ -862,6 +863,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
     }
 
     private Table addCostToLegs(Table legs, Table personModeScores, MoneyLog moneyLog) {
+        LOGGER.info("Adding costs to legs table");
         // Add Costs to Legs
         // join personal monetary costs, constant and per distance unit
         legs = legs
@@ -869,7 +871,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
                 .inner(personModeScores
                         .selectColumns("person", "mode", "monetaryDistanceRate", "dailyMonetaryConstant"));
 
-        // compute monetary cost for each leg from scoring params
+        LOGGER.info("Compute monetary cost for each leg from scoring params");
         legs.addColumns(
                 legs.intColumn("distance")
                         .multiply(legs.doubleColumn("monetaryDistanceRate"))
@@ -878,18 +880,21 @@ public class TablesawKpiCalculator implements KpiCalculator {
                         .setName("monetaryCostOfTravel"));
         legs.removeColumns("monetaryDistanceRate", "dailyMonetaryConstant");
 
-        // add contribution from person money events
-        // first create time columns in seconds
+        LOGGER.info("Adding contribution from person money events");
+        LOGGER.info("Create a time columns in seconds");
         DoubleColumn dep_time_seconds = DoubleColumn.create("dep_time_seconds");
         DoubleColumn trav_time_seconds = DoubleColumn.create("trav_time_seconds");
+        LOGGER.info("Adding dep_time column");
         legs.stringColumn("dep_time")
                 .forEach(time -> dep_time_seconds.append(
                         (int) Time.parseTime(time)));
+        LOGGER.info("Adding trav_time column");
         legs.stringColumn("trav_time")
                 .forEach(time -> trav_time_seconds.append(
                         (int) Time.parseTime(time)));
         DoubleColumn arr_time_seconds = dep_time_seconds.add(trav_time_seconds).setName("arr_time_seconds");
         legs.addColumns(dep_time_seconds, arr_time_seconds);
+        LOGGER.info("Iterating over the money log");
         for (String person : moneyLog.getMoneyLogData().keySet()) {
             for (Map.Entry<Double, Double> costEntry : moneyLog.getMoneyLogData(person).entrySet()) {
                 Double time = costEntry.getKey();
@@ -902,7 +907,9 @@ public class TablesawKpiCalculator implements KpiCalculator {
                 );
             }
         }
+        LOGGER.info("Finished iterating over the money log");
         legs.removeColumns(dep_time_seconds, arr_time_seconds);
+        LOGGER.info("Finished adding costs to legs table");
         return legs;
     }
 
@@ -1340,6 +1347,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
 
 
     public Table readCSVInputStream(InputStream inputStream, Map<String, ColumnType> columnMapping) {
+        LOGGER.info(("Reading CSV input stream into a table"));
         // TODO Make separator accessible from outside
         CsvReadOptions.Builder builder = CsvReadOptions.builder(inputStream).separator(';').header(true)
                 .columnTypesPartial(column -> {
