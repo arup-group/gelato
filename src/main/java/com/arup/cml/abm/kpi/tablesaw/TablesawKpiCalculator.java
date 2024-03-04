@@ -94,17 +94,22 @@ public class TablesawKpiCalculator implements KpiCalculator {
         columnMapping.put("dep_time", ColumnType.STRING);
         columnMapping.put("trav_time", ColumnType.STRING);
         columnMapping.put("wait_time", ColumnType.STRING);
+        columnMapping.put("trip_id", ColumnType.STRING);
         return columnMapping;
     }
 
     private Map<String, ColumnType> getTripsColumnMap() {
         Map<String, ColumnType> columnMapping = getLegsColumnMap();
         columnMapping.put("first_pt_boarding_stop", ColumnType.STRING);
-        columnMapping.put("start_facility_id", ColumnType.STRING);
         columnMapping.put("start_x", ColumnType.DOUBLE);
         columnMapping.put("start_y", ColumnType.DOUBLE);
         columnMapping.put("end_x", ColumnType.DOUBLE);
         columnMapping.put("end_y", ColumnType.DOUBLE);
+        columnMapping.put("start_activity_type", ColumnType.STRING);
+        columnMapping.put("start_facility_id", ColumnType.STRING);
+        columnMapping.put("end_activity_type", ColumnType.STRING);
+        columnMapping.put("end_facility_id", ColumnType.STRING);
+        columnMapping.put("longest_distance_mode", ColumnType.STRING);
         return columnMapping;
     }
 
@@ -549,13 +554,14 @@ public class TablesawKpiCalculator implements KpiCalculator {
         LOGGER.info(String.format("Added a new column recording use of PT"));
 
 
-        // find out if they have access to pt
+        LOGGER.info("Checking access to bus stops");
         table = addPTAccessColumnWithinDistance(
                 table,
                 scheduleStops.where(scheduleStops.stringColumn("mode").isEqualTo("bus")),
                 400.0,
                 "bus_access_400m"
         );
+        LOGGER.info("Checking access to rail and subway stops");
         table = addPTAccessColumnWithinDistance(
                 table,
                 scheduleStops.where(
@@ -566,6 +572,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
                 800.0,
                 "rail_access_800m"
         );
+        LOGGER.info("Writing intermediate output");
         this.writeTableCompressed(
                 table,
                 String.format("%s/intermediate-access-to-mobility-services.csv", outputDirectory),
@@ -587,6 +594,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
         writeContentToFile(String.format("%s/kpi-access-to-mobility-services-access-to-rail.csv", outputDirectory),
                 String.valueOf(rail_kpi), this.compressionType);
 
+        LOGGER.info("Computing utilised PT KPI");
         Selection ptAccess = table.booleanColumn("bus_access_400m").isTrue()
                 .or(table.booleanColumn("rail_access_800m").isTrue());
         double used_pt_kpi = ((double) table.where(ptAccess.and(table.booleanColumn("used_pt").isTrue())
@@ -615,18 +623,21 @@ public class TablesawKpiCalculator implements KpiCalculator {
         for (Row stopRow : stops) {
             double x = stopRow.getNumber("x");
             double y = stopRow.getNumber("y");
-            LOGGER.info("Iterating over {} person trips for stop {}",
+
+            LOGGER.info("Calculating access for {} persons for stop {}",
                     table.rowCount(), stopRow.getString("name"));
-            for (Row personRow : table) {
-                double circleCalc = Math.pow(personRow.getNumber("x") - x, 2)
-                        + Math.pow(personRow.getNumber("y") - y, 2);
-                if (circleCalc <= Math.pow(distance, 2)) {
-                    // is within radius of 'distance'
-                    personRow.setBoolean(columnName, true);
-                    trueTable.append(personRow);
-                    table = table.dropWhere(table.stringColumn("person").isEqualTo(personRow.getString("person")));
-                }
-            }
+            table.addColumns(
+                    table.doubleColumn("x").subtract(x).power(2)
+                            .add(table.doubleColumn("y").subtract(y).power(2))
+                            .setName("circleCalc")
+            );
+            table.booleanColumn(columnName).set(
+                    table.doubleColumn("circleCalc").isLessThanOrEqualTo(Math.pow(distance, 2)),
+                    true
+            );
+            table.removeColumns("circleCalc");
+            trueTable.append(table.where(table.booleanColumn(columnName).isTrue()));
+            table = table.dropWhere(table.booleanColumn(columnName).isTrue());
         }
         LOGGER.info("Finished making PT stop distance calcs for '{}' at {} distance", columnName, distance);
         return table.append(trueTable);
