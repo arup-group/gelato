@@ -45,7 +45,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
     private static final Logger LOGGER = LogManager.getLogger(TablesawKpiCalculator.class);
     private Table legs;
     private Table trips;
-    private final Table activities;
+    private Table activities;
     private Table activityFacilities;
     private Table personModeScores;
     private Table networkLinks;
@@ -57,6 +57,10 @@ public class TablesawKpiCalculator implements KpiCalculator {
     private Table linkLogTable;
     private Table vehicleOccupancyTable;
     private CompressionType compressionType;
+
+    public TablesawKpiCalculator() {
+        LOGGER.info("Running `TablesawKpiCalculator` in debug mode");
+    }
 
     public TablesawKpiCalculator(Network network,
                                  TransitSchedule schedule,
@@ -608,7 +612,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
         return table;
     }
 
-    private Table addPTAccessColumnWithinDistance(Table table, Table stops, double distance, String columnName) {
+    public Table addPTAccessColumnWithinDistance(Table table, Table stops, double distance, String columnName) {
         LOGGER.info("Adding a new column '{}' to table '{}' with a distance from PT value of '{}'",
                 columnName,
                 table.name(),
