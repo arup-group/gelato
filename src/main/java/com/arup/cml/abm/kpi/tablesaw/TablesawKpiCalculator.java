@@ -522,12 +522,12 @@ public class TablesawKpiCalculator implements KpiCalculator {
     public Table writeAccessToMobilityServicesKpi(Path outputDirectory) {
         LOGGER.info("Writing Access To Mobility Services KPI to {}", outputDirectory);
 
-        LOGGER.info(String.format("Filtering trips table with {} rows to find trips that started from 'home'",
-                trips.rowCount()));
+        LOGGER.info("Filtering trips table with {} rows to find trips that started from 'home'",
+                trips.rowCount());
         Table table = trips
                 .where(trips.stringColumn("start_activity_type").isEqualTo("home"))
                 .selectColumns("person", "start_activity_type", "start_x", "start_y", "first_pt_boarding_stop");
-        LOGGER.info(String.format("Filtered down to {} trips initially", table.rowCount()));
+        LOGGER.info("Filtered down to {} trips initially", table.rowCount());
         table.column("start_activity_type").setName("location_type");
         table.column("start_x").setName("x");
         table.column("start_y").setName("y");
@@ -615,6 +615,8 @@ public class TablesawKpiCalculator implements KpiCalculator {
         for (Row stopRow : stops) {
             double x = stopRow.getNumber("x");
             double y = stopRow.getNumber("y");
+            LOGGER.info("Iterating over {} person trips for stop {}",
+                    table.rowCount(), stopRow.getString("name"));
             for (Row personRow : table) {
                 double circleCalc = Math.pow(personRow.getNumber("x") - x, 2)
                         + Math.pow(personRow.getNumber("y") - y, 2);
