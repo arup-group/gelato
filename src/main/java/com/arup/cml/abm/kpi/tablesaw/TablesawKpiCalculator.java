@@ -522,14 +522,17 @@ public class TablesawKpiCalculator implements KpiCalculator {
     public Table writeAccessToMobilityServicesKpi(Path outputDirectory) {
         LOGGER.info("Writing Access To Mobility Services KPI to {}", outputDirectory);
 
-        // get home locations for persons
+        LOGGER.info(String.format("Filtering trips table with {} rows to find trips that started from 'home'",
+                trips.rowCount()));
         Table table = trips
                 .where(trips.stringColumn("start_activity_type").isEqualTo("home"))
                 .selectColumns("person", "start_activity_type", "start_x", "start_y", "first_pt_boarding_stop");
+        LOGGER.info(String.format("Filtered down to {} trips initially", table.rowCount()));
         table.column("start_activity_type").setName("location_type");
         table.column("start_x").setName("x");
         table.column("start_y").setName("y");
         BooleanColumn usedPtColumn = BooleanColumn.create("used_pt");
+        LOGGER.info(String.format("Iterating over the 'home' trips to record use of PT", table.rowCount()));
         table.stringColumn("first_pt_boarding_stop").forEach(new Consumer<String>() {
             @Override
             public void accept(String aString) {
@@ -543,6 +546,8 @@ public class TablesawKpiCalculator implements KpiCalculator {
         table.addColumns(usedPtColumn);
         table.removeColumns(table.column("first_pt_boarding_stop"));
         table = table.dropDuplicateRows();
+        LOGGER.info(String.format("Added a new column recording use of PT"));
+
 
         // find out if they have access to pt
         table = addPTAccessColumnWithinDistance(
@@ -566,7 +571,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
                 String.format("%s/intermediate-access-to-mobility-services.csv", outputDirectory),
                 this.compressionType);
 
-        // compute KPIs
+        LOGGER.info(String.format("Calculating bus access to mobility KPI"));
         double bus_kpi = ((double) table.booleanColumn("bus_access_400m").countTrue() /
                 table.booleanColumn("bus_access_400m").size())
                 * 100;
@@ -574,6 +579,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
         writeContentToFile(String.format("%s/kpi-access-to-mobility-services-access-to-bus.csv", outputDirectory),
                 String.valueOf(bus_kpi), this.compressionType);
 
+        LOGGER.info(String.format("Calculating rail access to mobility KPI"));
         double rail_kpi = ((double) table.booleanColumn("rail_access_800m").countTrue() /
                 table.booleanColumn("rail_access_800m").size())
                 * 100;
@@ -590,20 +596,28 @@ public class TablesawKpiCalculator implements KpiCalculator {
         writeContentToFile(String.format("%s/kpi-access-to-mobility-services-access-to-pt-and-pt-used.csv", outputDirectory),
                 String.valueOf(used_pt_kpi), this.compressionType);
 
+        LOGGER.info(String.format("Finished calculating access to mobility KPIs"));
         return table;
     }
 
     private Table addPTAccessColumnWithinDistance(Table table, Table stops, double distance, String columnName) {
+        LOGGER.info("Adding a new column '{}' to table '{}' with a distance from PT value of '{}'",
+                columnName,
+                table.name(),
+                distance);
         table.addColumns(
                 BooleanColumn.create(columnName,
                         Collections.nCopies(table.column("person").size(), false)));
         // to collect people with access, we remove them from table to not process them again
         Table trueTable = table.emptyCopy();
+
+        LOGGER.info("Iterating over {} PT stops to calculate person distances from each", stops.rowCount());
         for (Row stopRow : stops) {
             double x = stopRow.getNumber("x");
             double y = stopRow.getNumber("y");
             for (Row personRow : table) {
-                double circleCalc = Math.pow(personRow.getNumber("x") - x, 2) + Math.pow(personRow.getNumber("y") - y, 2);
+                double circleCalc = Math.pow(personRow.getNumber("x") - x, 2)
+                        + Math.pow(personRow.getNumber("y") - y, 2);
                 if (circleCalc <= Math.pow(distance, 2)) {
                     // is within radius of 'distance'
                     personRow.setBoolean(columnName, true);
@@ -612,6 +626,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
                 }
             }
         }
+        LOGGER.info("Finished making PT stop distance calcs for '{}' at {} distance", columnName, distance);
         return table.append(trueTable);
     }
 
@@ -875,11 +890,11 @@ public class TablesawKpiCalculator implements KpiCalculator {
     }
 
     private Table addCostToLegs(Table legs, Table personModeScores, MoneyLog moneyLog) {
-        LOGGER.info(String.format("Adding costs to legs table. Legs table has %s rows, personModeScores table " +
-                "has %s rows, moneyLog has %s entries",
+        LOGGER.info("Adding costs to legs table. Legs table has {} rows, personModeScores table " +
+                "has {} rows, moneyLog has {} entries",
                 legs.rowCount(),
                 personModeScores.rowCount(),
-                moneyLog.getMoneyLogData().size()));
+                moneyLog.getMoneyLogData().size());
         // Add Costs to Legs
         // join personal monetary costs, constant and per distance unit
         personModeScores.column("mode").setName("score_mode");
@@ -970,9 +985,9 @@ public class TablesawKpiCalculator implements KpiCalculator {
                 );
 
         StringColumn uniquePersons = trips.stringColumn("person").unique();
-        LOGGER.info(String.format("About to iterate over %s unique persons in a trips table with %s rows",
+        LOGGER.info("About to iterate over {} unique persons in a trips table with {} rows",
                 uniquePersons.countUnique(),
-                trips.rowCount()));
+                trips.rowCount());
         int personsProcessedCount = 0;
         for (String person : uniquePersons) {
             Table personTrips = trips
@@ -1019,7 +1034,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
             activities.append(personActivities);
             personsProcessedCount++;
             if (personsProcessedCount % 10000 == 0) {
-                LOGGER.info(String.format("Created activities for %s persons so far", personsProcessedCount));
+                LOGGER.info("Created activities for {} persons so far", personsProcessedCount);
             }
         }
         LOGGER.info("Finished creating Activities Table");
@@ -1043,7 +1058,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
 
         LOGGER.info("Reading persons file into a Table");
         personModeScores = readCSVInputStream(personInputStream, columnMapping).setName("Person Mode Scoring Parameters");
-        LOGGER.info(String.format("Created a persons table with %s rows", personModeScores.rowCount()));
+        LOGGER.info("Created a persons table with {} rows", personModeScores.rowCount());
 
         if (!personModeScores.columnNames().contains("income")) {
             LOGGER.info("Found no `income` column in the persons table - creating one");
