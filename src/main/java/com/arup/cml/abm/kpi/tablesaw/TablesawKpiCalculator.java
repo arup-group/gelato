@@ -85,7 +85,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
         createTransitTables(schedule);
         createVehicleTable(vehicles);
         createLinkLogTables(linkLog);
-        writeIntermediateData(outputDirectory);
+        writeSupportingData(outputDirectory);
     }
 
     private Map<String, ColumnType> getLegsColumnMap() {
@@ -126,7 +126,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
     }
 
     private Table readTrips(InputStream tripsInputStream, Table legs) {
-        LOGGER.info("Reading trips file from stream without a activities table");
+        LOGGER.info("Reading trips file from stream without an activities table");
         trips = readCSVInputStream(tripsInputStream, getTripsColumnMap()).setName("Trips");
         if (trips.column("start_facility_id").countMissing() != 0
                 || trips.column("end_facility_id").countMissing() != 0) {
@@ -681,34 +681,44 @@ public class TablesawKpiCalculator implements KpiCalculator {
     public double writeMobilitySpaceUsageKpi(Path outputDirectory) {
         LOGGER.info("Writing Mobility Space Usage KPI to {}", outputDirectory);
 
+        LOGGER.info("Filtering the activities table, which contains {} rows, for car activities",
+                activities.rowCount());
         Table carActivities = activities
                 .where(activities.stringColumn("access_mode").isEqualTo("car")
                         .or(activities.stringColumn("egress_mode").isEqualTo("car")));
+        LOGGER.info("Filtered down to {} car activity rows", carActivities.rowCount());
 
+        LOGGER.info("Make a table for peopleInFacilities");
         Table peopleInFacilities = carActivities
                 .summarize("person", countUnique)
                 .by("facility_id", "activity_type");
+        LOGGER.info("Make a table for tripsToFacilities");
         Table tripsToFacilities = carActivities
                 .summarize("access_trip_id", countNonMissing)
                 .by("facility_id", "activity_type");
 
+        LOGGER.info("Joining peopleInFacilities with tripsToFacilities");
         Table intermediate = peopleInFacilities
                 .joinOn("facility_id", "activity_type")
                 .inner(tripsToFacilities)
                 .setName("Mobility Space Usage");
+        LOGGER.info("Join complete");
         intermediate.column("Count Unique [person]").setName("max_occupancy");
         intermediate.column("Count [access_trip_id]").setName("total_trips");
 
-        // calculate parking space demand with parking factor: 11.5
         // https://www.interparking-france.com/en/what-are-the-dimensions-of-a-parking-space/
+        LOGGER.info("Calculating parking space demand with parking factor: 11.5");
+        LOGGER.info("Adding a new parking_space_demand column to the joined table, derived from the max_occupancy");
         intermediate.addColumns(
                 intermediate.numberColumn("max_occupancy")
                         .multiply(11.5)
                         .setName("parking_space_demand")
         );
-        this.writeTableCompressed(intermediate, String.format("%s/intermediate-mobility-space-usage.csv", outputDirectory), this.compressionType);
+        this.writeTableCompressed(intermediate,
+                String.format("%s/intermediate-mobility-space-usage.csv", outputDirectory),
+                this.compressionType);
 
-        // compute kpi number one, demand by activity type
+        LOGGER.info("Computing KPI number one: demand by activity type");
         Table kpi = intermediate
                 .summarize("parking_space_demand", "total_trips", sum)
                 .by("activity_type")
@@ -716,19 +726,27 @@ public class TablesawKpiCalculator implements KpiCalculator {
         kpi.column("Sum [parking_space_demand]").setName("parking_space_demand");
         kpi.column("Sum [total_trips]").setName("total_trips");
 
+        LOGGER.info("Adding new weighted_demand column to the KPI table");
         kpi.addColumns(
                 kpi.numberColumn("parking_space_demand")
                         .multiply(kpi.numberColumn("total_trips")
                                 .divide(kpi.numberColumn("total_trips").sum()))
                         .setName("weighted_demand")
         );
-        this.writeTableCompressed(intermediate, String.format("%s/kpi-mobility-space-usage-per-activity-type.csv", outputDirectory), this.compressionType);
+        LOGGER.info("Finished adding weighted_demand column to the KPI table");
+        this.writeTableCompressed(intermediate,
+                String.format("%s/kpi-mobility-space-usage-per-activity-type.csv", outputDirectory),
+                this.compressionType);
 
+        LOGGER.info("Calculating the final KPI");
         double finalKpi = kpi.numberColumn("parking_space_demand").sum()
                 / personModeScores.column("person").size();
+        LOGGER.info("Finished calculating the final KPI");
         // TODO Add Scaling
         finalKpi = round(finalKpi, 2);
-        writeContentToFile(String.format("%s/kpi-mobility-space-usage.csv", outputDirectory), String.valueOf(finalKpi), this.compressionType);
+        writeContentToFile(String.format("%s/kpi-mobility-space-usage.csv", outputDirectory),
+                String.valueOf(finalKpi),
+                this.compressionType);
         return finalKpi;
     }
 
@@ -951,7 +969,12 @@ public class TablesawKpiCalculator implements KpiCalculator {
                         StringColumn.create("egress_trip_id")
                 );
 
-        for (String person : trips.stringColumn("person").unique()) {
+        StringColumn uniquePersons = trips.stringColumn("person").unique();
+        LOGGER.info(String.format("About to iterate over %s unique persons in a trips table with %s rows",
+                uniquePersons.countUnique(),
+                trips.rowCount()));
+        int personsProcessedCount = 0;
+        for (String person : uniquePersons) {
             Table personTrips = trips
                     .where(trips.stringColumn("person").isEqualTo(person))
                     .sortAscendingOn("trip_number");
@@ -994,6 +1017,10 @@ public class TablesawKpiCalculator implements KpiCalculator {
 
             // finally append the activities of this person
             activities.append(personActivities);
+            personsProcessedCount++;
+            if (personsProcessedCount % 10000 == 0) {
+                LOGGER.info(String.format("Created activities for %s persons so far", personsProcessedCount));
+            }
         }
         LOGGER.info("Finished creating Activities Table");
 
@@ -1351,13 +1378,13 @@ public class TablesawKpiCalculator implements KpiCalculator {
         try (Writer wr = IOUtils.getBufferedWriter(path.concat(compressionType.fileEnding))) {
             wr.write(content);
         } catch (IOException e) {
-            LOGGER.warn("Failed to save content `{}` to file: `{}`", content, path);
+            LOGGER.error("!!! Failed to save content '{}' to file: '{}'", content, path);
         }
         LOGGER.info(String.format("Finished writing file %s", path));
     }
 
-    private void writeIntermediateData(Path outputDir) {
-        LOGGER.info("Writing intermediate data files");
+    private void writeSupportingData(Path outputDir) {
+        LOGGER.info("Writing supporting data files");
         try {
             Files.createDirectories(outputDir);
         } catch (IOException e) {
@@ -1377,7 +1404,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
         this.writeTableCompressed(scheduleStops, String.format("%s/supporting-data-scheduleStops.csv", outputDir), this.compressionType);
         this.writeTableCompressed(scheduleRoutes, String.format("%s/supporting-data-scheduleRoutes.csv", outputDir), this.compressionType);
         this.writeTableCompressed(vehicles, String.format("%s/supporting-data-vehicles.csv", outputDir), this.compressionType);
-        LOGGER.info("Finished writing intermediate data files");
+        LOGGER.info("Finished writing supporting            data files");
     }
 
     private OutputStream getCompressedOutputStream(String filepath, CompressionType compressionType) {
@@ -1386,11 +1413,13 @@ public class TablesawKpiCalculator implements KpiCalculator {
     }
 
     private void writeTableCompressed(Table table, String filePath, CompressionType compressionType) {
+        LOGGER.info("Writing out compressed '{}' table to {}", table.name(), filePath);
         try (OutputStream stream = getCompressedOutputStream(filePath, compressionType)) {
             CsvWriteOptions options = CsvWriteOptions.builder(stream).lineEnd(MatsimKpiGenerator.EOL).build();
             table.write().csv(options);
         } catch (IOException e) {
             throw new IllegalStateException(e);
         }
+        LOGGER.info("Finished writing out '{}' table to {}", table.name(), filePath);
     }
 }
