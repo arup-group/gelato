@@ -78,11 +78,19 @@ public class MatsimKpiGenerator implements Runnable {
         summariseEventsHandled(eventsFile, matsimPersonMoneyHandler.getEventCounts());
 
         KpiCalculator kpiCalculator = new TablesawKpiCalculator(
-                matsimUtils.getMatsimNetwork(), matsimUtils.getTransitSchedule(), matsimUtils.getMatsimVehicles(),
-                linkLog, matsimUtils.getMatsimPersonsCSVInputStream(), moneyLog, matsimUtils.getScoring(), matsimUtils.getFacilities(),
-                matsimUtils.getMatsimLegsCSVInputStream(),  matsimUtils.getMatsimTripsCSVInputStream(),
-                outputDir, CompressionType.gzip
-                );
+                matsimUtils.getMatsimNetwork(),
+                matsimUtils.getTransitSchedule(),
+                matsimUtils.getMatsimVehicles(),
+                linkLog,
+                matsimUtils.getMatsimPersonsCSVInputStream(),
+                moneyLog,
+                matsimUtils.getScoring(),
+                matsimUtils.getFacilities(),
+                matsimUtils.getMatsimLegsCSVInputStream(),
+                matsimUtils.getMatsimTripsCSVInputStream(),
+                outputDir,
+                CompressionType.gzip
+        );
 
         kpiCalculator.writeAffordabilityKpi(outputDir);
         kpiCalculator.writePtWaitTimeKpi(outputDir);

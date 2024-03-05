@@ -8,7 +8,7 @@ import tech.tablesaw.columns.Column;
 import tech.tablesaw.io.csv.CsvWriteOptions;
 
 import java.nio.file.Path;
-import java.util.Arrays;
+import java.util.Set;
 
 public class TripsBuilder {
     TemporaryFolder tmpDir;
@@ -42,13 +42,13 @@ public class TripsBuilder {
         this.tmpDir = tmpDir;
     }
 
-    public void fillWithDudValues() {
-        String[] timeCols = new String[]{"dep_time", "trav_time", "wait_time"};
-        String[] numberCols = new String[]{"start_x", "start_y", "end_x", "end_y"};
+    private void fillWithDudValues() {
+        Set<String> timeCols = Set.of("dep_time", "trav_time", "wait_time");
+        Set<String> numberCols = Set.of("start_x", "start_y", "end_x", "end_y");
         for (Column col : trips.columns()) {
-            if (Arrays.asList(timeCols).contains(col.name())) {
+            if (timeCols.contains(col.name())) {
                 col.append("00:00:00");
-            } else if (Arrays.asList(numberCols).contains(col.name())) {
+            } else if (numberCols.contains(col.name())) {
                 col.append(1.0);
             } else {
                 col.append("dud");

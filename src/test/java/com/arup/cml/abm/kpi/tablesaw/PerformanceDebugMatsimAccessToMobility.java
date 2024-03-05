@@ -1,6 +1,5 @@
-package com.arup.cml.abm.kpi.matsim.run;
+package com.arup.cml.abm.kpi.tablesaw;
 
-import com.arup.cml.abm.kpi.tablesaw.TablesawKpiCalculator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.matsim.core.utils.io.IOUtils;
@@ -22,8 +21,8 @@ import java.util.Optional;
 
 
 @Command(name = "MatsimKpiGenerator", version = "0.0.3-alpha", mixinStandardHelpOptions = true)
-public class MatsimAccessToMobilityDebug implements Runnable {
-    private static final Logger LOGGER = LogManager.getLogger(MatsimAccessToMobilityDebug.class);
+public class PerformanceDebugMatsimAccessToMobility implements Runnable {
+    private static final Logger LOGGER = LogManager.getLogger(PerformanceDebugMatsimAccessToMobility.class);
     public static final String EOL = "\n";
 
     @Option(names = "-st", description = "Full path to `supporting-data-trips.csv.gz` file from a previous run",
@@ -39,7 +38,7 @@ public class MatsimAccessToMobilityDebug implements Runnable {
 
     public static void main(String[] args) {
         System.setProperty("line.separator", EOL); // Required to allow platform independent checksum similarity
-        int exitCode = new CommandLine(new MatsimAccessToMobilityDebug()).execute(args);
+        int exitCode = new CommandLine(new PerformanceDebugMatsimAccessToMobility()).execute(args);
         System.exit(exitCode);
     }
 

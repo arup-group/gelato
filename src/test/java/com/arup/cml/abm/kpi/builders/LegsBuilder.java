@@ -8,7 +8,7 @@ import tech.tablesaw.columns.Column;
 import tech.tablesaw.io.csv.CsvWriteOptions;
 
 import java.nio.file.Path;
-import java.util.Arrays;
+import java.util.Set;
 
 public class LegsBuilder {
     TemporaryFolder tmpDir;
@@ -37,10 +37,10 @@ public class LegsBuilder {
         this.tmpDir = tmpDir;
     }
 
-    public void fillWithDudValues() {
-        String[] intCols = new String[]{"distance"};
+    private void fillWithDudValues() {
+        Set<String> intCols = Set.of("distance");
         for (Column col : legs.columns()) {
-            if (Arrays.asList(intCols).contains(col.name())) {
+            if (intCols.contains(col.name())) {
                 col.append(0);
             } else {
                 col.append("dud");

@@ -13,10 +13,10 @@ public class TestMoneyLog {
     public void recordsMoneyEvent() {
         MoneyLog moneyLog = new MoneyLog();
         assertThat(moneyLog.getMoneyLogData().isEmpty()).isTrue().as("Money log should be empty to begin with");
-
         String somePersonID = "somePerson";
         Double someTime = 5.0;
         Double someCost = 100.0;
+
         moneyLog.createMoneyLogEntry(somePersonID, someTime, someCost);
 
         HashMap<String, HashMap<Double, Double>> moneyData = moneyLog.getMoneyLogData();
@@ -41,12 +41,12 @@ public class TestMoneyLog {
     public void recordsTwoSeparateMoneyEvents() {
         MoneyLog moneyLog = new MoneyLog();
         assertThat(moneyLog.getMoneyLogData().isEmpty()).isTrue().as("Money log should be empty to begin with");
-
         String somePersonID = "somePerson";
         Double firstTime = 5.0;
         Double firstCost = 100.0;
         Double secondTime = 10.0;
         Double secondCost = 200.0;
+
         moneyLog.createMoneyLogEntry(somePersonID, firstTime, firstCost);
         moneyLog.createMoneyLogEntry(somePersonID, secondTime, secondCost);
 
@@ -72,11 +72,11 @@ public class TestMoneyLog {
     public void combinesTwoMoneyEventsHappeningAtTheSameTime() {
         MoneyLog moneyLog = new MoneyLog();
         assertThat(moneyLog.getMoneyLogData().isEmpty()).isTrue().as("Money log should be empty to begin with");
-
         String somePersonID = "somePerson";
         Double someTime = 5.0;
         Double firstCost = 100.0;
         Double secondCost = 200.0;
+
         moneyLog.createMoneyLogEntry(somePersonID, someTime, firstCost);
         moneyLog.createMoneyLogEntry(somePersonID, someTime, secondCost);
 

@@ -26,6 +26,10 @@ import java.util.*;
 
 public class MatsimUtils {
     private static final Logger LOGGER = LogManager.getLogger(MatsimUtils.class);
+    public static final String DEFAULT_CAR_FUEL_TYPE = "petrol";
+    public static final double DEFAULT_CAR_EMISSIONS_FACTOR = 0.222;
+    public static final String DEFAULT_BUS_FUEL_TYPE = "cng";
+    public static final double DEFAULT_BUS_EMISSIONS_FACTOR = 1.372;
     private Path matsimOutputDir;
     private Config matsimConfig;
     private Scenario matsimScenario;
@@ -246,8 +250,8 @@ public class MatsimUtils {
         // check fuel types and emissions, set defaults if missing
         vehicles.getVehicleTypes().forEach((vehicleTypeId, vehicleType) -> {
             switch (vehicleType.getNetworkMode()) {
-                case "car" -> setDefaultsForEngineInformationIfNotAvailable(vehicleType, "petrol", 0.222);
-                case "bus" -> setDefaultsForEngineInformationIfNotAvailable(vehicleType, "cng", 1.372);
+                case "car" -> setDefaultsForEngineInformationIfNotAvailable(vehicleType, DEFAULT_CAR_FUEL_TYPE, DEFAULT_CAR_EMISSIONS_FACTOR);
+                case "bus" -> setDefaultsForEngineInformationIfNotAvailable(vehicleType, DEFAULT_BUS_FUEL_TYPE, DEFAULT_BUS_EMISSIONS_FACTOR);
             }
         });
         return vehicles;

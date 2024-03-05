@@ -8,7 +8,7 @@ import tech.tablesaw.columns.Column;
 import tech.tablesaw.io.csv.CsvWriteOptions;
 
 import java.nio.file.Path;
-import java.util.Arrays;
+import java.util.Set;
 
 public class PersonsBuilder {
 
@@ -23,10 +23,10 @@ public class PersonsBuilder {
         this.tmpDir = tmpDir;
     }
 
-    public void fillWithDudValues() {
-        String[] numberCols = new String[]{"income", "monetaryDistanceRate", "dailyMonetaryConstant"};
+    private void fillWithDudValues() {
+        Set<String> numberCols = Set.of("income", "monetaryDistanceRate", "dailyMonetaryConstant");
         for (Column col : persons.columns()) {
-            if (Arrays.asList(numberCols).contains(col.name())) {
+            if (numberCols.contains(col.name())) {
                 col.append(1.0);
             } else {
                 col.append("dud");
