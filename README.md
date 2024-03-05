@@ -223,6 +223,9 @@ of around 620MB, containing 61.4 million events, and a full set of input files l
 -rw-r--r--@ 1 mickyfitz  staff    32M 26 Jan 15:05 output_activities.csv.gz
 ```
 
+Peak memory usage was around 20GB - see the [memory settings](#a-word-about-memory) section for a deeper
+discussion of memory usage and JVM settings.
+
 
 # Using Gelato via Docker
 
