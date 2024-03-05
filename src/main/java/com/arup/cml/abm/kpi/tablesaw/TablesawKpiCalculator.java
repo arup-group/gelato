@@ -628,7 +628,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
             double x = stopRow.getNumber("x");
             double y = stopRow.getNumber("y");
 
-            LOGGER.info("Calculating access for {} persons for stop {}",
+            LOGGER.debug("Calculating access for {} persons for stop {}",
                     table.rowCount(), stopRow.getString("name"));
             table.addColumns(
                     table.doubleColumn("x").subtract(x).power(2)
@@ -713,34 +713,34 @@ public class TablesawKpiCalculator implements KpiCalculator {
     public double writeMobilitySpaceUsageKpi(Path outputDirectory) {
         LOGGER.info("Writing Mobility Space Usage KPI to {}", outputDirectory);
 
-        LOGGER.info("Filtering the activities table, which contains {} rows, for car activities",
+        LOGGER.debug("Filtering the activities table, which contains {} rows, for car activities",
                 activities.rowCount());
         Table carActivities = activities
                 .where(activities.stringColumn("access_mode").isEqualTo("car")
                         .or(activities.stringColumn("egress_mode").isEqualTo("car")));
-        LOGGER.info("Filtered down to {} car activity rows", carActivities.rowCount());
+        LOGGER.debug("Filtered activities table down to {} car activity rows", carActivities.rowCount());
 
-        LOGGER.info("Make a table for peopleInFacilities");
+        LOGGER.debug("Making a table for peopleInFacilities");
         Table peopleInFacilities = carActivities
                 .summarize("person", countUnique)
                 .by("facility_id", "activity_type");
-        LOGGER.info("Make a table for tripsToFacilities");
+        LOGGER.debug("Make a table for tripsToFacilities");
         Table tripsToFacilities = carActivities
                 .summarize("access_trip_id", countNonMissing)
                 .by("facility_id", "activity_type");
 
-        LOGGER.info("Joining peopleInFacilities with tripsToFacilities");
+        LOGGER.debug("Joining peopleInFacilities with tripsToFacilities");
         Table intermediate = peopleInFacilities
                 .joinOn("facility_id", "activity_type")
                 .inner(tripsToFacilities)
                 .setName("Mobility Space Usage");
-        LOGGER.info("Join complete");
+        LOGGER.debug("Join complete");
         intermediate.column("Count Unique [person]").setName("max_occupancy");
         intermediate.column("Count [access_trip_id]").setName("total_trips");
 
         // https://www.interparking-france.com/en/what-are-the-dimensions-of-a-parking-space/
         LOGGER.info("Calculating parking space demand with parking factor: 11.5");
-        LOGGER.info("Adding a new parking_space_demand column to the joined table, derived from the max_occupancy");
+        LOGGER.debug("Adding a new parking_space_demand column to the joined table, derived from the max_occupancy");
         intermediate.addColumns(
                 intermediate.numberColumn("max_occupancy")
                         .multiply(11.5)
@@ -758,14 +758,14 @@ public class TablesawKpiCalculator implements KpiCalculator {
         kpi.column("Sum [parking_space_demand]").setName("parking_space_demand");
         kpi.column("Sum [total_trips]").setName("total_trips");
 
-        LOGGER.info("Adding new weighted_demand column to the KPI table");
+        LOGGER.debug("Adding new weighted_demand column to the KPI table");
         kpi.addColumns(
                 kpi.numberColumn("parking_space_demand")
                         .multiply(kpi.numberColumn("total_trips")
                                 .divide(kpi.numberColumn("total_trips").sum()))
                         .setName("weighted_demand")
         );
-        LOGGER.info("Finished adding weighted_demand column to the KPI table");
+        LOGGER.debug("Finished adding weighted_demand column to the KPI table");
         this.writeTableCompressed(intermediate,
                 String.format("%s/kpi-mobility-space-usage-per-activity-type.csv", outputDirectory),
                 this.compressionType);
@@ -804,9 +804,9 @@ public class TablesawKpiCalculator implements KpiCalculator {
     private Table sanitiseInfiniteColumnValuesInTable(Table table, DoubleColumn column) {
         Table infiniteValuesTable = table.where(column.eval(Double::isInfinite));
         if (!infiniteValuesTable.isEmpty()) {
-            LOGGER.warn(("Table: `%s` has %d row(s) affected by infinite values in column: `%s`. " +
-                    "These rows will be dropped for this calculation.")
-                    .formatted(table.name(), infiniteValuesTable.rowCount(), column.name()));
+            LOGGER.warn("Table: '{}' has {} row(s) affected by infinite values in column: '{}'. " +
+                    "These rows will be dropped for this calculation.",
+                    table.name(), infiniteValuesTable.rowCount(), column.name());
             return table.dropWhere(column.eval(Double::isInfinite));
         } else {
             return table;
@@ -924,7 +924,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
         );
         personModeScores.column("score_mode").setName("mode");
 
-        LOGGER.info("Compute monetary cost for each leg from scoring params");
+        LOGGER.debug("Computing monetary cost for each leg from scoring params");
         legs.addColumns(
                 legs.intColumn("distance")
                         .multiply(legs.doubleColumn("monetaryDistanceRate"))
@@ -934,14 +934,14 @@ public class TablesawKpiCalculator implements KpiCalculator {
         legs.removeColumns("monetaryDistanceRate", "dailyMonetaryConstant");
 
         LOGGER.info("Adding contribution from person money events");
-        LOGGER.info("Create a time columns in seconds");
+        LOGGER.debug("Create a time columns in seconds");
         DoubleColumn dep_time_seconds = DoubleColumn.create("dep_time_seconds");
         DoubleColumn trav_time_seconds = DoubleColumn.create("trav_time_seconds");
-        LOGGER.info("Adding dep_time column");
+        LOGGER.debug("Adding dep_time column");
         legs.stringColumn("dep_time")
                 .forEach(time -> dep_time_seconds.append(
                         (int) Time.parseTime(time)));
-        LOGGER.info("Adding trav_time column");
+        LOGGER.debug("Adding trav_time column");
         legs.stringColumn("trav_time")
                 .forEach(time -> trav_time_seconds.append(
                         (int) Time.parseTime(time)));
@@ -960,7 +960,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
                 );
             }
         }
-        LOGGER.info("Finished iterating over the money log");
+        LOGGER.debug("Finished iterating over the money log");
         legs.removeColumns(dep_time_seconds, arr_time_seconds);
         LOGGER.info("Finished adding costs to legs table");
         return legs;
@@ -1006,6 +1006,10 @@ public class TablesawKpiCalculator implements KpiCalculator {
                 uniquePersons.countUnique(),
                 trips.rowCount());
         int personsProcessedCount = 0;
+        int loggingStepSize = 10000;
+        if (uniquePersons.countUnique() > 10) {
+            loggingStepSize = uniquePersons.countUnique() / 10;
+        }
         for (String person : uniquePersons) {
             Table personTrips = trips
                     .where(trips.stringColumn("person").isEqualTo(person))
@@ -1050,7 +1054,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
             // finally append the activities of this person
             activities.append(personActivities);
             personsProcessedCount++;
-            if (personsProcessedCount % 10000 == 0) {
+            if (personsProcessedCount % loggingStepSize == 0) {
                 LOGGER.info("Created activities for {} persons so far", personsProcessedCount);
             }
         }
@@ -1093,7 +1097,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
         DoubleColumn monetaryDistanceRateColumn = DoubleColumn.create("monetaryDistanceRate");
         DoubleColumn dailyMonetaryConstantColumn = DoubleColumn.create("dailyMonetaryConstant");
 
-        LOGGER.info("Adding people to the person mode scores table");
+        LOGGER.debug("Adding people to the person mode scores table");
         for (Row row : personModeScores) {
             String person = row.getString("person");
             String subpopulation = row.getString("subpopulation");
@@ -1105,7 +1109,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
                 dailyMonetaryConstantColumn.append(modeParams.getDailyMonetaryConstant());
             }
         }
-        LOGGER.info("Joining person mode scores table to a new temp table");
+        LOGGER.debug("Joining person mode scores table to a new temp table");
         personModeScores = personModeScores
                 .joinOn("person")
                 .rightOuter(Table
@@ -1240,6 +1244,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
                         routeIDColumn,
                         modeColumn
                 );
+        LOGGER.info("Finished creating Transit Tables");
     }
 
     private void createVehicleTable(Vehicles inputVehicles) {
@@ -1406,13 +1411,13 @@ public class TablesawKpiCalculator implements KpiCalculator {
     }
 
     private void writeContentToFile(String path, String content, CompressionType compressionType) {
-        LOGGER.info(String.format("Writing file %s", path));
+        LOGGER.info("Writing file {}", path);
         try (Writer wr = IOUtils.getBufferedWriter(path.concat(compressionType.fileEnding))) {
             wr.write(content);
         } catch (IOException e) {
             LOGGER.error("!!! Failed to save content '{}' to file: '{}'", content, path);
         }
-        LOGGER.info(String.format("Finished writing file %s", path));
+        LOGGER.info("Finished writing file {}", path);
     }
 
     private void writeSupportingData(Path outputDir) {
@@ -1436,7 +1441,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
         this.writeTableCompressed(scheduleStops, String.format("%s/supporting-data-scheduleStops.csv", outputDir), this.compressionType);
         this.writeTableCompressed(scheduleRoutes, String.format("%s/supporting-data-scheduleRoutes.csv", outputDir), this.compressionType);
         this.writeTableCompressed(vehicles, String.format("%s/supporting-data-vehicles.csv", outputDir), this.compressionType);
-        LOGGER.info("Finished writing supporting            data files");
+        LOGGER.info("Finished writing supporting data files");
     }
 
     private OutputStream getCompressedOutputStream(String filepath, CompressionType compressionType) {
