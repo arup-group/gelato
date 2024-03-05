@@ -175,7 +175,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
     }
 
     @Override
-    public void writeVehicleKMKpi(Path outputDirectory) {
+    public double writeVehicleKMKpi(Path outputDirectory) {
         LOGGER.info("Writing Vehicle KM KPI to {}", outputDirectory);
 
         // add link length to the link log table
@@ -191,7 +191,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
         table.addColumns(
                 table
                         .doubleColumn("Sum [length]")
-                        .divide(100)
+                        .divide(1000)
                         .setName("distance_km")
         );
 
@@ -216,6 +216,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
         double kpi = round(table.doubleColumn("distance_km").sum(), 2);
         LOGGER.info("Vehicle KM KPI {}", kpi);
         writeContentToFile(String.format("%s/kpi-vehicle-km.csv", outputDirectory), String.valueOf(kpi), this.compressionType);
+        return kpi;
     }
 
     @Override
