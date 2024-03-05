@@ -118,25 +118,42 @@ Gelato will read in MATSim's output files and generate a number of compressed ou
 files in the directory you specified via `-o`, giving you something like this:
 
 ```shell
--rw-r--r--@  1 mickyfitz  staff   1.5M 19 Feb 12:00 intermediate-congestion.csv.gz
--rw-r--r--@  1 mickyfitz  staff    68K 19 Feb 12:00 intermediate-occupancy-rate.csv.gz
--rw-r--r--@  1 mickyfitz  staff   1.2K 19 Feb 11:59 intermediate-pt-wait-time.csv.gz
--rw-r--r--@  1 mickyfitz  staff    81K 19 Feb 12:00 intermediate-vehicle-km.csv.gz
--rw-r--r--@  1 mickyfitz  staff    97B 19 Feb 12:00 kpi-congestion.csv.gz
--rw-r--r--@  1 mickyfitz  staff   114B 19 Feb 11:59 kpi-modal-split.csv.gz
--rw-r--r--@  1 mickyfitz  staff    24B 19 Feb 12:00 kpi-occupancy-rate.csv.gz
--rw-r--r--@  1 mickyfitz  staff    26B 19 Feb 11:59 kpi-pt-wait-time.csv.gz
--rw-r--r--@  1 mickyfitz  staff   326K 19 Feb 12:00 kpi-speed.csv.gz
--rw-r--r--@  1 mickyfitz  staff    30B 19 Feb 12:00 kpi-vehicle-km.csv.gz
--rw-r--r--@  1 mickyfitz  staff    37K 19 Feb 11:59 supporting-data-legs.csv.gz
--rw-r--r--@  1 mickyfitz  staff    51M 19 Feb 11:59 supporting-data-linkLog.csv.gz
--rw-r--r--@  1 mickyfitz  staff   995K 19 Feb 11:59 supporting-data-networkLinkModes.csv.gz
--rw-r--r--@  1 mickyfitz  staff   3.1M 19 Feb 11:59 supporting-data-networkLinks.csv.gz
--rw-r--r--@  1 mickyfitz  staff   2.6K 19 Feb 11:59 supporting-data-scheduleRoutes.csv.gz
--rw-r--r--@  1 mickyfitz  staff    34K 19 Feb 11:59 supporting-data-scheduleStops.csv.gz
--rw-r--r--@  1 mickyfitz  staff    21K 19 Feb 11:59 supporting-data-trips.csv.gz
--rw-r--r--@  1 mickyfitz  staff    16M 19 Feb 11:59 supporting-data-vehicleOccupancy.csv.gz
--rw-r--r--@  1 mickyfitz  staff    68K 19 Feb 11:59 supporting-data-vehicles.csv.gz
+-rw-r--r--@  1 mickyfitz  staff   1.2M  5 Mar 16:10 intermediate-access-to-mobility-services.csv.gz
+-rw-r--r--@  1 mickyfitz  staff   110B  5 Mar 16:04 intermediate-affordability.csv.gz
+-rw-r--r--@  1 mickyfitz  staff   4.4M  5 Mar 16:11 intermediate-congestion.csv.gz
+-rw-r--r--@  1 mickyfitz  staff    67B  5 Mar 16:09 intermediate-ghg-emissions.csv.gz
+-rw-r--r--@  1 mickyfitz  staff   392K  5 Mar 16:13 intermediate-mobility-space-usage.csv.gz
+-rw-r--r--@  1 mickyfitz  staff   586K  5 Mar 16:06 intermediate-occupancy-rate.csv.gz
+-rw-r--r--@  1 mickyfitz  staff   3.0M  5 Mar 16:07 intermediate-passenger-km.csv.gz
+-rw-r--r--@  1 mickyfitz  staff   172K  5 Mar 16:04 intermediate-pt-wait-time.csv.gz
+-rw-r--r--@  1 mickyfitz  staff   190B  5 Mar 16:11 intermediate-travel-time.csv.gz
+-rw-r--r--@  1 mickyfitz  staff   2.5M  5 Mar 16:07 intermediate-vehicle-km.csv.gz
+-rw-r--r--@  1 mickyfitz  staff    25B  5 Mar 16:10 kpi-access-to-mobility-services-access-to-bus.csv.gz
+-rw-r--r--@  1 mickyfitz  staff    25B  5 Mar 16:10 kpi-access-to-mobility-services-access-to-pt-and-pt-used.csv.gz
+-rw-r--r--@  1 mickyfitz  staff    25B  5 Mar 16:10 kpi-access-to-mobility-services-access-to-rail.csv.gz
+-rw-r--r--@  1 mickyfitz  staff    81B  5 Mar 16:11 kpi-congestion.csv.gz
+-rw-r--r--@  1 mickyfitz  staff    24B  5 Mar 16:09 kpi-ghg-emissions.csv.gz
+-rw-r--r--@  1 mickyfitz  staff   392K  5 Mar 16:13 kpi-mobility-space-usage-per-activity-type.csv.gz
+-rw-r--r--@  1 mickyfitz  staff    23B  5 Mar 16:13 kpi-mobility-space-usage.csv.gz
+-rw-r--r--@  1 mickyfitz  staff   107B  5 Mar 16:04 kpi-modal-split.csv.gz
+-rw-r--r--@  1 mickyfitz  staff    24B  5 Mar 16:06 kpi-occupancy-rate.csv.gz
+-rw-r--r--@  1 mickyfitz  staff    30B  5 Mar 16:07 kpi-passenger-km.csv.gz
+-rw-r--r--@  1 mickyfitz  staff    27B  5 Mar 16:04 kpi-pt-wait-time.csv.gz
+-rw-r--r--@  1 mickyfitz  staff   909K  5 Mar 16:08 kpi-speed.csv.gz
+-rw-r--r--@  1 mickyfitz  staff    35B  5 Mar 16:11 kpi-travel-time.csv.gz
+-rw-r--r--@  1 mickyfitz  staff    33B  5 Mar 16:07 kpi-vehicle-km.csv.gz
+-rw-r--r--@  1 mickyfitz  staff    26M  5 Mar 16:02 supporting-data-activities.csv.gz
+-rw-r--r--@  1 mickyfitz  staff   1.7M  5 Mar 16:02 supporting-data-activity-facilities.csv.gz
+-rw-r--r--@  1 mickyfitz  staff    72M  5 Mar 16:02 supporting-data-legs.csv.gz
+-rw-r--r--@  1 mickyfitz  staff   284M  5 Mar 16:03 supporting-data-linkLog.csv.gz
+-rw-r--r--@  1 mickyfitz  staff   200K  5 Mar 16:04 supporting-data-networkLinkModes.csv.gz
+-rw-r--r--@  1 mickyfitz  staff   483K  5 Mar 16:04 supporting-data-networkLinks.csv.gz
+-rw-r--r--@  1 mickyfitz  staff    34M  5 Mar 16:03 supporting-data-person-mode-score-parameters.csv.gz
+-rw-r--r--@  1 mickyfitz  staff    27K  5 Mar 16:04 supporting-data-scheduleRoutes.csv.gz
+-rw-r--r--@  1 mickyfitz  staff    49K  5 Mar 16:04 supporting-data-scheduleStops.csv.gz
+-rw-r--r--@  1 mickyfitz  staff    48M  5 Mar 16:02 supporting-data-trips.csv.gz
+-rw-r--r--@  1 mickyfitz  staff   188M  5 Mar 16:04 supporting-data-vehicleOccupancy.csv.gz
+-rw-r--r--@  1 mickyfitz  staff    12M  5 Mar 16:04 supporting-data-vehicles.csv.gz
 ```
 
 For a short explanation of the content and meaning of these files, see [the KPI section](#the-kpis). For a more
