@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Vehicle KM KPI output being off by factor of 10 when converting units ([#49](https://github.com/arup-group/gelato/issues/49))
 
 ### Changed
 
