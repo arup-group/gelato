@@ -191,6 +191,38 @@ java -XX:MaxRAMPercentage=80.0 \
 -o /p
 ```
 
+## A word about running times
+We have not yet spent any time trying to optimise runtime. Running times depend on a combination of factors,
+but are mostly influenced by:
+
+- The size and shape of the MATSim outputs you feed to Gelato
+- The specifications of the machine you are running Gelato on
+
+For this reason, Your Mileage May (Will..) Vary, but as an example, on an M2 Macbook Pro, a full set of
+KPIs takes between 22 and 36 minutes to generate for a model with a compressed events file
+of around 620MB, containing 61.4 million events, and a full set of input files like this:
+
+```shell
+-rw-r--r--@ 1 mickyfitz  staff    29M 26 Jan 15:41 output_vehicles.xml.gz
+-rw-r--r--@ 1 mickyfitz  staff    45M 26 Jan 15:41 output_trips.csv.gz
+-rw-r--r--@ 1 mickyfitz  staff    38K 26 Jan 15:39 output_transitVehicles.xml.gz
+-rw-r--r--@ 1 mickyfitz  staff   1.1M 26 Jan 15:39 output_transitSchedule.xml.gz
+-rw-r--r--@ 1 mickyfitz  staff   469M 26 Jan 15:39 output_plans.xml.gz
+-rw-r--r--@ 1 mickyfitz  staff    17M 26 Jan 15:28 output_persons.csv.gz
+-rw-r--r--@ 1 mickyfitz  staff   906K 26 Jan 15:27 output_network.xml.gz
+-rw-r--r--@ 1 mickyfitz  staff   1.1M 26 Jan 15:27 output_links.csv.gz
+-rw-r--r--@ 1 mickyfitz  staff    66M 26 Jan 15:27 output_legs.csv.gz
+-rw-r--r--@ 1 mickyfitz  staff   6.7M 26 Jan 15:26 output_households.xml.gz
+-rw-r--r--@ 1 mickyfitz  staff   2.1M 26 Jan 15:26 output_facilities.xml.gz
+-rw-r--r--@ 1 mickyfitz  staff   205M 26 Jan 15:26 output_experienced_plans.xml.gz
+-rw-r--r--@ 1 mickyfitz  staff   618M 26 Jan 15:20 output_events.xml.gz
+-rw-r--r--@ 1 mickyfitz  staff   194B 26 Jan 15:05 output_counts.xml.gz
+-rw-r--r--@ 1 mickyfitz  staff    18K 26 Jan 15:05 output_config_reduced.xml
+-rw-r--r--@ 1 mickyfitz  staff    53K 26 Jan 15:05 output_config.xml
+-rw-r--r--@ 1 mickyfitz  staff   2.1M 26 Jan 15:05 output_allVehicles.xml.gz
+-rw-r--r--@ 1 mickyfitz  staff    32M 26 Jan 15:05 output_activities.csv.gz
+```
+
 
 # Using Gelato via Docker
 

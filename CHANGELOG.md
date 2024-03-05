@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- New KPIs: Affordability, Passenger km, GHG, Travel time , Access to mobility services, Mobility space usage
+- New KPIs: Affordability, Passenger KM, GHG, Travel time , Access to mobility services, Mobility space usage
 - More supporting data tables: facilities, activities and person scores
 
 ### Fixed
