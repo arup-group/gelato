@@ -13,7 +13,7 @@ public interface KpiCalculator {
 
     void writeOccupancyRateKpi(Path outputDirectory);
 
-    void writeVehicleKMKpi(Path outputDirectory);
+    double writeVehicleKMKpi(Path outputDirectory);
 
     void writeSpeedKpi(Path outputDirectory);
 

@@ -32,6 +32,10 @@ public class NetworkBuilder {
         return withNetworkLink(id, fromNode, toNode, defaultLinkLength, defaultLinkSpeed, defaultLinkCapacity, defaultLinkLanes);
     }
 
+    public NetworkBuilder withNetworkLinkWithLength(String id, String fromNode, String toNode, double length) {
+        return withNetworkLink(id, fromNode, toNode, length, defaultLinkSpeed, defaultLinkCapacity, defaultLinkLanes);
+    }
+
     public NetworkBuilder withNetworkLinkWithSpeed(String id, String fromNode, String toNode, double speed) {
         return withNetworkLink(id, fromNode, toNode, defaultLinkLength, speed, defaultLinkCapacity, defaultLinkLanes);
     }
