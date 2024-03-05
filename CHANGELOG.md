@@ -9,8 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- New KPIs: Affordability, Passenger KM, GHG, Travel time , Access to mobility services, Mobility space usage
-- More supporting data tables: facilities, activities and person scores
+- Passenger KM KPI ([#50](https://github.com/arup-group/gelato/issues/50))
+- Affordability KPI ([#59](https://github.com/arup-group/gelato/issues/59))
+- Greenhouse gases (GHG) emissions KPI ([#60](https://github.com/arup-group/gelato/issues/60))
+- Average travel time KPI ([#61](https://github.com/arup-group/gelato/issues/61))
+- Access to mobility services KPI ([#62](https://github.com/arup-group/gelato/issues/62))
+- Parking space demand/mobility space usage KPI ([#63](https://github.com/arup-group/gelato/issues/63))
+- More supporting data tables:
+  - `supporting-data-activity-facilities.csv.gz`
+  - `supporting-data-activities.csv.gz`
+  - `supporting-data-person-mode-score-parameters.csv.gz`
 
 ### Fixed
 
@@ -21,9 +29,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - README now includes JVM memory tuning instructions ([#48](https://github.com/arup-group/gelato/issues/48))
 - Gelato now uses less memory ([#52](https://github.com/arup-group/gelato/issues/52))
 - Tables: 
-  - transit stops now include mode of transport using the stop
-  - vehicles get fuel types and emission factors
-  - trips and legs have an additional column reporting monetary cost of the trip or leg
+  - transit stops now include mode of transport using the stop ([#62](https://github.com/arup-group/gelato/issues/62))
+  - vehicles get fuel types and emission factors ([#60](https://github.com/arup-group/gelato/issues/60))
+  - trips and legs have an additional column reporting monetary cost of the trip or leg ([#59](https://github.com/arup-group/gelato/issues/59))
 
 ## [0.0.2-alpha] - 2024-02-21
 
