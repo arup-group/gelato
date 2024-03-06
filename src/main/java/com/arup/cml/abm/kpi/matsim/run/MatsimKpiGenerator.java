@@ -1,9 +1,11 @@
 package com.arup.cml.abm.kpi.matsim.run;
 
 import com.arup.cml.abm.kpi.KpiCalculator;
+import com.arup.cml.abm.kpi.data.MoneyLog;
 import com.arup.cml.abm.kpi.domain.NetworkLinkLog;
 import com.arup.cml.abm.kpi.matsim.MatsimUtils;
 import com.arup.cml.abm.kpi.matsim.handlers.MatsimLinkLogHandler;
+import com.arup.cml.abm.kpi.matsim.handlers.MatsimPersonMoneyHandler;
 import com.arup.cml.abm.kpi.tablesaw.TablesawKpiCalculator;
 import com.arup.cml.abm.kpi.tablesaw.TablesawNetworkLinkLog;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -59,8 +61,11 @@ public class MatsimKpiGenerator implements Runnable {
         MatsimUtils matsimUtils = new MatsimUtils(matsimOutputDirectory, matsimConfigFile);
         NetworkLinkLog linkLog = new TablesawNetworkLinkLog();
         MatsimLinkLogHandler matsimLinkLogHandler = new MatsimLinkLogHandler(linkLog);
+        MoneyLog moneyLog = new MoneyLog();
+        MatsimPersonMoneyHandler matsimPersonMoneyHandler = new MatsimPersonMoneyHandler(moneyLog);
         EventsManager eventsManager = EventsUtils.createEventsManager();
         eventsManager.addHandler(matsimLinkLogHandler);
+        eventsManager.addHandler(matsimPersonMoneyHandler);
 
         String eventsFile = String.format("%s/%soutput_events.xml%s",
                 matsimOutputDirectory,
@@ -70,21 +75,35 @@ public class MatsimKpiGenerator implements Runnable {
         LOGGER.info("Streaming MATSim events from {}", eventsFile);
         new MatsimEventsReader(eventsManager).readFile(eventsFile);
         summariseEventsHandled(eventsFile, matsimLinkLogHandler.getEventCounts());
+        summariseEventsHandled(eventsFile, matsimPersonMoneyHandler.getEventCounts());
 
         KpiCalculator kpiCalculator = new TablesawKpiCalculator(
-                matsimUtils.getMatsimNetwork(), matsimUtils.getTransitSchedule(), matsimUtils.getMatsimVehicles(),
-                linkLog, matsimUtils.getMatsimLegsCSVInputStream(), matsimUtils.getMatsimTripsCSVInputStream(),
-                outputDir, CompressionType.gzip
-                );
+                matsimUtils.getMatsimNetwork(),
+                matsimUtils.getTransitSchedule(),
+                matsimUtils.getMatsimVehicles(),
+                linkLog,
+                matsimUtils.getMatsimPersonsCSVInputStream(),
+                moneyLog,
+                matsimUtils.getScoring(),
+                matsimUtils.getFacilities(),
+                matsimUtils.getMatsimLegsCSVInputStream(),
+                matsimUtils.getMatsimTripsCSVInputStream(),
+                outputDir,
+                CompressionType.gzip
+        );
 
         kpiCalculator.writeAffordabilityKpi(outputDir);
         kpiCalculator.writePtWaitTimeKpi(outputDir);
         kpiCalculator.writeModalSplitKpi(outputDir);
         kpiCalculator.writeOccupancyRateKpi(outputDir);
         kpiCalculator.writeVehicleKMKpi(outputDir);
+        kpiCalculator.writePassengerKMKpi(outputDir);
         kpiCalculator.writeSpeedKpi(outputDir);
         kpiCalculator.writeGHGKpi(outputDir);
+        kpiCalculator.writeAccessToMobilityServicesKpi(outputDir);
         kpiCalculator.writeCongestionKpi(outputDir);
+        kpiCalculator.writeTravelTimeKpi(outputDir);
+        kpiCalculator.writeMobilitySpaceUsageKpi(outputDir);
         MemoryObserver.stop();
     }
 

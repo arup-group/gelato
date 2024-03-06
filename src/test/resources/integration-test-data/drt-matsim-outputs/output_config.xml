@@ -459,7 +459,7 @@
 				<param name="marginalUtilityOfDistance_util_m" value="0.0" />
 				<param name="marginalUtilityOfTraveling_util_hr" value="-6.0" />
 				<param name="mode" value="drt" />
-				<param name="monetaryDistanceRate" value="0.0" />
+				<param name="monetaryDistanceRate" value="-0.05" />
 			</parameterset>
 		</parameterset>
 		<parameterset type="scoringParameters" >
@@ -640,7 +640,7 @@
 				<param name="marginalUtilityOfDistance_util_m" value="0.0" />
 				<param name="marginalUtilityOfTraveling_util_hr" value="-6.0" />
 				<param name="mode" value="drt" />
-				<param name="monetaryDistanceRate" value="0.0" />
+				<param name="monetaryDistanceRate" value="-0.05" />
 			</parameterset>
 		</parameterset>
 		<parameterset type="scoringParameters" >
@@ -821,7 +821,7 @@
 				<param name="marginalUtilityOfDistance_util_m" value="0.0" />
 				<param name="marginalUtilityOfTraveling_util_hr" value="-6.0" />
 				<param name="mode" value="drt" />
-				<param name="monetaryDistanceRate" value="0.0" />
+				<param name="monetaryDistanceRate" value="-0.05" />
 			</parameterset>
 		</parameterset>
 		<parameterset type="scoringParameters" >
@@ -1026,7 +1026,7 @@
 				<param name="marginalUtilityOfDistance_util_m" value="0.0" />
 				<param name="marginalUtilityOfTraveling_util_hr" value="-6.0" />
 				<param name="mode" value="drt" />
-				<param name="monetaryDistanceRate" value="0.0" />
+				<param name="monetaryDistanceRate" value="-0.05" />
 			</parameterset>
 		</parameterset>
 		<parameterset type="scoringParameters" >
@@ -1255,7 +1255,7 @@
 				<param name="marginalUtilityOfDistance_util_m" value="0.0" />
 				<param name="marginalUtilityOfTraveling_util_hr" value="-6.0" />
 				<param name="mode" value="drt" />
-				<param name="monetaryDistanceRate" value="0.0" />
+				<param name="monetaryDistanceRate" value="-0.05" />
 			</parameterset>
 		</parameterset>
 	</module>

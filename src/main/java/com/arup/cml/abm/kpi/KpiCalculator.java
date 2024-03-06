@@ -5,7 +5,7 @@ import tech.tablesaw.api.Table;
 import java.nio.file.Path;
 
 public interface KpiCalculator {
-    void writeAffordabilityKpi(Path outputDirectory);
+    double writeAffordabilityKpi(Path outputDirectory);
 
     void writePtWaitTimeKpi(Path outputDirectory);
 
@@ -15,9 +15,17 @@ public interface KpiCalculator {
 
     double writeVehicleKMKpi(Path outputDirectory);
 
+    void writePassengerKMKpi(Path outputDirectory);
+
     void writeSpeedKpi(Path outputDirectory);
 
-    void writeGHGKpi(Path outputDirectory);
+    double writeGHGKpi(Path outputDirectory);
+
+    double writeTravelTimeKpi(Path outputDirectory);
+
+    Table writeAccessToMobilityServicesKpi(Path outputDirectory);
 
     Table writeCongestionKpi(Path directory);
+
+    double writeMobilitySpaceUsageKpi(Path outputDirectory);
 }

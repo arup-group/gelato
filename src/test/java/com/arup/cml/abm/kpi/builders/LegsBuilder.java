@@ -1,14 +1,14 @@
 package com.arup.cml.abm.kpi.builders;
 
 import org.junit.rules.TemporaryFolder;
-import org.matsim.core.utils.io.IOUtils;
+import tech.tablesaw.api.IntColumn;
 import tech.tablesaw.api.StringColumn;
 import tech.tablesaw.api.Table;
-import tech.tablesaw.index.StringIndex;
+import tech.tablesaw.columns.Column;
 import tech.tablesaw.io.csv.CsvWriteOptions;
 
-import java.io.InputStream;
 import java.nio.file.Path;
+import java.util.Set;
 
 public class LegsBuilder {
     TemporaryFolder tmpDir;
@@ -18,7 +18,7 @@ public class LegsBuilder {
             StringColumn.create("dep_time"),
             StringColumn.create("trav_time"),
             StringColumn.create("wait_time"),
-            StringColumn.create("distance"),
+            IntColumn.create("distance"),
             StringColumn.create("mode"),
             StringColumn.create("start_link"),
             StringColumn.create("start_x"),
@@ -37,7 +37,23 @@ public class LegsBuilder {
         this.tmpDir = tmpDir;
     }
 
+    private void fillWithDudValues() {
+        Set<String> intCols = Set.of("distance");
+        for (Column col : legs.columns()) {
+            if (intCols.contains(col.name())) {
+                col.append(0);
+            } else {
+                col.append("dud");
+            }
+        }
+    }
+
     public String build() {
+        if (legs.isEmpty()) {
+            // empty table gets into trouble reading all the columns, if the table is empty, it is assumed it's not
+            // being used, so filling it with dud vales, just for the shape is ok
+            fillWithDudValues();
+        }
         String legsPath = String.valueOf(Path.of(tmpDir.getRoot().getAbsolutePath(), "output_legs.csv"));
         CsvWriteOptions options = CsvWriteOptions.builder(legsPath).separator(';').build();
         legs.write().usingOptions(options);

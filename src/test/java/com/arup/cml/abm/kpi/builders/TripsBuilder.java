@@ -1,13 +1,14 @@
 package com.arup.cml.abm.kpi.builders;
 
 import org.junit.rules.TemporaryFolder;
-import org.matsim.core.utils.io.IOUtils;
+import tech.tablesaw.api.DoubleColumn;
 import tech.tablesaw.api.StringColumn;
 import tech.tablesaw.api.Table;
+import tech.tablesaw.columns.Column;
 import tech.tablesaw.io.csv.CsvWriteOptions;
 
-import java.io.InputStream;
 import java.nio.file.Path;
+import java.util.Set;
 
 public class TripsBuilder {
     TemporaryFolder tmpDir;
@@ -28,11 +29,11 @@ public class TripsBuilder {
             StringColumn.create("end_activity_type"),
             StringColumn.create("end_facility_id"),
             StringColumn.create("start_link"),
-            StringColumn.create("start_x"),
-            StringColumn.create("start_y"),
+            DoubleColumn.create("start_x"),
+            DoubleColumn.create("start_y"),
             StringColumn.create("end_link"),
-            StringColumn.create("end_x"),
-            StringColumn.create("end_y"),
+            DoubleColumn.create("end_x"),
+            DoubleColumn.create("end_y"),
             StringColumn.create("first_pt_boarding_stop"),
             StringColumn.create("last_pt_egress_stop")
     );
@@ -41,7 +42,26 @@ public class TripsBuilder {
         this.tmpDir = tmpDir;
     }
 
+    private void fillWithDudValues() {
+        Set<String> timeCols = Set.of("dep_time", "trav_time", "wait_time");
+        Set<String> numberCols = Set.of("start_x", "start_y", "end_x", "end_y");
+        for (Column col : trips.columns()) {
+            if (timeCols.contains(col.name())) {
+                col.append("00:00:00");
+            } else if (numberCols.contains(col.name())) {
+                col.append(1.0);
+            } else {
+                col.append("dud");
+            }
+        }
+    }
+
     public String build() {
+        if (trips.isEmpty()) {
+            // empty table gets into trouble reading all the columns, if the table is empty, it is assumed it's not
+            // being used, so filling it with dud vales, just for the shape is ok
+            fillWithDudValues();
+        }
         String tripsPath = String.valueOf(Path.of(tmpDir.getRoot().getAbsolutePath(), "output_trips.csv"));
         CsvWriteOptions options = CsvWriteOptions.builder(tripsPath).separator(';').build();
         trips.write().usingOptions(options);
