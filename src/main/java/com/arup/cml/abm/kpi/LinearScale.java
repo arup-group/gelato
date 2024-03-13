@@ -5,6 +5,7 @@ public class LinearScale implements ScalingFactor {
     private double rightScaleBound;
     private double leftValueBound;
     private double rightValueBound;
+    private boolean isReversedLinearScale = false;
 
     public LinearScale(double leftScaleBound, double rightScaleBound, double leftValueBound, double rightValueBound) {
         // leftValueBound is mapped to leftScaleBound
@@ -20,6 +21,11 @@ public class LinearScale implements ScalingFactor {
             throw new RuntimeException("The bounds given for linear scale are invalid. " +
                     "Left and right bounds cannot both be the same value.");
         }
+        if (leftValueBound > rightValueBound) {
+            this.isReversedLinearScale = true;
+            leftValueBound = -leftValueBound;
+            rightValueBound = -rightValueBound;
+        }
 
         this.leftScaleBound = leftScaleBound;
         this.rightScaleBound = rightScaleBound;
@@ -32,27 +38,20 @@ public class LinearScale implements ScalingFactor {
     }
 
     private boolean isReversedLinearScale() {
-        return leftValueBound > rightValueBound;
+        return this.isReversedLinearScale;
     }
 
     private boolean isWithinBounds(double value) {
-        if (this.isReversedLinearScale() && ((value <= leftValueBound) && (value >= rightValueBound))) {
-            return true;
-        } else {
-            return (value >= leftValueBound) && (value <= rightValueBound);
-        }
+        return (value >= leftValueBound) && (value <= rightValueBound);
     }
 
     @Override
     public double scale(double value) {
+        if (this.isReversedLinearScale()) {
+            value = -value;
+        }
         if (this.isWithinBounds(value)) {
             return ((value - leftValueBound) / (rightValueBound - leftValueBound)) * (rightScaleBound - leftScaleBound);
-        } else if (this.isReversedLinearScale()) {
-            if (value < rightValueBound) {
-                return rightScaleBound;
-            } else {
-                return leftScaleBound;
-            }
         } else {
             if (value > rightValueBound) {
                 return rightScaleBound;
