@@ -1,5 +1,7 @@
 package com.arup.cml.abm.kpi;
 
+import com.arup.cml.abm.kpi.data.LinkLog;
+import com.arup.cml.abm.kpi.data.exceptions.LinkLogPassengerConsistencyException;
 import org.junit.Test;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -63,4 +65,22 @@ public class TestLinearScale {
     public void reversedFactorOutsideRightBoundMapsToUpperScaleBound() {
         assertThat(reverseScaleFactor.scale(5.0)).isEqualTo(upperScaleBound);
     }
+
+    @Test
+    public void defaultsToZeroToTenScaleBounds() {
+        LinearScale defaultedLinearScale = new LinearScale(45, 50);
+        assertThat(defaultedLinearScale.getLowerScaleBound()).isEqualTo(0.0);
+        assertThat(defaultedLinearScale.getUpperScaleBound()).isEqualTo(10.0);
+    }
+
+    @Test(expected = RuntimeException.class)
+    public void throwsExceptionWhenRightScaleBoundIsLargerThanLeftScaleBound() {
+        new LinearScale(10, 0, 45, 50);
+    }
+
+    @Test(expected = RuntimeException.class)
+    public void throwsExceptionWhenValueBoundsEqualButScaleBoundsAreNot() {
+        new LinearScale(0, 1, 45, 45);
+    }
+
 }

@@ -41,6 +41,14 @@ public class LinearScale implements ScalingFactor {
         return this.isReversedLinearScale;
     }
 
+    public double getLowerScaleBound() {
+        return leftScaleBound;
+    }
+
+    public double getUpperScaleBound() {
+        return rightScaleBound;
+    }
+
     private boolean isWithinBounds(double value) {
         return (value >= leftValueBound) && (value <= rightValueBound);
     }
