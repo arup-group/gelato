@@ -22,7 +22,7 @@ public class TestTablesawAffordabilityKpiWithLinearScalingFactor {
     public TemporaryFolder tmpDir = new TemporaryFolder();
 
     @Test
-    public void testSingleAgentGivesRatioOfOne() {
+    public void singleAgentGivesRatioOfOne() {
         String bobby = "Bobby";
         String bobbySubpop = "default";
         Integer bobbyTripLength = 10;
