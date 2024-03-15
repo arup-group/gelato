@@ -167,7 +167,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
     }
 
     @Override
-    public double writeAffordabilityKpi(Path outputDirectory) {
+    public double writeAffordabilityKpi(Path outputDirectory, ScalingFactor scalingFactor) {
         LOGGER.info("Writing Affordability KPI to {}", outputDirectory);
 
         // join personal income / subpop info
@@ -250,7 +250,9 @@ public class TablesawKpiCalculator implements KpiCalculator {
                     .where(intermediate.stringColumn(incomeColumnName).isEqualTo(lowIncomeName))
                     .doubleColumn("mean_daily_monetary_cost")
                     .get(0);
-            double kpi = round(lowIncomeAverageCost / overallAverageCost, 2);
+            double kpi = round(
+                    scalingFactor.scale(lowIncomeAverageCost / overallAverageCost),
+                    2);
             writeContentToFile(String.format("%s/kpi-affordability.csv", outputDirectory), String.valueOf(kpi), this.compressionType);
             return kpi;
         }

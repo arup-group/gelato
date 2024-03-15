@@ -1,5 +1,7 @@
 package com.arup.cml.abm.kpi.tablesaw;
 
+import com.arup.cml.abm.kpi.LinearScale;
+import com.arup.cml.abm.kpi.ScalingFactor;
 import com.arup.cml.abm.kpi.builders.*;
 import org.assertj.core.data.Offset;
 import org.junit.Rule;
@@ -11,6 +13,10 @@ import java.nio.file.Path;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 public class TestTablesawAffordabilityKpi {
+    // this scale is not the proposed KPI scale. The Value bounds where chosen so that we have a multiplicative
+    // `equivalentScalingFactor` to multiply the expected Affordability KPI Ratio by
+    ScalingFactor scalingFactor = new LinearScale(0, 1, 0, 10);
+    double equivalentScalingFactor = 1.0 / 10.0;
 
     @Rule
     public TemporaryFolder tmpDir = new TemporaryFolder();
@@ -32,11 +38,12 @@ public class TestTablesawAffordabilityKpi {
                         .withMonetaryCostsForSubpopulationAndMode(bobbySubpop, "car", 1.0, 1.0)
                         .build())
                 .build();
-        double outputKpi = kpiCalculator.writeAffordabilityKpi(Path.of(tmpDir.getRoot().getAbsolutePath()));
+        double outputKpi = kpiCalculator.writeAffordabilityKpi(Path.of(tmpDir.getRoot().getAbsolutePath()), scalingFactor);
 
-        assertThat(outputKpi).isEqualTo(1)
+        double expectedRatio = 1;
+        assertThat(outputKpi).isEqualTo(expectedRatio * equivalentScalingFactor)
                 .as("There is only one agent so the ratio of all travel to the low income group " +
-                        "is expected to be 1");
+                        "is expected to be 1, and 0.1 after scaling");
     }
 
     @Test
@@ -46,7 +53,6 @@ public class TestTablesawAffordabilityKpi {
         Integer tripLength = 10;
         double dailyConstant = 1;
         double distanceCost = 1;
-        double singleTripCost = dailyConstant + tripLength * distanceCost;
 
         String poorBobby = "PoorBobby";
         double poorBobbyIncome = 10000;
@@ -69,13 +75,19 @@ public class TestTablesawAffordabilityKpi {
                         .withMonetaryCostsForSubpopulationAndMode(subpop, mode, dailyConstant, distanceCost)
                         .build())
                 .build();
-        double outputKpi = kpiCalculator.writeAffordabilityKpi(Path.of(tmpDir.getRoot().getAbsolutePath()));
+        double outputKpi = kpiCalculator.writeAffordabilityKpi(
+                Path.of(tmpDir.getRoot().getAbsolutePath()),
+                scalingFactor
+        );
 
-        double poorBobbyDayAverage = 2 * singleTripCost;
-        double overallDayAverage = 3 * singleTripCost / 2;
-        assertThat(outputKpi).isCloseTo(poorBobbyDayAverage / overallDayAverage, Offset.offset(0.009))
-                .as("There is only one agent so the ratio of all travel to the low income group " +
-                        "is expected to be 1");
+        // why 1.33.. ?
+        // 2x / (3x/2) = 4x/3x = 1 + 1/3
+        // 2x <- poor Bobby cost
+        // (3x/2) <- overall average
+        double expectedRatio = 1 + 1.0/3;
+        assertThat(outputKpi).isCloseTo(expectedRatio * equivalentScalingFactor, Offset.offset(0.009))
+                .as("There are two agents, the poorer agent spends twice as much on travel. The ratio of " +
+                        "all travel to the low income group is expected to be 1.33, and 0.133 after scaling.");
     }
 
     @Test
@@ -84,7 +96,6 @@ public class TestTablesawAffordabilityKpi {
         Integer tripLength = 10;
         double dailyConstant = 1;
         double distanceCost = 1;
-        double singleTripCost = dailyConstant + tripLength * distanceCost;
 
         String poorBobby = "PoorBobby";
         String poorBobbySubpop = "low income";
@@ -108,13 +119,16 @@ public class TestTablesawAffordabilityKpi {
                         .withMonetaryCostsForSubpopulationAndMode(richBobbySubpop, mode, dailyConstant, distanceCost)
                         .build())
                 .build();
-        double outputKpi = kpiCalculator.writeAffordabilityKpi(Path.of(tmpDir.getRoot().getAbsolutePath()));
+        double outputKpi = kpiCalculator.writeAffordabilityKpi(Path.of(tmpDir.getRoot().getAbsolutePath()), scalingFactor);
 
-        double poorBobbyDayAverage = 2 * singleTripCost;
-        double overallDayAverage = 3 * singleTripCost / 2;
-        assertThat(outputKpi).isCloseTo(poorBobbyDayAverage / overallDayAverage, Offset.offset(0.009))
-                .as("There is only one agent so the ratio of all travel to the low income group " +
-                        "is expected to be 1");
+        // why 1.33.. ?
+        // 2x / (3x/2) = 4x/3x = 1 + 1/3
+        // 2x <- poor Bobby cost
+        // (3x/2) <- overall average
+        double expectedRatio = 1 + 1.0/3;
+        assertThat(outputKpi).isCloseTo(expectedRatio * equivalentScalingFactor, Offset.offset(0.009))
+                .as("There are two agents, the poorer agent spends twice as much on travel. The ratio of " +
+                        "all travel to the low income group is expected to be 1.33, and 0.133 after scaling.");
     }
 
 

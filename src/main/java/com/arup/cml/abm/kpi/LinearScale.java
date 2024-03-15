@@ -17,7 +17,7 @@ public class LinearScale implements ScalingFactor {
         if (leftScaleBound > rightScaleBound) {
             throw new RuntimeException("leftScaleBound cannot be larger than rightValueBound");
         }
-        if ((leftValueBound == rightValueBound) && (leftScaleBound != rightScaleBound)) {
+        if (leftValueBound == rightValueBound && leftScaleBound != rightScaleBound) {
             throw new RuntimeException("The bounds given for linear scale are invalid. " +
                     "Left and right bounds cannot both be the same value.");
         }
@@ -50,7 +50,7 @@ public class LinearScale implements ScalingFactor {
     }
 
     private boolean isWithinBounds(double value) {
-        return (value >= leftValueBound) && (value <= rightValueBound);
+        return value >= leftValueBound && value <= rightValueBound;
     }
 
     @Override
