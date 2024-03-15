@@ -1,6 +1,7 @@
 package com.arup.cml.abm.kpi.tablesaw;
 
 import com.arup.cml.abm.kpi.KpiCalculator;
+import com.arup.cml.abm.kpi.ScalingFactor;
 import com.arup.cml.abm.kpi.data.MoneyLog;
 import com.arup.cml.abm.kpi.domain.NetworkLinkLog;
 import org.apache.logging.log4j.LogManager;
