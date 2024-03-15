@@ -7,7 +7,7 @@ import java.nio.file.Path;
 public interface KpiCalculator {
     double writeAffordabilityKpi(Path outputDirectory, ScalingFactor scalingFactor);
 
-    double writePtWaitTimeKpi(Path outputDirectory);
+    double writePtWaitTimeKpi(Path outputDirectory, ScalingFactor scalingFactor);
 
     void writeModalSplitKpi(Path outputDirectory);
 

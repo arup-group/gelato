@@ -13,7 +13,10 @@ import java.nio.file.Path;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 public class TestTablesawPtWaitTimeKpi {
-
+    // this scale is not the proposed KPI scale. The Value bounds where chosen so that we have a multiplicative
+    // `equivalentScalingFactor` to multiply the expected KPI output by
+    ScalingFactor linearScalingFactor = new LinearScale(0, 1, 0, 15 * 60);
+    double equivalentScalingFactor = 1.0 / (15.0 * 60);
     @Rule
     public TemporaryFolder tmpDir = new TemporaryFolder();
 
@@ -29,11 +32,11 @@ public class TestTablesawPtWaitTimeKpi {
                         .build())
                 .build();
         double outputKpi = kpiCalculator.writePtWaitTimeKpi(
-                Path.of(tmpDir.getRoot().getAbsolutePath())
-//                scalingFactor
+                Path.of(tmpDir.getRoot().getAbsolutePath()),
+                linearScalingFactor
         );
 
-        assertThat(outputKpi).isEqualTo(bobbyPtWaitTimeSeconds)
+        assertThat(outputKpi).isEqualTo(bobbyPtWaitTimeSeconds * equivalentScalingFactor)
                 .as("PT Wait Time KPI should return the only PT wait time recorded with one agent");
     }
 
@@ -48,8 +51,8 @@ public class TestTablesawPtWaitTimeKpi {
                         .build())
                 .build();
         double outputKpi = kpiCalculator.writePtWaitTimeKpi(
-                Path.of(tmpDir.getRoot().getAbsolutePath())
-//                scalingFactor
+                Path.of(tmpDir.getRoot().getAbsolutePath()),
+                linearScalingFactor
         );
 
         assertThat(outputKpi).isEqualTo(0.0)
@@ -73,11 +76,11 @@ public class TestTablesawPtWaitTimeKpi {
                         .build())
                 .build();
         double outputKpi = kpiCalculator.writePtWaitTimeKpi(
-                Path.of(tmpDir.getRoot().getAbsolutePath())
-//                scalingFactor
+                Path.of(tmpDir.getRoot().getAbsolutePath()),
+                linearScalingFactor
         );
 
-        assertThat(outputKpi).isEqualTo((bobbyPtWaitTimeSeconds + bobbinaPtWaitTimeSeconds) / 2)
+        assertThat(outputKpi).isEqualTo((bobbyPtWaitTimeSeconds + bobbinaPtWaitTimeSeconds) / 2 * equivalentScalingFactor)
                 .as("PT Wait Time KPI should return average of 6 and 12 minutes for Bobby " +
                         "and his friend Bobbina");
     }

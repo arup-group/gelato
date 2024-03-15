@@ -2,7 +2,6 @@ package com.arup.cml.abm.kpi.matsim.run;
 
 import com.arup.cml.abm.kpi.KpiCalculator;
 import com.arup.cml.abm.kpi.LinearScale;
-import com.arup.cml.abm.kpi.ScalingFactor;
 import com.arup.cml.abm.kpi.data.MoneyLog;
 import com.arup.cml.abm.kpi.domain.NetworkLinkLog;
 import com.arup.cml.abm.kpi.matsim.MatsimUtils;
@@ -94,9 +93,8 @@ public class MatsimKpiGenerator implements Runnable {
                 CompressionType.gzip
         );
 
-        ScalingFactor scalingFactor = new LinearScale(0, 10, 1.25, 1);
-        kpiCalculator.writeAffordabilityKpi(outputDir, scalingFactor);
-        kpiCalculator.writePtWaitTimeKpi(outputDir);
+        kpiCalculator.writeAffordabilityKpi(outputDir, new LinearScale(0, 10, 1.25, 1));
+        kpiCalculator.writePtWaitTimeKpi(outputDir, new LinearScale(0, 10, 15 * 60.0, 5 * 60.0));
         kpiCalculator.writeModalSplitKpi(outputDir);
         kpiCalculator.writeOccupancyRateKpi(outputDir);
         kpiCalculator.writeVehicleKMKpi(outputDir);
