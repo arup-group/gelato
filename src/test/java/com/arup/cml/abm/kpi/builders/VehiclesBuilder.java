@@ -9,34 +9,32 @@ import org.matsim.vehicles.Vehicles;
 public class VehiclesBuilder {
     Vehicles vehicles = VehicleUtils.createVehiclesContainer();
 
-    public VehiclesBuilder withVehicle(String id, String vehicleType) {
-        return withVehicle(id, vehicleType, "car");
+    public VehiclesBuilder withVehicle(String vehicleId, String vehicleType) {
+        return withVehicleOfMode(vehicleId, vehicleType, "car");
     }
 
-    public VehiclesBuilder withVehicle(String id, String vehicleType, String mode) {
-        withVehicleType(vehicleType, mode);
-        VehicleType matsimVehicleType = vehicles.getVehicleTypes().get(Id.create(vehicleType, VehicleType.class));
-        Vehicle vehicle = VehicleUtils.createVehicle(Id.createVehicleId(id), matsimVehicleType);
-        vehicles.addVehicle(vehicle);
+    public VehiclesBuilder withVehicleOfMode(String vehicleId, String vehicleType, String mode) {
+        return this.withVehicleOfCapacity(vehicleId, vehicleType, mode, 2);
+    }
+
+    public VehiclesBuilder withVehicleOfCapacity(String vehicleId, String vehicleTypeID, String mode, Integer seats) {
+        Id<VehicleType> vehTypeId = Id.create(vehicleTypeID, VehicleType.class);
+        VehicleType matsimVehicleType = vehicles.getVehicleTypes().getOrDefault(
+                vehTypeId, VehicleUtils.createVehicleType(vehTypeId));
+        matsimVehicleType.setNetworkMode(mode);
+        matsimVehicleType.getCapacity().setSeats(seats);
+        vehicles.addVehicleType(matsimVehicleType);
+        vehicles.addVehicle(VehicleUtils.createVehicle(Id.createVehicleId(vehicleId), matsimVehicleType));
         return this;
     }
 
-    public VehiclesBuilder withVehicleType(String vehicleType) {
-        return withVehicleType(vehicleType, "car");
-    }
-
-    public VehiclesBuilder withVehicleType(String vehicleType, String mode) {
-        return this.withVehicleTypeOfCapacity(vehicleType, mode, 2);
-    }
-
-    public VehiclesBuilder withVehicleTypeOfCapacity(String vehicleType, String mode, Integer seats) {
-        Id<VehicleType> vehicleTypeId = Id.create(vehicleType, VehicleType.class);
-        if (!vehicles.getVehicleTypes().containsKey(vehicleTypeId)) {
-            VehicleType matsimVehicleType = VehicleUtils.createVehicleType(vehicleTypeId);
-            matsimVehicleType.setNetworkMode(mode);
-            matsimVehicleType.getCapacity().setSeats(seats);
-            vehicles.addVehicleType(matsimVehicleType);
-        }
+    public VehiclesBuilder withVehicleWithEmissionsFactor(String vehicleId, String vehicleTypeId, double emissionsFactor) {
+        Id<VehicleType> vehTypeId = Id.create(vehicleTypeId, VehicleType.class);
+        VehicleType matsimVehicleType = vehicles.getVehicleTypes().getOrDefault(
+                vehTypeId, VehicleUtils.createVehicleType(vehTypeId));
+        matsimVehicleType.getEngineInformation().getAttributes().putAttribute("emissionsFactor", emissionsFactor);
+        vehicles.addVehicleType(matsimVehicleType);
+        vehicles.addVehicle(VehicleUtils.createVehicle(Id.createVehicleId(vehicleId), matsimVehicleType));
         return this;
     }
 

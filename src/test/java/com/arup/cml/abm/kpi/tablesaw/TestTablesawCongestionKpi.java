@@ -29,7 +29,7 @@ public class TestTablesawCongestionKpi {
                         .withNetworkLink("otherLink", "B", "A")
                         .build())
                 .withVehicles(new VehiclesBuilder()
-                        .withVehicle("someCar", "car", "car")
+                        .withVehicle("someCar", "car")
                         .build())
                 .withLinkLog(new LinkLogBuilder()
                         .withEntry("someCar", "infLink", (9 * 60 * 60), (9 * 60 * 60) + 25)

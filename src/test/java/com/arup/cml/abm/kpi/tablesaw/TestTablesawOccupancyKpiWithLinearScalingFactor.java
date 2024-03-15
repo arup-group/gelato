@@ -32,8 +32,7 @@ public class TestTablesawOccupancyKpiWithLinearScalingFactor {
                         .withEntry(someCar, "someLink", (9 * 60 * 60), (9 * 60 * 60) + 25)
                         .build())
                 .withVehicles(new VehiclesBuilder()
-                        .withVehicleTypeOfCapacity("car", "car", 4)
-                        .withVehicle(someCar, "car", "car")
+                        .withVehicleOfCapacity(someCar, "car", "car", 4)
                         .build())
                 .build();
         double outputKpi = kpiCalculator.writeOccupancyRateKpi(
