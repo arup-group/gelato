@@ -11,7 +11,7 @@ public interface KpiCalculator {
 
     void writeModalSplitKpi(Path outputDirectory);
 
-    double writeOccupancyRateKpi(Path outputDirectory);
+    double writeOccupancyRateKpi(Path outputDirectory, ScalingFactor scalingFactor);
 
     double writeVehicleKMKpi(Path outputDirectory);
 

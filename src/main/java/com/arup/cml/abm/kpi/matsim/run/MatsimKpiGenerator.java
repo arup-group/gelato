@@ -96,7 +96,7 @@ public class MatsimKpiGenerator implements Runnable {
         kpiCalculator.writeAffordabilityKpi(outputDir, new LinearScale(0, 10, 1.25, 1));
         kpiCalculator.writePtWaitTimeKpi(outputDir, new LinearScale(0, 10, 15 * 60.0, 5 * 60.0));
         kpiCalculator.writeModalSplitKpi(outputDir);
-        kpiCalculator.writeOccupancyRateKpi(outputDir);
+        kpiCalculator.writeOccupancyRateKpi(outputDir, new LinearScale(0, 10, 0.2, 0.6));
         kpiCalculator.writeVehicleKMKpi(outputDir);
         kpiCalculator.writePassengerKMKpi(outputDir);
         kpiCalculator.writeSpeedKpi(outputDir);

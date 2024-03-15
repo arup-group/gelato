@@ -332,7 +332,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
     }
 
     @Override
-    public double writeOccupancyRateKpi(Path outputDirectory) {
+    public double writeOccupancyRateKpi(Path outputDirectory, ScalingFactor scalingFactor) {
         LOGGER.info("Writing Occupancy Rate KPI to {}", outputDirectory);
 
         // add capacity of the vehicle
@@ -365,7 +365,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
 
         double kpi = averageOccupancyPerVehicle.doubleColumn("Mean [numberOfPeople] / Mean [capacity]").sum();
         kpi = kpi / numberOfVehicles;
-        kpi = round(kpi, 2);
+        kpi = round(scalingFactor.scale(kpi), 2);
 
         LOGGER.info("Occupancy Rate KPI {}", kpi);
         writeContentToFile(String.format("%s/kpi-occupancy-rate.csv", outputDirectory), String.valueOf(kpi), this.compressionType);
