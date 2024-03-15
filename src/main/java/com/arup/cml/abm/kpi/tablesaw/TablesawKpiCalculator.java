@@ -498,7 +498,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
                 .setName("emissions"));
 
         double emissionsTotal = round(table.numberColumn("emissions").sum(), 2);
-        double emissionsPerCapita = round(emissionsTotal / personModeScores.column("person").size(), 2);
+        double emissionsPerCapita = round(emissionsTotal / personModeScores.column("person").countUnique(), 2);
         writeContentToFile(
                 String.format("%s/intermediate-ghg-emissions.csv", outputDirectory),
                 String.format("emissions_total,emissions_per_capita\n%f,%f", emissionsTotal, emissionsPerCapita),

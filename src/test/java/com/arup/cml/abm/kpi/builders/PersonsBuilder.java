@@ -34,6 +34,12 @@ public class PersonsBuilder {
         return this;
     }
 
+    public PersonsBuilder withPerson(
+            String person
+    ) {
+        return this.withPerson(person, defaultIncome, defaultSubpopulation);
+    }
+
     public PersonsBuilder withDefaultPersons() {
         this.withPerson(
                 defaultPerson1, defaultIncome, defaultSubpopulation
