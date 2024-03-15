@@ -97,6 +97,16 @@ public class LegsBuilder {
         );
     }
 
+    public LegsBuilder withDefaultPtLegWithTiming(
+            String person, String tripId, String depTime, String travTime, String waitTime) {
+        return this.withLeg(
+                person, tripId, depTime, travTime, waitTime, defaultDistance, "bus",
+                defaultStartLink, defaultStartX, defaultStartY, defaultEndLink, defaultEndX, defaultEndY,
+                "Stop A", "Stop B", "SomeTransitLine",
+                "SomeTransitRoute", "SomeBus"
+        );
+    }
+
     public String build() {
         if (legs.isEmpty()) {
             // empty table gets into trouble reading all the columns, if the table is empty, it is assumed it's not

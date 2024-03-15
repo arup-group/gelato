@@ -5,7 +5,6 @@ import org.matsim.core.config.groups.ScoringConfigGroup;
 public class ScoringConfigBuilder {
     ScoringConfigGroup scoring;
     String defaultSubpopulation = "default";
-    String defaultMode = "car";
     double defaultDailyMonetaryConstant = 0.0;
     double defaultMonetaryDistanceRate = 0.0;
     double defaultConstant = 0.0;
@@ -41,9 +40,19 @@ public class ScoringConfigBuilder {
     }
 
     public ScoringConfigBuilder withDefaultScoringParams() {
-        return this.withScoringParams(defaultSubpopulation, defaultMode, defaultDailyMonetaryConstant,
+        this.withScoringParams(defaultSubpopulation, "car", defaultDailyMonetaryConstant,
                 defaultMonetaryDistanceRate, defaultConstant, defaultMarginalUtilityOfDistance,
                 defaultDailyUtilityConstant, defaultMarginalUtilityOfTraveling);
+        this.withScoringParams(defaultSubpopulation, "drt", defaultDailyMonetaryConstant,
+                defaultMonetaryDistanceRate, defaultConstant, defaultMarginalUtilityOfDistance,
+                defaultDailyUtilityConstant, defaultMarginalUtilityOfTraveling);
+        this.withScoringParams(defaultSubpopulation, "bus", defaultDailyMonetaryConstant,
+                defaultMonetaryDistanceRate, defaultConstant, defaultMarginalUtilityOfDistance,
+                defaultDailyUtilityConstant, defaultMarginalUtilityOfTraveling);
+        this.withScoringParams(defaultSubpopulation, "rail", defaultDailyMonetaryConstant,
+                defaultMonetaryDistanceRate, defaultConstant, defaultMarginalUtilityOfDistance,
+                defaultDailyUtilityConstant, defaultMarginalUtilityOfTraveling);
+        return this;
     }
 
     public ScoringConfigGroup build() {

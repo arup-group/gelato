@@ -271,7 +271,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
     }
 
     @Override
-    public void writePtWaitTimeKpi(Path outputDirectory) {
+    public double writePtWaitTimeKpi(Path outputDirectory) {
         LOGGER.info("Writing PT Wait Time KPI to {}", outputDirectory);
 
         // pull out legs with PT stops information
@@ -314,6 +314,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
         kpi = round(kpi, 2);
         LOGGER.info("PT Wait Time KPI {}", kpi);
         writeContentToFile(String.format("%s/kpi-pt-wait-time.csv", outputDirectory), String.valueOf(kpi), this.compressionType);
+        return kpi;
     }
 
     @Override

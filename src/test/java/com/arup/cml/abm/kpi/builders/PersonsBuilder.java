@@ -11,7 +11,8 @@ import java.nio.file.Path;
 public class PersonsBuilder {
 
     TemporaryFolder tmpDir;
-    String defaultPerson = "Bobby";
+    String defaultPerson1 = "Bobby";
+    String defaultPerson2 = "Bobbina";
     double defaultIncome = 10000.0;
     String defaultSubpopulation = "default";
     Table persons = Table.create("persons").addColumns(
@@ -33,9 +34,12 @@ public class PersonsBuilder {
         return this;
     }
 
-    public PersonsBuilder withDefaultPerson() {
+    public PersonsBuilder withDefaultPersons() {
+        this.withPerson(
+                defaultPerson1, defaultIncome, defaultSubpopulation
+        );
         return this.withPerson(
-                defaultPerson, defaultIncome, defaultSubpopulation
+                defaultPerson2, defaultIncome, defaultSubpopulation
         );
     }
 
@@ -50,7 +54,7 @@ public class PersonsBuilder {
         if (persons.isEmpty()) {
             // empty table gets into trouble reading all the columns, if the table is empty, it is assumed it's not
             // being used, so filling it with dud vales, just for the shape is ok
-            this.withDefaultPerson();
+            this.withDefaultPersons();
         }
         String path = String.valueOf(Path.of(tmpDir.getRoot().getAbsolutePath(), "output_persons.csv"));
         CsvWriteOptions options = CsvWriteOptions.builder(path).separator(';').build();

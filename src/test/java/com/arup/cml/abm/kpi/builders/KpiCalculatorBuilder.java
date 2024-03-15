@@ -25,7 +25,7 @@ public class KpiCalculatorBuilder {
     MoneyLog moneyLog = new MoneyLog();
     String persons;
     ActivityFacilities facilities = new FacilitiesBuilder().build();
-    ScoringConfigGroup scoring = new ScoringConfigBuilder().build();
+    ScoringConfigGroup scoring = new ScoringConfigBuilder().withDefaultScoringParams().build();
 
     public KpiCalculatorBuilder(TemporaryFolder tmpDir) {
         this.tmpDir = tmpDir;
