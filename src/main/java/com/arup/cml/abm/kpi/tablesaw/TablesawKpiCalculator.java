@@ -332,7 +332,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
     }
 
     @Override
-    public void writeOccupancyRateKpi(Path outputDirectory) {
+    public double writeOccupancyRateKpi(Path outputDirectory) {
         LOGGER.info("Writing Occupancy Rate KPI to {}", outputDirectory);
 
         // add capacity of the vehicle
@@ -369,6 +369,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
 
         LOGGER.info("Occupancy Rate KPI {}", kpi);
         writeContentToFile(String.format("%s/kpi-occupancy-rate.csv", outputDirectory), String.valueOf(kpi), this.compressionType);
+        return kpi;
     }
 
     @Override

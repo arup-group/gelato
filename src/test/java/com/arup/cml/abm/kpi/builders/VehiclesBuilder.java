@@ -26,10 +26,15 @@ public class VehiclesBuilder {
     }
 
     public VehiclesBuilder withVehicleType(String vehicleType, String mode) {
+        return this.withVehicleTypeOfCapacity(vehicleType, mode, 2);
+    }
+
+    public VehiclesBuilder withVehicleTypeOfCapacity(String vehicleType, String mode, Integer seats) {
         Id<VehicleType> vehicleTypeId = Id.create(vehicleType, VehicleType.class);
         if (!vehicles.getVehicleTypes().containsKey(vehicleTypeId)) {
             VehicleType matsimVehicleType = VehicleUtils.createVehicleType(vehicleTypeId);
             matsimVehicleType.setNetworkMode(mode);
+            matsimVehicleType.getCapacity().setSeats(seats);
             vehicles.addVehicleType(matsimVehicleType);
         }
         return this;
