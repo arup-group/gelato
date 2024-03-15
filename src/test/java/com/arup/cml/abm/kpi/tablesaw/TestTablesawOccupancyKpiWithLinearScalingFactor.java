@@ -13,7 +13,7 @@ import java.nio.file.Path;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
-public class TestTablesawOccupancyeKpiWithLinearScalingFactor {
+public class TestTablesawOccupancyKpiWithLinearScalingFactor {
     // this scale is not the proposed KPI scale. The Value bounds where chosen so that we have a multiplicative
     // `equivalentScalingFactor` to multiply the expected KPI output by
     ScalingFactor linearScalingFactor = new LinearScale(0, 10, 0, 1);
