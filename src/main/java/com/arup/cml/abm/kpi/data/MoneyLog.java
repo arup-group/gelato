@@ -16,16 +16,11 @@ public class MoneyLog {
 
     public void createMoneyLogEntry(String personID, double time, double amount) {
         Map<Double, Double> personLog = getPersonLog(personID);
-        if (personLog.containsKey(time)) {
-            personLog.put(time, amount + personLog.get(time));
-        } else {
-            personLog.put(time, amount);
-        }
+        personLog.compute(time, (k, v) -> (v == null) ? amount : amount + v);
     }
 
     private Map<Double, Double> getPersonLog(String personID) {
-        moneyLogData.putIfAbsent(personID, new HashMap<>());
-        return moneyLogData.get(personID);
+        return moneyLogData.computeIfAbsent(personID, k -> new HashMap<>());
     }
 
 }
