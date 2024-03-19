@@ -2,7 +2,7 @@ package com.arup.cml.abm.kpi.data;
 
 import org.junit.Test;
 
-import java.util.HashMap;
+import java.util.Map;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
@@ -19,7 +19,7 @@ public class TestMoneyLog {
 
         moneyLog.createMoneyLogEntry(somePersonID, someTime, someCost);
 
-        HashMap<String, HashMap<Double, Double>> moneyData = moneyLog.getMoneyLogData();
+        Map<String, Map<Double, Double>> moneyData = moneyLog.getMoneyLogData();
         assertThat(moneyData.size())
                 .isEqualTo(1)
                 .as("Money Log should contain entries for a single person");
@@ -50,7 +50,7 @@ public class TestMoneyLog {
         moneyLog.createMoneyLogEntry(somePersonID, firstTime, firstCost);
         moneyLog.createMoneyLogEntry(somePersonID, secondTime, secondCost);
 
-        HashMap<String, HashMap<Double, Double>> moneyData = moneyLog.getMoneyLogData();
+        Map<String, Map<Double, Double>> moneyData = moneyLog.getMoneyLogData();
         assertThat(moneyData.size())
                 .isEqualTo(1)
                 .as("Money Log should contain entries for a single person");
@@ -80,7 +80,7 @@ public class TestMoneyLog {
         moneyLog.createMoneyLogEntry(somePersonID, someTime, firstCost);
         moneyLog.createMoneyLogEntry(somePersonID, someTime, secondCost);
 
-        HashMap<String, HashMap<Double, Double>> moneyData = moneyLog.getMoneyLogData();
+        Map<String, Map<Double, Double>> moneyData = moneyLog.getMoneyLogData();
         assertThat(moneyData.size())
                 .isEqualTo(1)
                 .as("Money Log should contain entries for a single person");
