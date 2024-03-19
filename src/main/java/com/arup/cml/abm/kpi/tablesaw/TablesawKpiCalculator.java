@@ -477,7 +477,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
     }
 
     @Override
-    public double writeGHGKpi(Path outputDirectory) {
+    public double writeGHGKpi(Path outputDirectory, ScalingFactor scalingFactor) {
         LOGGER.info("Writing GHG KPIs to {}", outputDirectory);
 
         // add link length to the link log table
@@ -504,8 +504,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
                 String.format("emissions_total,emissions_per_capita\n%f,%f", emissionsTotal, emissionsPerCapita),
                 this.compressionType);
 
-        // TODO Add Scaling
-        double kpi = emissionsPerCapita;
+        double kpi = scalingFactor.scale(emissionsPerCapita);
         writeContentToFile(String.format("%s/kpi-ghg-emissions.csv", outputDirectory), String.valueOf(kpi), this.compressionType);
         return kpi;
     }

@@ -14,8 +14,8 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 public class TestTablesawGHGKpi {
     // this scale is not the proposed KPI scale. The Value bounds where chosen so that we have a multiplicative
     // `equivalentScalingFactor` to multiply the expected KPI output by
-    ScalingFactor linearScalingFactor = new LinearScale(0, 10, 0, 1);
-    double equivalentScalingFactor = 10.0;
+    ScalingFactor linearScalingFactor = new LinearScale(0, 10, 0, 20);
+    double equivalentScalingFactor = 1.0 / 2.0;
     @Rule
     public TemporaryFolder tmpDir = new TemporaryFolder();
 
@@ -41,13 +41,13 @@ public class TestTablesawGHGKpi {
                         .build())
                 .build();
         double outputKpi = kpiCalculator.writeGHGKpi(
-                Path.of(tmpDir.getRoot().getAbsolutePath())
-//                linearScalingFactor
+                Path.of(tmpDir.getRoot().getAbsolutePath()),
+                linearScalingFactor
         );
 
-        assertThat(outputKpi).isEqualTo(2.0)
+        assertThat(outputKpi).isEqualTo(2.0 * equivalentScalingFactor)
                 .as("A vehicle with emissions factor 2 drives a kilometer, " +
-                        "so the output of the GHG KPI is expected to be 2.");
+                        "so the output of the GHG KPI is expected to be 2, and 1 after scaling");
     }
 
 }
