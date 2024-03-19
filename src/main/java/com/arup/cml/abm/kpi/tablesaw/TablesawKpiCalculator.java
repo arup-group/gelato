@@ -949,15 +949,20 @@ public class TablesawKpiCalculator implements KpiCalculator {
         DoubleColumn arr_time_seconds = dep_time_seconds.add(trav_time_seconds).setName("arr_time_seconds");
         legs.addColumns(dep_time_seconds, arr_time_seconds);
         LOGGER.info("Iterating over the money log");
-        for (String person : moneyLog.getMoneyLogData().keySet()) {
-            for (Map.Entry<Double, Double> costEntry : moneyLog.getMoneyLogData(person).entrySet()) {
+        DoubleColumn monetaryCostOfTravelColumn = legs.doubleColumn("monetaryCostOfTravel");
+        DoubleColumn departureTimeColumn = legs.doubleColumn("dep_time_seconds");
+        DoubleColumn arrivalTimeColumn = legs.doubleColumn("arr_time_seconds");
+        StringColumn personColumn = legs.stringColumn("person");
+        for (Map.Entry<String, Map<Double, Double>> entry : moneyLog.getMoneyLogData().entrySet()) {
+            String person = entry.getKey();
+            for (Map.Entry<Double, Double> costEntry : entry.getValue().entrySet()) {
                 Double time = costEntry.getKey();
                 Double cost = costEntry.getValue();
-                legs.doubleColumn("monetaryCostOfTravel").set(
-                        legs.stringColumn("person").isEqualTo(person)
-                                .and(legs.doubleColumn("dep_time_seconds").isLessThan(time)
-                                        .and(legs.doubleColumn("arr_time_seconds").isGreaterThanOrEqualTo(time))),
-                        legs.doubleColumn("monetaryCostOfTravel").add(cost)
+                monetaryCostOfTravelColumn.set(
+                        personColumn.isEqualTo(person)
+                                .and(departureTimeColumn.isLessThan(time)
+                                        .and(arrivalTimeColumn.isGreaterThanOrEqualTo(time))),
+                        monetaryCostOfTravelColumn.add(cost)
                 );
             }
         }
