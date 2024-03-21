@@ -33,10 +33,6 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
 import java.util.function.Consumer;
 
 import static tech.tablesaw.aggregate.AggregateFunctions.*;
@@ -953,19 +949,18 @@ public class TablesawKpiCalculator implements KpiCalculator {
         DoubleColumn departureTimeColumn = legs.doubleColumn("dep_time_seconds");
         DoubleColumn arrivalTimeColumn = legs.doubleColumn("arr_time_seconds");
         StringColumn personColumn = legs.stringColumn("person");
-        for (Map.Entry<String, Map<Double, Double>> entry : moneyLog.getMoneyLogData().entrySet()) {
-            String person = entry.getKey();
-            for (Map.Entry<Double, Double> costEntry : entry.getValue().entrySet()) {
-                Double time = costEntry.getKey();
-                Double cost = costEntry.getValue();
-                monetaryCostOfTravelColumn.set(
-                        personColumn.isEqualTo(person)
-                                .and(departureTimeColumn.isLessThan(time)
-                                        .and(arrivalTimeColumn.isGreaterThanOrEqualTo(time))),
-                        monetaryCostOfTravelColumn.add(cost)
-                );
-            }
-        }
+
+        legs.stream().parallel().forEach(row -> {
+                int i = row.getRowNumber();
+                double departureTime = departureTimeColumn.get(i);
+                double arrivalTime = arrivalTimeColumn.get(i);
+                String person = personColumn.get(i);
+                double costs = moneyLog.getMoneyLogData(person, departureTime, arrivalTime);
+                if (costs > 0) {
+                        monetaryCostOfTravelColumn.set(i,costs);
+                }
+        });
+
         LOGGER.debug("Finished iterating over the money log");
         legs.removeColumns(dep_time_seconds, arr_time_seconds);
         LOGGER.info("Finished adding costs to legs table");

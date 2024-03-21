@@ -1,6 +1,7 @@
 package com.arup.cml.abm.kpi.data;
 
 import java.util.*;
+import java.util.Map.Entry;
 
 public class MoneyLog {
 
@@ -14,6 +15,11 @@ public class MoneyLog {
         return getPersonLog(personID);
     }
 
+    public double getMoneyLogData(String personID, double departureTime, double arrivalTime) {
+        return getPersonLog(personID).entrySet().stream()
+                .filter(e -> e.getKey() > departureTime && e.getKey() <= arrivalTime).mapToDouble(Entry::getValue).sum();
+    }
+    
     public void createMoneyLogEntry(String personID, double time, double amount) {
         Map<Double, Double> personLog = getPersonLog(personID);
         personLog.compute(time, (k, v) -> (v == null) ? amount : amount + v);
