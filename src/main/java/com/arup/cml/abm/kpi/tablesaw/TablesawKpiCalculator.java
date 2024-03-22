@@ -956,7 +956,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
                 double arrivalTime = arrivalTimeColumn.get(i);
                 String person = personColumn.get(i);
                 double costs = moneyLog.getMoneyLogData(person, departureTime, arrivalTime);
-                if (costs > 0) {
+                if (costs != 0) {
                         monetaryCostOfTravelColumn.set(i,costs);
                 }
         });
