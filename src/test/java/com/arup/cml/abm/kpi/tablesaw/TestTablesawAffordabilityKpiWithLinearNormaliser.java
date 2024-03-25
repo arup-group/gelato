@@ -1,7 +1,7 @@
 package com.arup.cml.abm.kpi.tablesaw;
 
-import com.arup.cml.abm.kpi.LinearScale;
-import com.arup.cml.abm.kpi.ScalingFactor;
+import com.arup.cml.abm.kpi.LinearNormaliser;
+import com.arup.cml.abm.kpi.Normaliser;
 import com.arup.cml.abm.kpi.builders.*;
 import org.assertj.core.data.Offset;
 import org.junit.Rule;
@@ -12,10 +12,10 @@ import java.nio.file.Path;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
-public class TestTablesawAffordabilityKpiWithLinearScalingFactor {
-    // this scale is not the proposed KPI scale. The Value bounds where chosen so that we have a multiplicative
+public class TestTablesawAffordabilityKpiWithLinearNormaliser {
+    // the scale interval is not the one proposed for this KPI. The Value bounds where chosen so that we have a multiplicative
     // `equivalentScalingFactor` to multiply the expected Affordability KPI Ratio by
-    ScalingFactor linearScalingFactor = new LinearScale(0, 1, 0, 10);
+    Normaliser linearNormaliser = new LinearNormaliser(0, 1, 0, 10);
     double equivalentScalingFactor = 1.0 / 10.0;
 
     @Rule
@@ -40,7 +40,7 @@ public class TestTablesawAffordabilityKpiWithLinearScalingFactor {
                 .build();
         double outputKpi = kpiCalculator.writeAffordabilityKpi(
                 Path.of(tmpDir.getRoot().getAbsolutePath()),
-                linearScalingFactor
+                linearNormaliser
         );
 
         double expectedRatio = 1;
@@ -80,7 +80,7 @@ public class TestTablesawAffordabilityKpiWithLinearScalingFactor {
                 .build();
         double outputKpi = kpiCalculator.writeAffordabilityKpi(
                 Path.of(tmpDir.getRoot().getAbsolutePath()),
-                linearScalingFactor
+                linearNormaliser
         );
 
         // why 1.33.. ?
@@ -124,7 +124,7 @@ public class TestTablesawAffordabilityKpiWithLinearScalingFactor {
                 .build();
         double outputKpi = kpiCalculator.writeAffordabilityKpi(
                 Path.of(tmpDir.getRoot().getAbsolutePath()),
-                linearScalingFactor
+                linearNormaliser
         );
 
         // why 1.33.. ?

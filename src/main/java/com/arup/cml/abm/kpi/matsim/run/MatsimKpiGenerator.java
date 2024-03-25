@@ -1,7 +1,7 @@
 package com.arup.cml.abm.kpi.matsim.run;
 
 import com.arup.cml.abm.kpi.KpiCalculator;
-import com.arup.cml.abm.kpi.LinearScale;
+import com.arup.cml.abm.kpi.LinearNormaliser;
 import com.arup.cml.abm.kpi.data.MoneyLog;
 import com.arup.cml.abm.kpi.domain.NetworkLinkLog;
 import com.arup.cml.abm.kpi.matsim.MatsimUtils;
@@ -93,17 +93,17 @@ public class MatsimKpiGenerator implements Runnable {
                 CompressionType.gzip
         );
 
-        kpiCalculator.writeAffordabilityKpi(outputDir, new LinearScale(0, 10, 1.25, 1));
-        kpiCalculator.writePtWaitTimeKpi(outputDir, new LinearScale(0, 10, 15 * 60.0, 5 * 60.0));
+        kpiCalculator.writeAffordabilityKpi(outputDir, new LinearNormaliser(0, 10, 1.25, 1));
+        kpiCalculator.writePtWaitTimeKpi(outputDir, new LinearNormaliser(0, 10, 15 * 60.0, 5 * 60.0));
         kpiCalculator.writeModalSplitKpi(outputDir);
-        kpiCalculator.writeOccupancyRateKpi(outputDir, new LinearScale(0, 10, 0.2, 0.6));
+        kpiCalculator.writeOccupancyRateKpi(outputDir, new LinearNormaliser(0, 10, 0.2, 0.6));
         kpiCalculator.writeVehicleKMKpi(outputDir);
         kpiCalculator.writePassengerKMKpi(outputDir);
         kpiCalculator.writeSpeedKpi(outputDir);
-        kpiCalculator.writeGHGKpi(outputDir, new LinearScale(0, 10, 8.87, 0.0));
-        kpiCalculator.writeAccessToMobilityServicesKpi(outputDir, new LinearScale(0, 10, 0.0, 100.0));
-        kpiCalculator.writeCongestionKpi(outputDir, new LinearScale(0, 10, 3.0, 1.25));
-        kpiCalculator.writeTravelTimeKpi(outputDir, new LinearScale(0, 10, 90.0, 10.0));
+        kpiCalculator.writeGHGKpi(outputDir, new LinearNormaliser(0, 10, 8.87, 0.0));
+        kpiCalculator.writeAccessToMobilityServicesKpi(outputDir, new LinearNormaliser(0, 10, 0.0, 100.0));
+        kpiCalculator.writeCongestionKpi(outputDir, new LinearNormaliser(0, 10, 3.0, 1.25));
+        kpiCalculator.writeTravelTimeKpi(outputDir, new LinearNormaliser(0, 10, 90.0, 10.0));
         kpiCalculator.writeMobilitySpaceUsageKpi(outputDir);
         MemoryObserver.stop();
     }

@@ -1,7 +1,7 @@
 package com.arup.cml.abm.kpi.tablesaw;
 
-import com.arup.cml.abm.kpi.LinearScale;
-import com.arup.cml.abm.kpi.ScalingFactor;
+import com.arup.cml.abm.kpi.LinearNormaliser;
+import com.arup.cml.abm.kpi.Normaliser;
 import com.arup.cml.abm.kpi.builders.*;
 import org.junit.Rule;
 import org.junit.Test;
@@ -11,10 +11,10 @@ import java.nio.file.Path;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
-public class TestTablesawTravelTimeKpi {
-    // this scale is not the proposed KPI scale. The Value bounds where chosen so that we have a multiplicative
+public class TestTablesawTravelTimeKpiWithLinearNormaliser {
+    // the scale interval is not the one proposed for this KPI. The Value bounds where chosen so that we have a multiplicative
     // `equivalentScalingFactor` to multiply the expected KPI output by
-    ScalingFactor linearScalingFactor = new LinearScale(0, 10, 0, 50);
+    Normaliser linearNormaliser = new LinearNormaliser(0, 10, 0, 50);
     double equivalentScalingFactor = 1 / 5.0;
     @Rule
     public TemporaryFolder tmpDir = new TemporaryFolder();
@@ -33,7 +33,7 @@ public class TestTablesawTravelTimeKpi {
                 .build();
         double outputKpi = kpiCalculator.writeTravelTimeKpi(
                 Path.of(tmpDir.getRoot().getAbsolutePath()),
-                linearScalingFactor
+                linearNormaliser
         );
 
         assertThat(outputKpi).isEqualTo(trav_time_minutes * equivalentScalingFactor)
@@ -59,7 +59,7 @@ public class TestTablesawTravelTimeKpi {
                 .build();
         double outputKpi = kpiCalculator.writeTravelTimeKpi(
                 Path.of(tmpDir.getRoot().getAbsolutePath()),
-                linearScalingFactor
+                linearNormaliser
         );
 
         assertThat(outputKpi).isEqualTo(

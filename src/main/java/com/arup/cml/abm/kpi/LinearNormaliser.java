@@ -1,24 +1,24 @@
 package com.arup.cml.abm.kpi;
 
-public class LinearScale implements ScalingFactor {
+public class LinearNormaliser implements Normaliser {
     private double leftScaleBound;
     private double rightScaleBound;
     private double leftValueBound;
     private double rightValueBound;
     private boolean isReversedLinearScale = false;
 
-    public LinearScale(double leftScaleBound, double rightScaleBound, double leftValueBound, double rightValueBound) {
-        // leftValueBound is mapped to leftScaleBound
-        // rightValueBound is mapped to rightScaleBound
-        // any value between value bounds is mapped, linearly between values [leftScaleBound, rightScaleBound]
-        // leftScaleBound < rightScaleBound necessarily
+    public LinearNormaliser(double leftIntervalBound, double rightIntervalBound, double leftValueBound, double rightValueBound) {
+        // leftValueBound is mapped to leftIntervalBound
+        // rightValueBound is mapped to rightIntervalBound
+        // any value between value bounds is mapped, linearly between values [leftIntervalBound, rightIntervalBound]
+        // leftIntervalBound < rightIntervalBound necessarily
         // leftValueBound can be larger than rightValueBound a value will be scaled reversely.
 
-        if (leftScaleBound > rightScaleBound) {
-            throw new RuntimeException("leftScaleBound cannot be larger than rightValueBound");
+        if (leftIntervalBound > rightIntervalBound) {
+            throw new RuntimeException("leftIntervalBound cannot be larger than rightValueBound");
         }
-        if (leftValueBound == rightValueBound && leftScaleBound != rightScaleBound) {
-            throw new RuntimeException("The bounds given for linear scale are invalid. " +
+        if (leftValueBound == rightValueBound && leftIntervalBound != rightIntervalBound) {
+            throw new RuntimeException("The bounds given for linear interval are invalid. " +
                     "Left and right bounds cannot both be the same value.");
         }
         if (leftValueBound > rightValueBound) {
@@ -27,13 +27,13 @@ public class LinearScale implements ScalingFactor {
             rightValueBound = -rightValueBound;
         }
 
-        this.leftScaleBound = leftScaleBound;
-        this.rightScaleBound = rightScaleBound;
+        this.leftScaleBound = leftIntervalBound;
+        this.rightScaleBound = rightIntervalBound;
         this.leftValueBound = leftValueBound;
         this.rightValueBound = rightValueBound;
     }
 
-    public LinearScale(double leftValueBound, double rightValueBound) {
+    public LinearNormaliser(double leftValueBound, double rightValueBound) {
         this(0, 10, leftValueBound, rightValueBound);
     }
 
@@ -54,7 +54,7 @@ public class LinearScale implements ScalingFactor {
     }
 
     @Override
-    public double scale(double value) {
+    public double normalise(double value) {
         if (this.isReversedLinearScale()) {
             value = -value;
         }

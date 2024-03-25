@@ -1,7 +1,7 @@
 package com.arup.cml.abm.kpi.tablesaw;
 
 import com.arup.cml.abm.kpi.KpiCalculator;
-import com.arup.cml.abm.kpi.ScalingFactor;
+import com.arup.cml.abm.kpi.Normaliser;
 import com.arup.cml.abm.kpi.data.MoneyLog;
 import com.arup.cml.abm.kpi.domain.NetworkLinkLog;
 import org.apache.logging.log4j.LogManager;
@@ -167,7 +167,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
     }
 
     @Override
-    public double writeAffordabilityKpi(Path outputDirectory, ScalingFactor scalingFactor) {
+    public double writeAffordabilityKpi(Path outputDirectory, Normaliser normaliser) {
         LOGGER.info("Writing Affordability KPI to {}", outputDirectory);
 
         // join personal income / subpop info
@@ -251,7 +251,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
                     .doubleColumn("mean_daily_monetary_cost")
                     .get(0);
             double kpi = round(
-                    scalingFactor.scale(lowIncomeAverageCost / overallAverageCost),
+                    normaliser.normalise(lowIncomeAverageCost / overallAverageCost),
                     2);
             writeContentToFile(String.format("%s/kpi-affordability.csv", outputDirectory), String.valueOf(kpi), this.compressionType);
             return kpi;
@@ -271,7 +271,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
     }
 
     @Override
-    public double writePtWaitTimeKpi(Path outputDirectory, ScalingFactor scalingFactor) {
+    public double writePtWaitTimeKpi(Path outputDirectory, Normaliser normaliser) {
         LOGGER.info("Writing PT Wait Time KPI to {}", outputDirectory);
 
         // pull out legs with PT stops information
@@ -311,7 +311,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
                                 .and(table.intColumn("hour").isLessThan(10)))
                         .intColumn("wait_time_seconds")
                         .mean();
-        kpi = round(scalingFactor.scale(kpi), 2);
+        kpi = round(normaliser.normalise(kpi), 2);
         LOGGER.info("PT Wait Time KPI {}", kpi);
         writeContentToFile(String.format("%s/kpi-pt-wait-time.csv", outputDirectory), String.valueOf(kpi), this.compressionType);
         return kpi;
@@ -332,7 +332,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
     }
 
     @Override
-    public double writeOccupancyRateKpi(Path outputDirectory, ScalingFactor scalingFactor) {
+    public double writeOccupancyRateKpi(Path outputDirectory, Normaliser normaliser) {
         LOGGER.info("Writing Occupancy Rate KPI to {}", outputDirectory);
 
         // add capacity of the vehicle
@@ -365,7 +365,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
 
         double kpi = averageOccupancyPerVehicle.doubleColumn("Mean [numberOfPeople] / Mean [capacity]").sum();
         kpi = kpi / numberOfVehicles;
-        kpi = round(scalingFactor.scale(kpi), 2);
+        kpi = round(normaliser.normalise(kpi), 2);
 
         LOGGER.info("Occupancy Rate KPI {}", kpi);
         writeContentToFile(String.format("%s/kpi-occupancy-rate.csv", outputDirectory), String.valueOf(kpi), this.compressionType);
@@ -477,7 +477,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
     }
 
     @Override
-    public double writeGHGKpi(Path outputDirectory, ScalingFactor scalingFactor) {
+    public double writeGHGKpi(Path outputDirectory, Normaliser normaliser) {
         LOGGER.info("Writing GHG KPIs to {}", outputDirectory);
 
         // add link length to the link log table
@@ -504,13 +504,13 @@ public class TablesawKpiCalculator implements KpiCalculator {
                 String.format("emissions_total,emissions_per_capita\n%f,%f", emissionsTotal, emissionsPerCapita),
                 this.compressionType);
 
-        double kpi = scalingFactor.scale(emissionsPerCapita);
+        double kpi = normaliser.normalise(emissionsPerCapita);
         writeContentToFile(String.format("%s/kpi-ghg-emissions.csv", outputDirectory), String.valueOf(kpi), this.compressionType);
         return kpi;
     }
 
     @Override
-    public double writeTravelTimeKpi(Path outputDirectory, ScalingFactor scalingFactor) {
+    public double writeTravelTimeKpi(Path outputDirectory, Normaliser normaliser) {
         LOGGER.info("Writing Travel Time KPI to {}", outputDirectory);
 
         // convert H:M:S format to seconds
@@ -528,7 +528,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
         this.writeTableCompressed(intermediate, String.format("%s/intermediate-travel-time.csv", outputDirectory), this.compressionType);
 
         double kpi = round(
-                scalingFactor.scale( trips.intColumn("trav_time_minutes").mean()),
+                normaliser.normalise( trips.intColumn("trav_time_minutes").mean()),
                 2
         );
         writeContentToFile(String.format("%s/kpi-travel-time.csv", outputDirectory), String.valueOf(kpi), this.compressionType);
@@ -536,7 +536,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
     }
 
     @Override
-    public Map<String, Double> writeAccessToMobilityServicesKpi(Path outputDirectory, ScalingFactor scalingFactor) {
+    public Map<String, Double> writeAccessToMobilityServicesKpi(Path outputDirectory, Normaliser normaliser) {
         LOGGER.info("Writing Access To Mobility Services KPI to {}", outputDirectory);
 
         LOGGER.info("Filtering trips table with {} rows to find trips that started from 'home'",
@@ -593,7 +593,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
         double bus_kpi = ((double) table.booleanColumn("bus_access_400m").countTrue() /
                 table.booleanColumn("bus_access_400m").size())
                 * 100;
-        bus_kpi = round(scalingFactor.scale(bus_kpi), 2);
+        bus_kpi = round(normaliser.normalise(bus_kpi), 2);
         writeContentToFile(String.format("%s/kpi-access-to-mobility-services-access-to-bus.csv", outputDirectory),
                 String.valueOf(bus_kpi), this.compressionType);
 
@@ -601,7 +601,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
         double rail_kpi = ((double) table.booleanColumn("rail_access_800m").countTrue() /
                 table.booleanColumn("rail_access_800m").size())
                 * 100;
-        rail_kpi = round(scalingFactor.scale(rail_kpi), 2);
+        rail_kpi = round(normaliser.normalise(rail_kpi), 2);
         writeContentToFile(String.format("%s/kpi-access-to-mobility-services-access-to-rail.csv", outputDirectory),
                 String.valueOf(rail_kpi), this.compressionType);
 
@@ -611,7 +611,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
         double used_pt_kpi = ((double) table.where(ptAccess.and(table.booleanColumn("used_pt").isTrue())
         ).rowCount() / table.rowCount())
                 * 100;
-        used_pt_kpi = round(scalingFactor.scale(used_pt_kpi), 2);
+        used_pt_kpi = round(normaliser.normalise(used_pt_kpi), 2);
         writeContentToFile(String.format("%s/kpi-access-to-mobility-services-access-to-pt-and-pt-used.csv", outputDirectory),
                 String.valueOf(used_pt_kpi), this.compressionType);
 
@@ -659,7 +659,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
     }
 
     @Override
-    public Table writeCongestionKpi(Path outputDirectory, ScalingFactor scalingFactor) {
+    public Table writeCongestionKpi(Path outputDirectory, Normaliser normaliser) {
         LOGGER.info("Writing Congestion KPIs to {}", outputDirectory);
 
         // compute travel time on links
@@ -720,7 +720,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
         DoubleColumn normalisedDelayedRatio = DoubleColumn.create("Normalised [Mean [delayRatio]]");
         kpi.doubleColumn("Mean [delayRatio]")
                 .forEach(meanDelayRatio -> normalisedDelayedRatio.append(
-                        scalingFactor.scale(meanDelayRatio)
+                        normaliser.normalise(meanDelayRatio)
                 ));
         kpi.addColumns(normalisedDelayedRatio);
 

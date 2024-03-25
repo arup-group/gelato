@@ -1,7 +1,7 @@
 package com.arup.cml.abm.kpi.tablesaw;
 
-import com.arup.cml.abm.kpi.LinearScale;
-import com.arup.cml.abm.kpi.ScalingFactor;
+import com.arup.cml.abm.kpi.LinearNormaliser;
+import com.arup.cml.abm.kpi.Normaliser;
 import com.arup.cml.abm.kpi.builders.KpiCalculatorBuilder;
 import com.arup.cml.abm.kpi.builders.LinkLogBuilder;
 import com.arup.cml.abm.kpi.builders.NetworkBuilder;
@@ -16,10 +16,10 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 import java.nio.file.Path;
 
-public class TestTablesawCongestionKpi {
-    // this scale is not the proposed KPI scale. The Value bounds where chosen so that we have a multiplicative
+public class TestTablesawCongestionKpiWithLinearNormaliser {
+    // the scale interval is not the one proposed for this KPI. The Value bounds where chosen so that we have a multiplicative
     // `equivalentScalingFactor` to multiply the expected KPI output by
-    ScalingFactor linearScalingFactor = new LinearScale(0, 1, 0, 50);
+    Normaliser linearNormaliser = new LinearNormaliser(0, 1, 0, 50);
     double equivalentScalingFactor = 1.0 / 50.0;
 
     @Rule
@@ -47,7 +47,7 @@ public class TestTablesawCongestionKpi {
                 .build();
         Table outputKpi = kpiCalculator.writeCongestionKpi(
                 Path.of(tmpDir.getRoot().getAbsolutePath()),
-                linearScalingFactor
+                linearNormaliser
         );
 
         assertThat(outputKpi.rowCount()).isEqualTo(1).as("Congestion KPI table should include only one row/mode");
@@ -84,7 +84,7 @@ public class TestTablesawCongestionKpi {
                 .build();
         Table outputKpi = kpiCalculator.writeCongestionKpi(
                 Path.of(tmpDir.getRoot().getAbsolutePath()),
-                linearScalingFactor
+                linearNormaliser
         );
 
         assertThat(outputKpi.rowCount()).isEqualTo(3).as("Congestion KPI table should include three rows/modes");
@@ -127,7 +127,7 @@ public class TestTablesawCongestionKpi {
                 .build();
         Table outputKpi = kpiCalculator.writeCongestionKpi(
                 Path.of(tmpDir.getRoot().getAbsolutePath()),
-                linearScalingFactor
+                linearNormaliser
         );
 
         assertThat(outputKpi.rowCount()).isEqualTo(1).as("Congestion KPI table should include only one row/mode");

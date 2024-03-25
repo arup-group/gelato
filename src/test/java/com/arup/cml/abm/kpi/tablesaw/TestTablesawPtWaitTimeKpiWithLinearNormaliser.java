@@ -1,7 +1,7 @@
 package com.arup.cml.abm.kpi.tablesaw;
 
-import com.arup.cml.abm.kpi.LinearScale;
-import com.arup.cml.abm.kpi.ScalingFactor;
+import com.arup.cml.abm.kpi.LinearNormaliser;
+import com.arup.cml.abm.kpi.Normaliser;
 import com.arup.cml.abm.kpi.builders.KpiCalculatorBuilder;
 import com.arup.cml.abm.kpi.builders.LegsBuilder;
 import org.junit.Rule;
@@ -12,10 +12,10 @@ import java.nio.file.Path;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
-public class TestTablesawPtWaitTimeKpiWithLinearScalingFactor {
-    // this scale is not the proposed KPI scale. The Value bounds where chosen so that we have a multiplicative
+public class TestTablesawPtWaitTimeKpiWithLinearNormaliser {
+    // the scale interval is not the one proposed for this KPI. The Value bounds where chosen so that we have a multiplicative
     // `equivalentScalingFactor` to multiply the expected KPI output by
-    ScalingFactor linearScalingFactor = new LinearScale(0, 1, 0, 15 * 60);
+    Normaliser linearNormaliser = new LinearNormaliser(0, 1, 0, 15 * 60);
     double equivalentScalingFactor = 1.0 / (15.0 * 60);
     @Rule
     public TemporaryFolder tmpDir = new TemporaryFolder();
@@ -33,7 +33,7 @@ public class TestTablesawPtWaitTimeKpiWithLinearScalingFactor {
                 .build();
         double outputKpi = kpiCalculator.writePtWaitTimeKpi(
                 Path.of(tmpDir.getRoot().getAbsolutePath()),
-                linearScalingFactor
+                linearNormaliser
         );
 
         assertThat(outputKpi).isEqualTo(bobbyPtWaitTimeSeconds * equivalentScalingFactor)
@@ -52,7 +52,7 @@ public class TestTablesawPtWaitTimeKpiWithLinearScalingFactor {
                 .build();
         double outputKpi = kpiCalculator.writePtWaitTimeKpi(
                 Path.of(tmpDir.getRoot().getAbsolutePath()),
-                linearScalingFactor
+                linearNormaliser
         );
 
         assertThat(outputKpi).isEqualTo(0.0)
@@ -77,7 +77,7 @@ public class TestTablesawPtWaitTimeKpiWithLinearScalingFactor {
                 .build();
         double outputKpi = kpiCalculator.writePtWaitTimeKpi(
                 Path.of(tmpDir.getRoot().getAbsolutePath()),
-                linearScalingFactor
+                linearNormaliser
         );
 
         assertThat(outputKpi).isEqualTo((bobbyPtWaitTimeSeconds + bobbinaPtWaitTimeSeconds) / 2 * equivalentScalingFactor)

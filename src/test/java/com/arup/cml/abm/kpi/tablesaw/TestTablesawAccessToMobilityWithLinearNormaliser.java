@@ -1,7 +1,7 @@
 package com.arup.cml.abm.kpi.tablesaw;
 
-import com.arup.cml.abm.kpi.LinearScale;
-import com.arup.cml.abm.kpi.ScalingFactor;
+import com.arup.cml.abm.kpi.LinearNormaliser;
+import com.arup.cml.abm.kpi.Normaliser;
 import com.arup.cml.abm.kpi.builders.KpiCalculatorBuilder;
 import com.arup.cml.abm.kpi.builders.TransitScheduleBuilder;
 import com.arup.cml.abm.kpi.builders.TripsBuilder;
@@ -14,10 +14,10 @@ import java.util.Map;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
-public class TestTablesawAccessToMobility {
-    // In this case, this scale is the proposed KPI scale. We have a natural multiplicative
+public class TestTablesawAccessToMobilityWithLinearNormaliser {
+    // In this case, the scale interval is the one proposed for this KPI. We have a natural multiplicative
     // `equivalentScalingFactor` to multiply the expected KPI output by
-    ScalingFactor linearScalingFactor = new LinearScale(0, 10, 0, 100);
+    Normaliser linearNormaliser = new LinearNormaliser(0, 10, 0, 100);
     double equivalentScalingFactor = 1 / 10.0;
     @Rule
     public TemporaryFolder tmpDir = new TemporaryFolder();
@@ -37,7 +37,7 @@ public class TestTablesawAccessToMobility {
                 .build();
         Map<String, Double> outputKpi = kpiCalculator.writeAccessToMobilityServicesKpi(
                 Path.of(tmpDir.getRoot().getAbsolutePath()),
-                linearScalingFactor
+                linearNormaliser
         );
 
         assertThat(outputKpi.get("bus_kpi")).isEqualTo(100.0 * equivalentScalingFactor)
@@ -67,7 +67,7 @@ public class TestTablesawAccessToMobility {
                 .build();
         Map<String, Double> outputKpi = kpiCalculator.writeAccessToMobilityServicesKpi(
                 Path.of(tmpDir.getRoot().getAbsolutePath()),
-                linearScalingFactor
+                linearNormaliser
         );
 
         assertThat(outputKpi.get("bus_kpi")).isEqualTo(100.0 * equivalentScalingFactor)
@@ -90,7 +90,7 @@ public class TestTablesawAccessToMobility {
                 .build();
         Map<String, Double> outputKpi = kpiCalculator.writeAccessToMobilityServicesKpi(
                 Path.of(tmpDir.getRoot().getAbsolutePath()),
-                linearScalingFactor
+                linearNormaliser
         );
 
         assertThat(outputKpi.get("bus_kpi")).isEqualTo(0.0 * equivalentScalingFactor)
@@ -120,7 +120,7 @@ public class TestTablesawAccessToMobility {
                 .build();
         Map<String, Double> outputKpi = kpiCalculator.writeAccessToMobilityServicesKpi(
                 Path.of(tmpDir.getRoot().getAbsolutePath()),
-                linearScalingFactor
+                linearNormaliser
         );
 
         assertThat(outputKpi.get("rail_kpi")).isEqualTo(100.0 * equivalentScalingFactor)
@@ -149,7 +149,7 @@ public class TestTablesawAccessToMobility {
                 .build();
         Map<String, Double> outputKpi = kpiCalculator.writeAccessToMobilityServicesKpi(
                 Path.of(tmpDir.getRoot().getAbsolutePath()),
-                linearScalingFactor
+                linearNormaliser
         );
 
         assertThat(outputKpi.get("bus_kpi")).isEqualTo(100.0 * equivalentScalingFactor)
@@ -175,7 +175,7 @@ public class TestTablesawAccessToMobility {
                 .build();
         Map<String, Double> outputKpi = kpiCalculator.writeAccessToMobilityServicesKpi(
                 Path.of(tmpDir.getRoot().getAbsolutePath()),
-                linearScalingFactor
+                linearNormaliser
         );
 
         assertThat(outputKpi.get("bus_kpi")).isEqualTo(50.0 * equivalentScalingFactor)
@@ -201,7 +201,7 @@ public class TestTablesawAccessToMobility {
                 .build();
         Map<String, Double> outputKpi = kpiCalculator.writeAccessToMobilityServicesKpi(
                 Path.of(tmpDir.getRoot().getAbsolutePath()),
-                linearScalingFactor
+                linearNormaliser
         );
 
         assertThat(outputKpi.get("rail_kpi")).isEqualTo(100.0 * equivalentScalingFactor)
@@ -227,7 +227,7 @@ public class TestTablesawAccessToMobility {
                 .build();
         Map<String, Double> outputKpi = kpiCalculator.writeAccessToMobilityServicesKpi(
                 Path.of(tmpDir.getRoot().getAbsolutePath()),
-                linearScalingFactor
+                linearNormaliser
         );
 
         assertThat(outputKpi.get("rail_kpi")).isEqualTo(50.0 * equivalentScalingFactor)
@@ -254,7 +254,7 @@ public class TestTablesawAccessToMobility {
                 .build();
         Map<String, Double> outputKpi = kpiCalculator.writeAccessToMobilityServicesKpi(
                 Path.of(tmpDir.getRoot().getAbsolutePath()),
-                linearScalingFactor
+                linearNormaliser
         );
 
         assertThat(outputKpi.get("bus_kpi")).isEqualTo(50.0 * equivalentScalingFactor)
