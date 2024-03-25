@@ -536,7 +536,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
     }
 
     @Override
-    public Map<String, Double> writeAccessToMobilityServicesKpi(Path outputDirectory) {
+    public Map<String, Double> writeAccessToMobilityServicesKpi(Path outputDirectory, ScalingFactor scalingFactor) {
         LOGGER.info("Writing Access To Mobility Services KPI to {}", outputDirectory);
 
         LOGGER.info("Filtering trips table with {} rows to find trips that started from 'home'",
@@ -593,7 +593,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
         double bus_kpi = ((double) table.booleanColumn("bus_access_400m").countTrue() /
                 table.booleanColumn("bus_access_400m").size())
                 * 100;
-        bus_kpi = round(bus_kpi, 2);
+        bus_kpi = round(scalingFactor.scale(bus_kpi), 2);
         writeContentToFile(String.format("%s/kpi-access-to-mobility-services-access-to-bus.csv", outputDirectory),
                 String.valueOf(bus_kpi), this.compressionType);
 
@@ -601,7 +601,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
         double rail_kpi = ((double) table.booleanColumn("rail_access_800m").countTrue() /
                 table.booleanColumn("rail_access_800m").size())
                 * 100;
-        rail_kpi = round(rail_kpi, 2);
+        rail_kpi = round(scalingFactor.scale(rail_kpi), 2);
         writeContentToFile(String.format("%s/kpi-access-to-mobility-services-access-to-rail.csv", outputDirectory),
                 String.valueOf(rail_kpi), this.compressionType);
 
@@ -611,7 +611,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
         double used_pt_kpi = ((double) table.where(ptAccess.and(table.booleanColumn("used_pt").isTrue())
         ).rowCount() / table.rowCount())
                 * 100;
-        used_pt_kpi = round(used_pt_kpi, 2);
+        used_pt_kpi = round(scalingFactor.scale(used_pt_kpi), 2);
         writeContentToFile(String.format("%s/kpi-access-to-mobility-services-access-to-pt-and-pt-used.csv", outputDirectory),
                 String.valueOf(used_pt_kpi), this.compressionType);
 
