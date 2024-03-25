@@ -1,5 +1,7 @@
 package com.arup.cml.abm.kpi.tablesaw;
 
+import com.arup.cml.abm.kpi.LinearScale;
+import com.arup.cml.abm.kpi.ScalingFactor;
 import com.arup.cml.abm.kpi.builders.KpiCalculatorBuilder;
 import com.arup.cml.abm.kpi.builders.LinkLogBuilder;
 import com.arup.cml.abm.kpi.builders.NetworkBuilder;
@@ -15,6 +17,10 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import java.nio.file.Path;
 
 public class TestTablesawCongestionKpi {
+    // this scale is not the proposed KPI scale. The Value bounds where chosen so that we have a multiplicative
+    // `equivalentScalingFactor` to multiply the expected KPI output by
+    ScalingFactor linearScalingFactor = new LinearScale(0, 1, 0, 50);
+    double equivalentScalingFactor = 1.0 / 50.0;
 
     @Rule
     public TemporaryFolder tmpDir = new TemporaryFolder();
@@ -39,13 +45,18 @@ public class TestTablesawCongestionKpi {
                         .withEntry("someCar", "otherLink", (9 * 60 * 60) + 30, (9 * 60 * 60) + 30 + secondDelayRatio)
                         .build())
                 .build();
-        Table outputKpi = kpiCalculator.writeCongestionKpi(Path.of(tmpDir.getRoot().getAbsolutePath()));
+        Table outputKpi = kpiCalculator.writeCongestionKpi(
+                Path.of(tmpDir.getRoot().getAbsolutePath()),
+                linearScalingFactor
+        );
 
         assertThat(outputKpi.rowCount()).isEqualTo(1).as("Congestion KPI table should include only one row/mode");
         Row metrics = outputKpi.row(0);
         assertThat(metrics.getString("mode")).isEqualTo("car").as("Mode should be car");
         assertThat(metrics.getDouble("Mean [delayRatio]")).isEqualTo(averageDelayRatio)
-                .as("Mean delay should be the average of 5 and 10");
+                .as("Mean delay should be the average of 5 and 10.");
+        assertThat(metrics.getDouble("Normalised [Mean [delayRatio]]")).isEqualTo(averageDelayRatio * equivalentScalingFactor)
+                .as("Mean delay should be the average of 5 and 10, scaled by `equivalentScalingFactor`");
     }
 
     @Test
@@ -71,18 +82,30 @@ public class TestTablesawCongestionKpi {
                         .withEntry("someHorse", "otherLink", (9 * 60 * 60) + 25, (9 * 60 * 60) + 25 + horseDelayRatio)
                         .build())
                 .build();
-        Table outputKpi = kpiCalculator.writeCongestionKpi(Path.of(tmpDir.getRoot().getAbsolutePath()));
+        Table outputKpi = kpiCalculator.writeCongestionKpi(
+                Path.of(tmpDir.getRoot().getAbsolutePath()),
+                linearScalingFactor
+        );
 
         assertThat(outputKpi.rowCount()).isEqualTo(3).as("Congestion KPI table should include three rows/modes");
         Row carMetric = outputKpi.row(0);
         assertThat(carMetric.getString("mode")).isEqualTo("car").as("Mode should be car");
-        assertThat(carMetric.getDouble("Mean [delayRatio]")).isEqualTo(carDelayRatio).as("Mean delay should be 15");
+        assertThat(carMetric.getDouble("Mean [delayRatio]")).isEqualTo(carDelayRatio)
+                .as("Mean delay should be 15");
+        assertThat(carMetric.getDouble("Normalised [Mean [delayRatio]]")).isEqualTo(carDelayRatio * equivalentScalingFactor)
+                .as("Mean delay should be 15, scaled by `equivalentScalingFactor`");
         Row rocketMetric = outputKpi.row(1);
         assertThat(rocketMetric.getString("mode")).isEqualTo("rocket").as("Mode should be rocket");
-        assertThat(rocketMetric.getDouble("Mean [delayRatio]")).isEqualTo(rocketDelayRatio).as("Mean delay should be 1");
+        assertThat(rocketMetric.getDouble("Mean [delayRatio]")).isEqualTo(rocketDelayRatio)
+                .as("Mean delay should be 1");
+        assertThat(rocketMetric.getDouble("Normalised [Mean [delayRatio]]")).isEqualTo(rocketDelayRatio * equivalentScalingFactor)
+                .as("Mean delay should be 1, scaled by `equivalentScalingFactor`");
         Row horseMetric = outputKpi.row(2);
         assertThat(horseMetric.getString("mode")).isEqualTo("horse").as("Mode should be horse");
-        assertThat(horseMetric.getDouble("Mean [delayRatio]")).isEqualTo(horseDelayRatio).as("Mean delay should be 30");
+        assertThat(horseMetric.getDouble("Mean [delayRatio]")).isEqualTo(horseDelayRatio)
+                .as("Mean delay should be 30");
+        assertThat(horseMetric.getDouble("Normalised [Mean [delayRatio]]")).isEqualTo(horseDelayRatio * equivalentScalingFactor)
+                .as("Mean delay should be 30, scaled by `equivalentScalingFactor`");
     }
 
     @Test
@@ -102,12 +125,18 @@ public class TestTablesawCongestionKpi {
                         .withEntry("someCar", "otherLink", (9 * 60 * 60) + 25, (9 * 60 * 60) + 30)
                         .build())
                 .build();
-        Table outputKpi = kpiCalculator.writeCongestionKpi(Path.of(tmpDir.getRoot().getAbsolutePath()));
+        Table outputKpi = kpiCalculator.writeCongestionKpi(
+                Path.of(tmpDir.getRoot().getAbsolutePath()),
+                linearScalingFactor
+        );
 
         assertThat(outputKpi.rowCount()).isEqualTo(1).as("Congestion KPI table should include only one row/mode");
         Row metrics = outputKpi.row(0);
         assertThat(metrics.getString("mode")).isEqualTo("car").as("Mode should be car");
-        assertThat(metrics.getDouble("Mean [delayRatio]")).isEqualTo(5).as("Mean delay should be 5");
+        assertThat(metrics.getDouble("Mean [delayRatio]")).isEqualTo(5)
+                .as("Mean delay should be 5");
+        assertThat(metrics.getDouble("Normalised [Mean [delayRatio]]")).isEqualTo(5 * equivalentScalingFactor)
+                .as("Mean delay should be 5, scaled by `equivalentScalingFactor`");
     }
 }
 

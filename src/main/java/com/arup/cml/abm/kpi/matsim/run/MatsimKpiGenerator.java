@@ -102,7 +102,7 @@ public class MatsimKpiGenerator implements Runnable {
         kpiCalculator.writeSpeedKpi(outputDir);
         kpiCalculator.writeGHGKpi(outputDir, new LinearScale(0, 10, 8.87, 0.0));
         kpiCalculator.writeAccessToMobilityServicesKpi(outputDir, new LinearScale(0, 10, 0.0, 100.0));
-        kpiCalculator.writeCongestionKpi(outputDir);
+        kpiCalculator.writeCongestionKpi(outputDir, new LinearScale(0, 10, 3.0, 1.25));
         kpiCalculator.writeTravelTimeKpi(outputDir, new LinearScale(0, 10, 90.0, 10.0));
         kpiCalculator.writeMobilitySpaceUsageKpi(outputDir);
         MemoryObserver.stop();

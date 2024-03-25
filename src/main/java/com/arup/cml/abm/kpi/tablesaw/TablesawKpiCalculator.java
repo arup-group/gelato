@@ -659,7 +659,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
     }
 
     @Override
-    public Table writeCongestionKpi(Path outputDirectory) {
+    public Table writeCongestionKpi(Path outputDirectory, ScalingFactor scalingFactor) {
         LOGGER.info("Writing Congestion KPIs to {}", outputDirectory);
 
         // compute travel time on links
@@ -715,7 +715,17 @@ public class TablesawKpiCalculator implements KpiCalculator {
                         .summarize("delayRatio", mean)
                         .by("mode")
                         .setName("Congestion KPI");
+
+        // add scaled output column
+        DoubleColumn normalisedDelayedRatio = DoubleColumn.create("Normalised [Mean [delayRatio]]");
+        kpi.doubleColumn("Mean [delayRatio]")
+                .forEach(meanDelayRatio -> normalisedDelayedRatio.append(
+                        scalingFactor.scale(meanDelayRatio)
+                ));
+        kpi.addColumns(normalisedDelayedRatio);
+
         kpi.replaceColumn(round(kpi.doubleColumn("Mean [delayRatio]"), 2));
+        kpi.replaceColumn(round(kpi.doubleColumn("Normalised [Mean [delayRatio]]"), 2));
         this.writeTableCompressed(kpi, String.format("%s/kpi-congestion.csv", outputDirectory), compressionType);
         return kpi;
     }

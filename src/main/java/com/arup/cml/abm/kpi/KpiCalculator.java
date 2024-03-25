@@ -26,7 +26,7 @@ public interface KpiCalculator {
 
     Map<String, Double> writeAccessToMobilityServicesKpi(Path outputDirectory, ScalingFactor scalingFactor);
 
-    Table writeCongestionKpi(Path directory);
+    Table writeCongestionKpi(Path directory, ScalingFactor scalingFactor);
 
     double writeMobilitySpaceUsageKpi(Path outputDirectory);
 }
