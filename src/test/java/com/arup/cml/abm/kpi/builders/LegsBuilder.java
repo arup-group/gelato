@@ -1,6 +1,7 @@
 package com.arup.cml.abm.kpi.builders;
 
 import org.junit.rules.TemporaryFolder;
+import tech.tablesaw.api.DoubleColumn;
 import tech.tablesaw.api.IntColumn;
 import tech.tablesaw.api.StringColumn;
 import tech.tablesaw.api.Table;
@@ -19,11 +20,11 @@ public class LegsBuilder {
     Integer defaultDistance = 5500;
     String defaultMode = "car";
     String defaultStartLink = "1-3";
-    String defaultStartX = "-500";
-    String defaultStartY = "-200";
+    double defaultStartX = -500.0;
+    double defaultStartY = -200.0;
     String defaultEndLink = "4-5";
-    String defaultEndX = "4600";
-    String defaultEndY = "800";
+    double defaultEndX = 4600.0;
+    double defaultEndY = 800.0;
     String defaultAccessStopId = "";
     String defaultEgressStopId = "";
     String defaultTransitLine = "";
@@ -39,11 +40,11 @@ public class LegsBuilder {
             IntColumn.create("distance"),
             StringColumn.create("mode"),
             StringColumn.create("start_link"),
-            StringColumn.create("start_x"),
-            StringColumn.create("start_y"),
+            DoubleColumn.create("start_x"),
+            DoubleColumn.create("start_y"),
             StringColumn.create("end_link"),
-            StringColumn.create("end_x"),
-            StringColumn.create("end_y"),
+            DoubleColumn.create("end_x"),
+            DoubleColumn.create("end_y"),
             StringColumn.create("access_stop_id"),
             StringColumn.create("egress_stop_id"),
             StringColumn.create("transit_line"),
@@ -57,7 +58,7 @@ public class LegsBuilder {
 
     public LegsBuilder withLeg(
             String person, String trip_id, String dep_time, String trav_time, String wait_time, Integer distance,
-            String mode, String start_link, String start_x, String start_y, String end_link, String end_x, String end_y,
+            String mode, String start_link, double start_x, double start_y, String end_link, double end_x, double end_y,
             String access_stop_id, String egress_stop_id, String transit_line, String transit_route, String vehicle_id
     ) {
         legs.stringColumn("person").append(person);
@@ -68,11 +69,11 @@ public class LegsBuilder {
         legs.intColumn("distance").append(distance);
         legs.stringColumn("mode").append(mode);
         legs.stringColumn("start_link").append(start_link);
-        legs.stringColumn("start_x").append(start_x);
-        legs.stringColumn("start_y").append(start_y);
+        legs.doubleColumn("start_x").append(start_x);
+        legs.doubleColumn("start_y").append(start_y);
         legs.stringColumn("end_link").append(end_link);
-        legs.stringColumn("end_x").append(end_x);
-        legs.stringColumn("end_y").append(end_y);
+        legs.doubleColumn("end_x").append(end_x);
+        legs.doubleColumn("end_y").append(end_y);
         legs.stringColumn("access_stop_id").append(access_stop_id);
         legs.stringColumn("egress_stop_id").append(egress_stop_id);
         legs.stringColumn("transit_line").append(transit_line);
