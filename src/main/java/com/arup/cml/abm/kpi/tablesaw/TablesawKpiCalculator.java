@@ -536,7 +536,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
     }
 
     @Override
-    public Table writeAccessToMobilityServicesKpi(Path outputDirectory) {
+    public Map<String, Double> writeAccessToMobilityServicesKpi(Path outputDirectory) {
         LOGGER.info("Writing Access To Mobility Services KPI to {}", outputDirectory);
 
         LOGGER.info("Filtering trips table with {} rows to find trips that started from 'home'",
@@ -549,7 +549,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
         table.column("start_x").setName("x");
         table.column("start_y").setName("y");
         BooleanColumn usedPtColumn = BooleanColumn.create("used_pt");
-        LOGGER.info(String.format("Iterating over the 'home' trips to record use of PT", table.rowCount()));
+        LOGGER.info("Iterating over {} 'home' trips to record use of PT", table.rowCount());
         table.stringColumn("first_pt_boarding_stop").forEach(new Consumer<String>() {
             @Override
             public void accept(String aString) {
@@ -563,8 +563,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
         table.addColumns(usedPtColumn);
         table.removeColumns(table.column("first_pt_boarding_stop"));
         table = table.dropDuplicateRows();
-        LOGGER.info(String.format("Added a new column recording use of PT"));
-
+        LOGGER.info("Added a new column recording use of PT");
 
         LOGGER.info("Checking access to bus stops");
         table = addPTAccessColumnWithinDistance(
@@ -590,7 +589,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
                 String.format("%s/intermediate-access-to-mobility-services.csv", outputDirectory),
                 this.compressionType);
 
-        LOGGER.info(String.format("Calculating bus access to mobility KPI"));
+        LOGGER.info("Calculating bus access to mobility KPI");
         double bus_kpi = ((double) table.booleanColumn("bus_access_400m").countTrue() /
                 table.booleanColumn("bus_access_400m").size())
                 * 100;
@@ -598,7 +597,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
         writeContentToFile(String.format("%s/kpi-access-to-mobility-services-access-to-bus.csv", outputDirectory),
                 String.valueOf(bus_kpi), this.compressionType);
 
-        LOGGER.info(String.format("Calculating rail access to mobility KPI"));
+        LOGGER.info("Calculating rail access to mobility KPI");
         double rail_kpi = ((double) table.booleanColumn("rail_access_800m").countTrue() /
                 table.booleanColumn("rail_access_800m").size())
                 * 100;
@@ -616,8 +615,12 @@ public class TablesawKpiCalculator implements KpiCalculator {
         writeContentToFile(String.format("%s/kpi-access-to-mobility-services-access-to-pt-and-pt-used.csv", outputDirectory),
                 String.valueOf(used_pt_kpi), this.compressionType);
 
-        LOGGER.info(String.format("Finished calculating access to mobility KPIs"));
-        return table;
+        LOGGER.info("Finished calculating access to mobility KPIs");
+        return Map.of(
+                "bus_kpi", bus_kpi,
+                "rail_kpi", rail_kpi,
+                "used_pt_kpi", used_pt_kpi
+        );
     }
 
     public Table addPTAccessColumnWithinDistance(Table table, Table stops, double distance, String columnName) {

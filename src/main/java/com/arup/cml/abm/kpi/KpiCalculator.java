@@ -3,6 +3,7 @@ package com.arup.cml.abm.kpi;
 import tech.tablesaw.api.Table;
 
 import java.nio.file.Path;
+import java.util.Map;
 
 public interface KpiCalculator {
     double writeAffordabilityKpi(Path outputDirectory, ScalingFactor scalingFactor);
@@ -23,7 +24,7 @@ public interface KpiCalculator {
 
     double writeTravelTimeKpi(Path outputDirectory, ScalingFactor scalingFactor);
 
-    Table writeAccessToMobilityServicesKpi(Path outputDirectory);
+    Map<String, Double> writeAccessToMobilityServicesKpi(Path outputDirectory);
 
     Table writeCongestionKpi(Path directory);
 

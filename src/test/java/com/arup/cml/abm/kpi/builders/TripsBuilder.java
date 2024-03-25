@@ -108,9 +108,29 @@ public class TripsBuilder {
         return this;
     }
 
-    public TripsBuilder withTripWithTravelTime(String person, String trip_number, String trav_time) {
+    public TripsBuilder withTripWithStartLocationAndType(
+            String person, String trip_number, String startActivityType, double startX, double startY) {
+        return this.withPtTripWithStartLocationAndType(
+                person, trip_number, startActivityType, startX, startY,
+                defaultMainMode, defaultFirstPtBoardingStop, defaultLastPtEgressStop
+        );
+    }
+
+    public TripsBuilder withPtTripWithStartLocationAndType(
+            String person, String trip_number, String startActivityType, double startX, double startY,
+            String mode, String ptBoardingStop, String ptEgressStop) {
         return this.withTrip(
-                person, trip_number, String.format("{}_{}", person, trip_number), defaultDepTime, trav_time, defaultWaitTime,
+                person, trip_number, String.format("{}_{}", person, trip_number), defaultDepTime, defaultTravTime, defaultWaitTime,
+                defaultTravelledDistance, defaultEuclideanDistance, mode, mode, mode,
+                startActivityType, defaultStartFacilityId, defaultEndActivityType, defaultEndFacilityId,
+                defaultStartLink, startX, startY, defaultEndLink, defaultEndX, defaultEndY,
+                ptBoardingStop, ptEgressStop
+        );
+    }
+
+    public TripsBuilder withTripWithTravelTime(String person, String tripNumber, String travTime) {
+        return this.withTrip(
+                person, tripNumber, String.format("{}_{}", person, tripNumber), defaultDepTime, travTime, defaultWaitTime,
                 defaultTravelledDistance, defaultEuclideanDistance, defaultMainMode, defaultLongestDistanceMode, defaultModes,
                 defaultStartActivityType, defaultStartFacilityId, defaultEndActivityType, defaultEndFacilityId,
                 defaultStartLink, defaultStartX, defaultStartY, defaultEndLink, defaultEndX, defaultEndY,
