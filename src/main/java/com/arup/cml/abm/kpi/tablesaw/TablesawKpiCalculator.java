@@ -510,7 +510,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
     }
 
     @Override
-    public double writeTravelTimeKpi(Path outputDirectory) {
+    public double writeTravelTimeKpi(Path outputDirectory, ScalingFactor scalingFactor) {
         LOGGER.info("Writing Travel Time KPI to {}", outputDirectory);
 
         // convert H:M:S format to seconds
@@ -527,7 +527,10 @@ public class TablesawKpiCalculator implements KpiCalculator {
                         .setName("Travel Time by trip purpose");
         this.writeTableCompressed(intermediate, String.format("%s/intermediate-travel-time.csv", outputDirectory), this.compressionType);
 
-        double kpi = trips.intColumn("trav_time_minutes").mean();
+        double kpi = round(
+                scalingFactor.scale( trips.intColumn("trav_time_minutes").mean()),
+                2
+        );
         writeContentToFile(String.format("%s/kpi-travel-time.csv", outputDirectory), String.valueOf(kpi), this.compressionType);
         return kpi;
     }

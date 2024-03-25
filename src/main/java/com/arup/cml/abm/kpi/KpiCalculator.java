@@ -21,7 +21,7 @@ public interface KpiCalculator {
 
     double writeGHGKpi(Path outputDirectory, ScalingFactor scalingFactor);
 
-    double writeTravelTimeKpi(Path outputDirectory);
+    double writeTravelTimeKpi(Path outputDirectory, ScalingFactor scalingFactor);
 
     Table writeAccessToMobilityServicesKpi(Path outputDirectory);
 
