@@ -45,7 +45,7 @@ public class TestTablesawCongestionKpiWithLinearNormaliser {
                         .withEntry("someCar", "otherLink", (9 * 60 * 60) + 30, (9 * 60 * 60) + 30 + secondDelayRatio)
                         .build())
                 .build();
-        Table outputKpi = kpiCalculator.writeCongestionKpi(
+        Table outputKpi = (Table) kpiCalculator.writeCongestionKpi(
                 Path.of(tmpDir.getRoot().getAbsolutePath()),
                 linearNormaliser
         );
@@ -82,7 +82,7 @@ public class TestTablesawCongestionKpiWithLinearNormaliser {
                         .withEntry("someHorse", "otherLink", (9 * 60 * 60) + 25, (9 * 60 * 60) + 25 + horseDelayRatio)
                         .build())
                 .build();
-        Table outputKpi = kpiCalculator.writeCongestionKpi(
+        Table outputKpi = (Table) kpiCalculator.writeCongestionKpi(
                 Path.of(tmpDir.getRoot().getAbsolutePath()),
                 linearNormaliser
         );
@@ -125,7 +125,7 @@ public class TestTablesawCongestionKpiWithLinearNormaliser {
                         .withEntry("someCar", "otherLink", (9 * 60 * 60) + 25, (9 * 60 * 60) + 30)
                         .build())
                 .build();
-        Table outputKpi = kpiCalculator.writeCongestionKpi(
+        Table outputKpi = (Table) kpiCalculator.writeCongestionKpi(
                 Path.of(tmpDir.getRoot().getAbsolutePath()),
                 linearNormaliser
         );

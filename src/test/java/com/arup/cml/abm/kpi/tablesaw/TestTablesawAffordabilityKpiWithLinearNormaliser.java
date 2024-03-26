@@ -9,6 +9,7 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.nio.file.Path;
+import java.util.Map;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
@@ -38,13 +39,14 @@ public class TestTablesawAffordabilityKpiWithLinearNormaliser {
                         .withMonetaryCostsForSubpopulationAndMode(bobbySubpop, "car", 1.0, 1.0)
                         .build())
                 .build();
-        double outputKpi = kpiCalculator.writeAffordabilityKpi(
+        Map<String, Double> outputKpi = kpiCalculator.writeAffordabilityKpi(
                 Path.of(tmpDir.getRoot().getAbsolutePath()),
                 linearNormaliser
         );
 
         double expectedRatio = 1;
-        assertThat(outputKpi).isEqualTo(expectedRatio * equivalentScalingFactor)
+        assertThat(outputKpi.get("actual")).isEqualTo(expectedRatio);
+        assertThat(outputKpi.get("normalised")).isEqualTo(expectedRatio * equivalentScalingFactor)
                 .as("There is only one agent so the ratio of all travel to the low income group " +
                         "is expected to be 1, and 0.1 after scaling");
     }
@@ -78,7 +80,7 @@ public class TestTablesawAffordabilityKpiWithLinearNormaliser {
                         .withMonetaryCostsForSubpopulationAndMode(subpop, mode, dailyConstant, distanceCost)
                         .build())
                 .build();
-        double outputKpi = kpiCalculator.writeAffordabilityKpi(
+        Map<String, Double> outputKpi = kpiCalculator.writeAffordabilityKpi(
                 Path.of(tmpDir.getRoot().getAbsolutePath()),
                 linearNormaliser
         );
@@ -88,7 +90,9 @@ public class TestTablesawAffordabilityKpiWithLinearNormaliser {
         // 2x <- poor Bobby cost
         // (3x/2) <- overall average
         double expectedRatio = 1 + 1.0/3;
-        assertThat(outputKpi).isCloseTo(expectedRatio * equivalentScalingFactor, Offset.offset(0.009))
+
+        assertThat(outputKpi.get("actual")).isCloseTo(expectedRatio, Offset.offset(0.009));
+        assertThat(outputKpi.get("normalised")).isCloseTo(expectedRatio * equivalentScalingFactor, Offset.offset(0.009))
                 .as("There are two agents, the poorer agent spends twice as much on travel. The ratio of " +
                         "all travel to the low income group is expected to be 1.33, and 0.133 after scaling.");
     }
@@ -122,7 +126,7 @@ public class TestTablesawAffordabilityKpiWithLinearNormaliser {
                         .withMonetaryCostsForSubpopulationAndMode(richBobbySubpop, mode, dailyConstant, distanceCost)
                         .build())
                 .build();
-        double outputKpi = kpiCalculator.writeAffordabilityKpi(
+        Map<String, Double> outputKpi = kpiCalculator.writeAffordabilityKpi(
                 Path.of(tmpDir.getRoot().getAbsolutePath()),
                 linearNormaliser
         );
@@ -132,7 +136,8 @@ public class TestTablesawAffordabilityKpiWithLinearNormaliser {
         // 2x <- poor Bobby cost
         // (3x/2) <- overall average
         double expectedRatio = 1 + 1.0/3;
-        assertThat(outputKpi).isCloseTo(expectedRatio * equivalentScalingFactor, Offset.offset(0.009))
+        assertThat(outputKpi.get("actual")).isCloseTo(expectedRatio, Offset.offset(0.009));
+        assertThat(outputKpi.get("normalised")).isCloseTo(expectedRatio * equivalentScalingFactor, Offset.offset(0.009))
                 .as("There are two agents, the poorer agent spends twice as much on travel. The ratio of " +
                         "all travel to the low income group is expected to be 1.33, and 0.133 after scaling.");
     }

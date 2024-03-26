@@ -8,6 +8,7 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.nio.file.Path;
+import java.util.Map;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
@@ -40,12 +41,13 @@ public class TestTablesawGHGKpiWithLinearNormaliser {
                         .withPerson("Bobby")
                         .build())
                 .build();
-        double outputKpi = kpiCalculator.writeGHGKpi(
+        Map<String, Double> outputKpi = kpiCalculator.writeGHGKpi(
                 Path.of(tmpDir.getRoot().getAbsolutePath()),
                 linearNormaliser
         );
 
-        assertThat(outputKpi).isEqualTo(2.0 * equivalentScalingFactor)
+        assertThat(outputKpi.get("actual")).isEqualTo(2.0);
+        assertThat(outputKpi.get("normalised")).isEqualTo(2.0 * equivalentScalingFactor)
                 .as("A vehicle with emissions factor 2 drives a kilometer, " +
                         "so the output of the GHG KPI is expected to be 2, and 1 after scaling");
     }

@@ -6,13 +6,13 @@ import java.nio.file.Path;
 import java.util.Map;
 
 public interface KpiCalculator {
-    double writeAffordabilityKpi(Path outputDirectory, Normaliser normaliser);
+    Map<String, Double> writeAffordabilityKpi(Path outputDirectory, Normaliser normaliser);
 
-    double writePtWaitTimeKpi(Path outputDirectory, Normaliser normaliser);
+    Map<String, Double> writePtWaitTimeKpi(Path outputDirectory, Normaliser normaliser);
 
     void writeModalSplitKpi(Path outputDirectory);
 
-    double writeOccupancyRateKpi(Path outputDirectory, Normaliser normaliser);
+    Map<String, Double> writeOccupancyRateKpi(Path outputDirectory, Normaliser normaliser);
 
     double writeVehicleKMKpi(Path outputDirectory);
 
@@ -20,11 +20,11 @@ public interface KpiCalculator {
 
     void writeSpeedKpi(Path outputDirectory);
 
-    double writeGHGKpi(Path outputDirectory, Normaliser normaliser);
+    Map<String, Double> writeGHGKpi(Path outputDirectory, Normaliser normaliser);
 
-    double writeTravelTimeKpi(Path outputDirectory, Normaliser normaliser);
+    Map<String, Double> writeTravelTimeKpi(Path outputDirectory, Normaliser normaliser);
 
-    Map<String, Double> writeAccessToMobilityServicesKpi(Path outputDirectory, Normaliser normaliser);
+    Map<String, Map<String, Double>> writeAccessToMobilityServicesKpi(Path outputDirectory, Normaliser normaliser);
 
     Table writeCongestionKpi(Path directory, Normaliser normaliser);
 

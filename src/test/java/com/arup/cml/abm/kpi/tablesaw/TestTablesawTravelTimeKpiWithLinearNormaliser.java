@@ -8,6 +8,7 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.nio.file.Path;
+import java.util.Map;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
@@ -31,12 +32,13 @@ public class TestTablesawTravelTimeKpiWithLinearNormaliser {
                         .build())
                 .withLegs(tripsBuilder.getLegsBuilder().build())
                 .build();
-        double outputKpi = kpiCalculator.writeTravelTimeKpi(
+        Map<String, Double> outputKpi = kpiCalculator.writeTravelTimeKpi(
                 Path.of(tmpDir.getRoot().getAbsolutePath()),
                 linearNormaliser
         );
 
-        assertThat(outputKpi).isEqualTo(trav_time_minutes * equivalentScalingFactor)
+        assertThat(outputKpi.get("actual")).isEqualTo(trav_time_minutes);
+        assertThat(outputKpi.get("normalised")).isEqualTo(trav_time_minutes * equivalentScalingFactor)
                 .as("KPI output is the average of travel times. " +
                         "Average of one travel time is that travel time");
     }
@@ -57,12 +59,14 @@ public class TestTablesawTravelTimeKpiWithLinearNormaliser {
                         .build())
                 .withLegs(tripsBuilder.getLegsBuilder().build())
                 .build();
-        double outputKpi = kpiCalculator.writeTravelTimeKpi(
+        Map<String, Double> outputKpi = kpiCalculator.writeTravelTimeKpi(
                 Path.of(tmpDir.getRoot().getAbsolutePath()),
                 linearNormaliser
         );
 
-        assertThat(outputKpi).isEqualTo(
+        assertThat(outputKpi.get("actual")).isEqualTo(
+                (bobby_trav_time_minutes + bobbina_trav_time_minutes) / 2);
+        assertThat(outputKpi.get("normalised")).isEqualTo(
                 ((bobby_trav_time_minutes + bobbina_trav_time_minutes) / 2) * equivalentScalingFactor)
                 .as("Should be the average of two travel times");
     }

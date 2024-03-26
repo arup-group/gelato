@@ -10,6 +10,7 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.nio.file.Path;
+import java.util.Map;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
@@ -35,12 +36,13 @@ public class TestTablesawOccupancyKpiWithLinearNormaliser {
                         .withVehicleOfCapacity(someCar, "car", "car", 4)
                         .build())
                 .build();
-        double outputKpi = kpiCalculator.writeOccupancyRateKpi(
+        Map<String, Double> outputKpi = kpiCalculator.writeOccupancyRateKpi(
                 Path.of(tmpDir.getRoot().getAbsolutePath()),
                 linearNormaliser
         );
 
-        assertThat(outputKpi).isEqualTo(0.5 * equivalentScalingFactor)
+        assertThat(outputKpi.get("actual")).isEqualTo(0.5);
+        assertThat(outputKpi.get("normalised")).isEqualTo(0.5 * equivalentScalingFactor)
                 .as("Occupancy Rate should be at half with two people in a car that fits four," +
                         "and 5 after scaling.");
     }
