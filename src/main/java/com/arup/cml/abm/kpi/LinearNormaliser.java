@@ -1,11 +1,11 @@
 package com.arup.cml.abm.kpi;
 
 public class LinearNormaliser implements Normaliser {
-    private double leftScaleBound;
-    private double rightScaleBound;
+    private double leftIntervalBound;
+    private double rightIntervalBound;
     private double leftValueBound;
     private double rightValueBound;
-    private boolean isReversedLinearScale = false;
+    private boolean isReversed = false;
 
     public LinearNormaliser(double leftIntervalBound, double rightIntervalBound, double leftValueBound, double rightValueBound) {
         // leftValueBound is mapped to leftIntervalBound
@@ -22,13 +22,13 @@ public class LinearNormaliser implements Normaliser {
                     "Left and right bounds cannot both be the same value.");
         }
         if (leftValueBound > rightValueBound) {
-            this.isReversedLinearScale = true;
+            this.isReversed = true;
             leftValueBound = -leftValueBound;
             rightValueBound = -rightValueBound;
         }
 
-        this.leftScaleBound = leftIntervalBound;
-        this.rightScaleBound = rightIntervalBound;
+        this.leftIntervalBound = leftIntervalBound;
+        this.rightIntervalBound = rightIntervalBound;
         this.leftValueBound = leftValueBound;
         this.rightValueBound = rightValueBound;
     }
@@ -37,16 +37,16 @@ public class LinearNormaliser implements Normaliser {
         this(0, 10, leftValueBound, rightValueBound);
     }
 
-    private boolean isReversedLinearScale() {
-        return this.isReversedLinearScale;
+    private boolean isReversed() {
+        return this.isReversed;
     }
 
-    public double getLowerScaleBound() {
-        return leftScaleBound;
+    public double getLowerIntervalBound() {
+        return leftIntervalBound;
     }
 
-    public double getUpperScaleBound() {
-        return rightScaleBound;
+    public double getUpperIntervalBound() {
+        return rightIntervalBound;
     }
 
     private boolean isWithinBounds(double value) {
@@ -55,16 +55,16 @@ public class LinearNormaliser implements Normaliser {
 
     @Override
     public double normalise(double value) {
-        if (this.isReversedLinearScale()) {
+        if (this.isReversed()) {
             value = -value;
         }
         if (this.isWithinBounds(value)) {
-            return ((value - leftValueBound) / (rightValueBound - leftValueBound)) * (rightScaleBound - leftScaleBound);
+            return ((value - leftValueBound) / (rightValueBound - leftValueBound)) * (rightIntervalBound - leftIntervalBound);
         } else {
             if (value > rightValueBound) {
-                return rightScaleBound;
+                return rightIntervalBound;
             } else {
-                return leftScaleBound;
+                return leftIntervalBound;
             }
         }
     }
