@@ -8,7 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- 
+- Scaling/Normalisation to values between `0` and `10` for metrics ([#69](https://github.com/arup-group/gelato/issues/69)): 
+`Affordability`, `PT Wait Time`, `Occupancy`, `GHG`, `Travel Time`, `Access to Mobility services`, `Congestion`
 
 ### Fixed
 
