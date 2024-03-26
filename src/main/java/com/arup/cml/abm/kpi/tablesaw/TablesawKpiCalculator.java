@@ -641,9 +641,9 @@ public class TablesawKpiCalculator implements KpiCalculator {
 
         LOGGER.info("Finished calculating access to mobility KPIs");
         return Map.of(
-                "bus_kpi", busKpiOutput,
-                "rail_kpi", railKpiOutput,
-                "used_pt_kpi", usedPtKpiOutput
+                "busKpi", busKpiOutput,
+                "railKpi", railKpiOutput,
+                "usedPtKpi", usedPtKpiOutput
         );
     }
 
@@ -1465,7 +1465,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
     }
 
     private void writeContentToFile(String path, Map<String, Double> content, CompressionType compressionType) {
-        // keys form columns
+        // keys of content map form columns in the output csv file
         StringBuilder csvColumns = new StringBuilder();
         StringBuilder csvValues = new StringBuilder();
 
