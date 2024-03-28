@@ -40,7 +40,7 @@ public class TestLinearNormaliser {
     }
 
     @Test
-    public void reversedFactorStillMapsTheMidpoint() {
+    public void reversedFactorMapsTheMidpoint() {
         assertThat(reverseLinearNormaliser.normalise(20)).isEqualTo(5.0);
     }
 

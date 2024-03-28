@@ -3,7 +3,8 @@ package com.arup.cml.abm.kpi.tablesaw;
 import com.arup.cml.abm.kpi.LinearNormaliser;
 import com.arup.cml.abm.kpi.Normaliser;
 import com.arup.cml.abm.kpi.builders.KpiCalculatorBuilder;
-import com.arup.cml.abm.kpi.builders.LegsBuilder;
+import com.arup.cml.abm.kpi.builders.LegBuilder;
+import com.arup.cml.abm.kpi.builders.LegsTableBuilder;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -28,8 +29,10 @@ public class TestTablesawPtWaitTimeKpiWithLinearNormaliser {
         Double bobbyPtWaitTimeSeconds = 6.0 * 60.0;
 
         TablesawKpiCalculator kpiCalculator = new KpiCalculatorBuilder(tmpDir)
-                .withLegs(new LegsBuilder(tmpDir)
-                        .withDefaultPtLegWithTiming(bobby, "bobby_1", "09:00:00", "00:30:00", bobbyPtWaitTime)
+                .withLegs(new LegsTableBuilder(tmpDir)
+                        .withLeg(bobby,
+                                "bobby_1",
+                                new LegBuilder().withDepTime("09:00:00").withTravTime("00:30:00").ofSomePtType().withWaitTime(bobbyPtWaitTime).build())
                         .build())
                 .build();
         Map<String, Double> outputKpi = kpiCalculator.writePtWaitTimeKpi(
@@ -48,8 +51,10 @@ public class TestTablesawPtWaitTimeKpiWithLinearNormaliser {
         String bobbyPtWaitTime = "00:06:00";
 
         TablesawKpiCalculator kpiCalculator = new KpiCalculatorBuilder(tmpDir)
-                .withLegs(new LegsBuilder(tmpDir)
-                        .withDefaultPtLegWithTiming(bobby, "bobby_1", "23:00:00", "00:30:00", bobbyPtWaitTime)
+                .withLegs(new LegsTableBuilder(tmpDir)
+                        .withLeg(bobby,
+                                "bobby_1",
+                                new LegBuilder().withDepTime("23:00:00").withTravTime("00:30:00").ofSomePtType().withWaitTime(bobbyPtWaitTime).build())
                         .build())
                 .build();
         Map<String, Double> outputKpi = kpiCalculator.writePtWaitTimeKpi(
@@ -73,9 +78,13 @@ public class TestTablesawPtWaitTimeKpiWithLinearNormaliser {
         Double bobbinaPtWaitTimeSeconds = 12.0 * 60.0;
 
         TablesawKpiCalculator kpiCalculator = new KpiCalculatorBuilder(tmpDir)
-                .withLegs(new LegsBuilder(tmpDir)
-                        .withDefaultPtLegWithTiming(bobby, "bobby_1", "09:00:00", "00:30:00", bobbyPtWaitTime)
-                        .withDefaultPtLegWithTiming(bobbina, "bobbina_1", "09:00:00", "00:30:00", bobbinaPtWaitTime)
+                .withLegs(new LegsTableBuilder(tmpDir)
+                        .withLeg(bobby,
+                                "bobby_1",
+                                new LegBuilder().withDepTime("09:00:00").withTravTime("00:30:00").ofSomePtType().withWaitTime(bobbyPtWaitTime).build())
+                        .withLeg(bobbina,
+                                "bobbina_1",
+                                new LegBuilder().withDepTime("09:00:00").withTravTime("00:30:00").ofSomePtType().withWaitTime(bobbinaPtWaitTime).build())
                         .build())
                 .build();
         Map<String, Double> outputKpi = kpiCalculator.writePtWaitTimeKpi(

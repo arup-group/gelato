@@ -25,18 +25,14 @@ public class PersonsBuilder {
         this.tmpDir = tmpDir;
     }
 
-    public PersonsBuilder withPerson(
-            String person, double income, String subpopulation
-    ) {
+    public PersonsBuilder withPerson(String person, double income, String subpopulation) {
         persons.stringColumn("person").append(person);
         persons.doubleColumn("income").append(income);
         persons.stringColumn("subpopulation").append(subpopulation);
         return this;
     }
 
-    public PersonsBuilder withPerson(
-            String person
-    ) {
+    public PersonsBuilder withPerson(String person) {
         return this.withPerson(person, defaultIncome, defaultSubpopulation);
     }
 

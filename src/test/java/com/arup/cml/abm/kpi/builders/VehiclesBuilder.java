@@ -1,7 +1,6 @@
 package com.arup.cml.abm.kpi.builders;
 
 import org.matsim.api.core.v01.Id;
-import org.matsim.vehicles.Vehicle;
 import org.matsim.vehicles.VehicleType;
 import org.matsim.vehicles.VehicleUtils;
 import org.matsim.vehicles.Vehicles;

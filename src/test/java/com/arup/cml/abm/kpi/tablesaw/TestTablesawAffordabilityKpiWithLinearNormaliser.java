@@ -29,14 +29,14 @@ public class TestTablesawAffordabilityKpiWithLinearNormaliser {
         Integer bobbyTripLength = 10;
 
         TablesawKpiCalculator kpiCalculator = new KpiCalculatorBuilder(tmpDir)
-                .withLegs(new LegsBuilder(tmpDir)
-                        .withLegWithDistanceAndMode(bobby, "bobby_1", bobbyTripLength, "car")
+                .withLegs(new LegsTableBuilder(tmpDir).reset()
+                        .withLeg(bobby, "bobby_1", new LegBuilder().withDistance(bobbyTripLength).withMode("car").build())
                         .build())
                 .withPersons(new PersonsBuilder(tmpDir)
                         .withPerson(bobby, 10000, bobbySubpop)
                         .build())
                 .withScoring(new ScoringConfigBuilder()
-                        .withMonetaryCostsForSubpopulationAndMode(bobbySubpop, "car", 1.0, 1.0)
+                        .withMonetaryCosts(bobbySubpop, "car", 1.0, 1.0)
                         .build())
                 .build();
         Map<String, Double> outputKpi = kpiCalculator.writeAffordabilityKpi(
@@ -66,18 +66,24 @@ public class TestTablesawAffordabilityKpiWithLinearNormaliser {
         double richBobbyIncome = 1000000;  // it's all about those zeros :)
 
         TablesawKpiCalculator kpiCalculator = new KpiCalculatorBuilder(tmpDir)
-                .withLegs(new LegsBuilder(tmpDir)
+                .withLegs(new LegsTableBuilder(tmpDir).reset()
                         // poor Bobby has to make two trips and spends twice as much on travel
-                        .withLegWithDistanceAndMode(poorBobby, "poor_bobby_1", tripLength, mode)
-                        .withLegWithDistanceAndMode(poorBobby, "poor_bobby_2", tripLength, mode)
-                        .withLegWithDistanceAndMode(richBobby, "rich_bobby_1", tripLength, mode)
+                        .withLeg(poorBobby,
+                                "poor_bobby_1",
+                                new LegBuilder().withDistance(tripLength).withMode(mode).build())
+                        .withLeg(poorBobby,
+                                "poor_bobby_2",
+                                new LegBuilder().withDistance(tripLength).withMode(mode).build())
+                        .withLeg(richBobby,
+                                "rich_bobby_1",
+                                new LegBuilder().withDistance(tripLength).withMode(mode).build())
                         .build())
                 .withPersons(new PersonsBuilder(tmpDir)
                         .withPerson(poorBobby, poorBobbyIncome, subpop)
                         .withPerson(richBobby, richBobbyIncome, subpop)
                         .build())
                 .withScoring(new ScoringConfigBuilder()
-                        .withMonetaryCostsForSubpopulationAndMode(subpop, mode, dailyConstant, distanceCost)
+                        .withMonetaryCosts(subpop, mode, dailyConstant, distanceCost)
                         .build())
                 .build();
         Map<String, Double> outputKpi = kpiCalculator.writeAffordabilityKpi(
@@ -111,19 +117,25 @@ public class TestTablesawAffordabilityKpiWithLinearNormaliser {
         String richBobbySubpop = "high income";
 
         TablesawKpiCalculator kpiCalculator = new KpiCalculatorBuilder(tmpDir)
-                .withLegs(new LegsBuilder(tmpDir)
+                .withLegs(new LegsTableBuilder(tmpDir).reset()
                         // poor Bobby has to make two trips and spends twice as much on travel
-                        .withLegWithDistanceAndMode(poorBobby, "poor_bobby_1", tripLength, mode)
-                        .withLegWithDistanceAndMode(poorBobby, "poor_bobby_2", tripLength, mode)
-                        .withLegWithDistanceAndMode(richBobby, "rich_bobby_1", tripLength, mode)
+                        .withLeg(poorBobby,
+                                "poor_bobby_1",
+                                new LegBuilder().withDistance(tripLength).withMode(mode).build())
+                        .withLeg(poorBobby,
+                                "poor_bobby_2",
+                                new LegBuilder().withDistance(tripLength).withMode(mode).build())
+                        .withLeg(richBobby,
+                                "rich_bobby_1",
+                                new LegBuilder().withDistance(tripLength).withMode(mode).build())
                         .build())
                 .withPersons(new PersonsBuilder(tmpDir)
                         .withPersonWithMissingIncome(poorBobby, poorBobbySubpop)
                         .withPersonWithMissingIncome(richBobby, richBobbySubpop)
                         .build())
                 .withScoring(new ScoringConfigBuilder()
-                        .withMonetaryCostsForSubpopulationAndMode(poorBobbySubpop, mode, dailyConstant, distanceCost)
-                        .withMonetaryCostsForSubpopulationAndMode(richBobbySubpop, mode, dailyConstant, distanceCost)
+                        .withMonetaryCosts(poorBobbySubpop, mode, dailyConstant, distanceCost)
+                        .withMonetaryCosts(richBobbySubpop, mode, dailyConstant, distanceCost)
                         .build())
                 .build();
         Map<String, Double> outputKpi = kpiCalculator.writeAffordabilityKpi(

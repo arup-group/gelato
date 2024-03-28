@@ -8,6 +8,7 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Map;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -24,13 +25,18 @@ public class TestTablesawTravelTimeKpiWithLinearNormaliser {
     public void singleTripGivesTrivialAverage() {
         String trav_time = "00:20:00";
         Double trav_time_minutes = 20.0;
-        TripsBuilder tripsBuilder = new TripsBuilder(tmpDir);
+        TripsTableBuilder tripsTableBuilder = new TripsTableBuilder(tmpDir);
 
         TablesawKpiCalculator kpiCalculator = new KpiCalculatorBuilder(tmpDir)
-                .withTrips(tripsBuilder
-                        .withTripWithTravelTime("Bobby", "1", trav_time)
+                .withTrips(tripsTableBuilder.reset()
+                                .withTrip(
+                                        "Bobby",
+                                        "1",
+                                        new TripBuilder()
+                                                .withLegs(Arrays.asList(new LegBuilder().withTravTime(trav_time).build()))
+                                                .build())
                         .build())
-                .withLegs(tripsBuilder.getLegsBuilder().build())
+                .withLegs(tripsTableBuilder.getLegsBuilder().build())
                 .build();
         Map<String, Double> outputKpi = kpiCalculator.writeTravelTimeKpi(
                 Path.of(tmpDir.getRoot().getAbsolutePath()),
@@ -50,14 +56,24 @@ public class TestTablesawTravelTimeKpiWithLinearNormaliser {
         String bobbina_trav_time = "01:04:00";
         Double bobbina_trav_time_minutes = 64.0;
 
-        TripsBuilder tripsBuilder = new TripsBuilder(tmpDir);
+        TripsTableBuilder tripsTableBuilder = new TripsTableBuilder(tmpDir);
 
         TablesawKpiCalculator kpiCalculator = new KpiCalculatorBuilder(tmpDir)
-                .withTrips(tripsBuilder
-                        .withTripWithTravelTime("Bobby", "1", bobby_trav_time)
-                        .withTripWithTravelTime("Bobbina", "1", bobbina_trav_time)
+                .withTrips(tripsTableBuilder.reset()
+                        .withTrip(
+                                "Bobby",
+                                "1",
+                                new TripBuilder()
+                                        .withLegs(Arrays.asList(new LegBuilder().withTravTime(bobby_trav_time).build()))
+                                        .build())
+                        .withTrip(
+                                "Bobbina",
+                                "1",
+                                new TripBuilder()
+                                        .withLegs(Arrays.asList(new LegBuilder().withTravTime(bobbina_trav_time).build()))
+                                        .build())
                         .build())
-                .withLegs(tripsBuilder.getLegsBuilder().build())
+                .withLegs(tripsTableBuilder.getLegsBuilder().build())
                 .build();
         Map<String, Double> outputKpi = kpiCalculator.writeTravelTimeKpi(
                 Path.of(tmpDir.getRoot().getAbsolutePath()),

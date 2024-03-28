@@ -4,54 +4,35 @@ import org.matsim.core.config.groups.ScoringConfigGroup;
 
 public class ScoringConfigBuilder {
     ScoringConfigGroup scoring;
-    String defaultSubpopulation = "default";
-    double defaultDailyMonetaryConstant = 0.0;
-    double defaultMonetaryDistanceRate = 0.0;
-    double defaultConstant = 0.0;
-    double defaultMarginalUtilityOfDistance = 0.0;
-    double defaultDailyUtilityConstant = 0.0;
-    double defaultMarginalUtilityOfTraveling = 0.0;
 
     public ScoringConfigBuilder() {
         scoring = new ScoringConfigGroup();
+        this.withMode("car");
+        this.withMode("drt");
+        this.withMode("bus");
+        this.withMode("rail");
     }
 
-    public ScoringConfigBuilder withScoringParams(
-            String subpopulation, String mode, double dailyMonetaryConstant, double monetaryDistanceRate,
-            double constant, double marginalUtilityOfDistance, double dailyUtilityConstant,
-            double marginalUtilityOfTraveling) {
-        ScoringConfigGroup.ScoringParameterSet paramSet = scoring.getOrCreateScoringParameters(subpopulation);
+    public ScoringConfigBuilder withMode(String mode) {
+        ScoringConfigGroup.ScoringParameterSet paramSet = scoring.getOrCreateScoringParameters("default");
         ScoringConfigGroup.ModeParams modeParams = new ScoringConfigGroup.ModeParams(mode);
-        modeParams.setDailyMonetaryConstant(dailyMonetaryConstant);
-        modeParams.setMonetaryDistanceRate(monetaryDistanceRate);
-        modeParams.setConstant(constant);
-        modeParams.setMarginalUtilityOfDistance(marginalUtilityOfDistance);
-        modeParams.setDailyUtilityConstant(dailyUtilityConstant);
-        modeParams.setMarginalUtilityOfTraveling(marginalUtilityOfTraveling);
+        modeParams.setDailyMonetaryConstant(0.0);
+        modeParams.setMonetaryDistanceRate(0.0);
+        modeParams.setConstant(0.0);
+        modeParams.setMarginalUtilityOfDistance(0.0);
+        modeParams.setDailyUtilityConstant(0.0);
+        modeParams.setMarginalUtilityOfTraveling(0.0);
         paramSet.addModeParams(modeParams);
         return this;
     }
 
-    public ScoringConfigBuilder withMonetaryCostsForSubpopulationAndMode(
+    public ScoringConfigBuilder withMonetaryCosts(
             String subpopulation, String mode, double dailyMonetaryConstant, double monetaryDistanceRate) {
-        return this.withScoringParams(subpopulation, mode, dailyMonetaryConstant, monetaryDistanceRate,
-                defaultConstant, defaultMarginalUtilityOfDistance, defaultDailyUtilityConstant,
-                defaultMarginalUtilityOfTraveling);
-    }
-
-    public ScoringConfigBuilder withDefaultScoringParams() {
-        this.withScoringParams(defaultSubpopulation, "car", defaultDailyMonetaryConstant,
-                defaultMonetaryDistanceRate, defaultConstant, defaultMarginalUtilityOfDistance,
-                defaultDailyUtilityConstant, defaultMarginalUtilityOfTraveling);
-        this.withScoringParams(defaultSubpopulation, "drt", defaultDailyMonetaryConstant,
-                defaultMonetaryDistanceRate, defaultConstant, defaultMarginalUtilityOfDistance,
-                defaultDailyUtilityConstant, defaultMarginalUtilityOfTraveling);
-        this.withScoringParams(defaultSubpopulation, "bus", defaultDailyMonetaryConstant,
-                defaultMonetaryDistanceRate, defaultConstant, defaultMarginalUtilityOfDistance,
-                defaultDailyUtilityConstant, defaultMarginalUtilityOfTraveling);
-        this.withScoringParams(defaultSubpopulation, "rail", defaultDailyMonetaryConstant,
-                defaultMonetaryDistanceRate, defaultConstant, defaultMarginalUtilityOfDistance,
-                defaultDailyUtilityConstant, defaultMarginalUtilityOfTraveling);
+        ScoringConfigGroup.ScoringParameterSet paramSet = scoring.getOrCreateScoringParameters(subpopulation);
+        ScoringConfigGroup.ModeParams modeParams = new ScoringConfigGroup.ModeParams(mode);
+        modeParams.setDailyMonetaryConstant(dailyMonetaryConstant);
+        modeParams.setMonetaryDistanceRate(monetaryDistanceRate);
+        paramSet.addModeParams(modeParams);
         return this;
     }
 

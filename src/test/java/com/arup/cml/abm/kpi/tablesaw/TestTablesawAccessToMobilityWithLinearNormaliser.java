@@ -2,14 +2,13 @@ package com.arup.cml.abm.kpi.tablesaw;
 
 import com.arup.cml.abm.kpi.LinearNormaliser;
 import com.arup.cml.abm.kpi.Normaliser;
-import com.arup.cml.abm.kpi.builders.KpiCalculatorBuilder;
-import com.arup.cml.abm.kpi.builders.TransitScheduleBuilder;
-import com.arup.cml.abm.kpi.builders.TripsBuilder;
+import com.arup.cml.abm.kpi.builders.*;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Map;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -24,13 +23,15 @@ public class TestTablesawAccessToMobilityWithLinearNormaliser {
 
     @Test
     public void singleAgentHasAccessOnlyToBus() {
-        TripsBuilder tripsBuilder = new TripsBuilder(tmpDir);
+        TripsTableBuilder tripsTableBuilder = new TripsTableBuilder(tmpDir);
 
         TablesawKpiCalculator kpiCalculator = new KpiCalculatorBuilder(tmpDir)
-                .withTrips(tripsBuilder
-                        .withTripWithStartLocationAndType("Bobby", "1", "home", 0.0, 0.0)
+                .withTrips(tripsTableBuilder
+                        .withTrip("Bobby",
+                                "1",
+                                new TripBuilder().withStartActivityType("home").withStartLocation(0.0, 0.0).build())
                         .build())
-                .withLegs(tripsBuilder.getLegsBuilder().build())
+                .withLegs(tripsTableBuilder.getLegsBuilder().build())
                 .withTransitSchedule(new TransitScheduleBuilder()
                         .withTransitStopWithMode("BusStop", 400.0, 0.0, "bus")
                         .build())
@@ -56,14 +57,18 @@ public class TestTablesawAccessToMobilityWithLinearNormaliser {
 
     @Test
     public void nonHomeTripsAreFilteredOutAndDontContributeToKpiOutput() {
-        TripsBuilder tripsBuilder = new TripsBuilder(tmpDir);
+        TripsTableBuilder tripsTableBuilder = new TripsTableBuilder(tmpDir);
 
         TablesawKpiCalculator kpiCalculator = new KpiCalculatorBuilder(tmpDir)
-                .withTrips(tripsBuilder
-                        .withTripWithStartLocationAndType("Bobby", "1", "home", 0.0, 0.0)
-                        .withTripWithStartLocationAndType("Bobby", "2", "work", 0.0, 0.0)
+                .withTrips(tripsTableBuilder.reset()
+                        .withTrip("Bobby",
+                                "1",
+                                new TripBuilder().withStartActivityType("home").withStartLocation(0.0, 0.0).build())
+                        .withTrip("Bobby",
+                                "2",
+                                new TripBuilder().withStartActivityType("work").withStartLocation(0.0, 0.0).build())
                         .build())
-                .withLegs(tripsBuilder.getLegsBuilder().build())
+                .withLegs(tripsTableBuilder.getLegsBuilder().build())
                 .withTransitSchedule(new TransitScheduleBuilder()
                         .withTransitStopWithMode("BusStop", 400.0, 0.0, "bus")
                         .build())
@@ -81,13 +86,15 @@ public class TestTablesawAccessToMobilityWithLinearNormaliser {
 
     @Test
     public void singleAgentHasAccessToRail() {
-        TripsBuilder tripsBuilder = new TripsBuilder(tmpDir);
+        TripsTableBuilder tripsTableBuilder = new TripsTableBuilder(tmpDir);
 
         TablesawKpiCalculator kpiCalculator = new KpiCalculatorBuilder(tmpDir)
-                .withTrips(tripsBuilder
-                        .withTripWithStartLocationAndType("Bobby", "1", "home", 0.0, 0.0)
+                .withTrips(tripsTableBuilder
+                        .withTrip("Bobby",
+                                "1",
+                                new TripBuilder().withStartActivityType("home").withStartLocation(0.0, 0.0).build())
                         .build())
-                .withLegs(tripsBuilder.getLegsBuilder().build())
+                .withLegs(tripsTableBuilder.getLegsBuilder().build())
                 .withTransitSchedule(new TransitScheduleBuilder()
                         .withTransitStopWithMode("RailStop", 800.0, 0.0, "rail")
                         .build())
@@ -113,14 +120,19 @@ public class TestTablesawAccessToMobilityWithLinearNormaliser {
 
     @Test
     public void singleAgentHasAccessToRailAndUsesPT() {
-        TripsBuilder tripsBuilder = new TripsBuilder(tmpDir);
+        TripsTableBuilder tripsTableBuilder = new TripsTableBuilder(tmpDir);
 
         TablesawKpiCalculator kpiCalculator = new KpiCalculatorBuilder(tmpDir)
-                .withTrips(tripsBuilder
-                        .withPtTripWithStartLocationAndType("Bobby", "1", "home",
-                                0.0, 0.0, "rail", "A", "B")
+                .withTrips(tripsTableBuilder.reset()
+                        .withTrip("Bobby",
+                                "1",
+                                new TripBuilder()
+                                        .withStartActivityType("home")
+                                        .withStartLocation(0.0, 0.0)
+                                        .withLegs(Arrays.asList(new LegBuilder().ofSomePtType().withMode("rail").build()))
+                                        .build())
                         .build())
-                .withLegs(tripsBuilder.getLegsBuilder().build())
+                .withLegs(tripsTableBuilder.getLegsBuilder().build())
                 .withTransitSchedule(new TransitScheduleBuilder()
                         .withTransitStopWithMode("RailStop", 800.0, 0.0, "rail")
                         .build())
@@ -142,16 +154,18 @@ public class TestTablesawAccessToMobilityWithLinearNormaliser {
 
     @Test
     public void twoAgentsWithBusAccess() {
-        TripsBuilder tripsBuilder = new TripsBuilder(tmpDir);
+        TripsTableBuilder tripsTableBuilder = new TripsTableBuilder(tmpDir);
 
         TablesawKpiCalculator kpiCalculator = new KpiCalculatorBuilder(tmpDir)
-                .withTrips(tripsBuilder
-                        .withTripWithStartLocationAndType("Bobby", "1", "home",
-                                0.0, 0.0)
-                        .withTripWithStartLocationAndType("Bobbina", "1", "home",
-                                399.0, 0.0)
+                .withTrips(tripsTableBuilder.reset()
+                        .withTrip("Bobby",
+                                "1",
+                                new TripBuilder().withStartActivityType("home").withStartLocation(0.0, 0.0).build())
+                        .withTrip("Bobbina",
+                                "1",
+                                new TripBuilder().withStartActivityType("home").withStartLocation(399.0, 0.0).build())
                         .build())
-                .withLegs(tripsBuilder.getLegsBuilder().build())
+                .withLegs(tripsTableBuilder.getLegsBuilder().build())
                 .withTransitSchedule(new TransitScheduleBuilder()
                         .withTransitStopWithMode("BusStop", 0.0, 0.0, "bus")
                         .build())
@@ -169,16 +183,19 @@ public class TestTablesawAccessToMobilityWithLinearNormaliser {
 
     @Test
     public void twoAgentsWithDifferentBusAccess() {
-        TripsBuilder tripsBuilder = new TripsBuilder(tmpDir);
+        TripsTableBuilder tripsTableBuilder = new TripsTableBuilder(tmpDir);
 
         TablesawKpiCalculator kpiCalculator = new KpiCalculatorBuilder(tmpDir)
-                .withTrips(tripsBuilder
-                        .withTripWithStartLocationAndType("Bobby", "1", "home",
-                                0.0, 0.0)
-                        .withTripWithStartLocationAndType("Bobbina", "1", "home",
-                                401.0, 0.0)
+                .withTrips(tripsTableBuilder
+                        .reset()
+                        .withTrip("Bobby",
+                                "1",
+                                new TripBuilder().withStartActivityType("home").withStartLocation(0.0, 0.0).build())
+                        .withTrip("Bobbina",
+                                "1",
+                                new TripBuilder().withStartActivityType("home").withStartLocation(401.0, 0.0).build())
                         .build())
-                .withLegs(tripsBuilder.getLegsBuilder().build())
+                .withLegs(tripsTableBuilder.getLegsBuilder().build())
                 .withTransitSchedule(new TransitScheduleBuilder()
                         .withTransitStopWithMode("BusStop", 0.0, 0.0, "bus")
                         .build())
@@ -196,16 +213,18 @@ public class TestTablesawAccessToMobilityWithLinearNormaliser {
 
     @Test
     public void twoAgentsWithRailAccess() {
-        TripsBuilder tripsBuilder = new TripsBuilder(tmpDir);
+        TripsTableBuilder tripsTableBuilder = new TripsTableBuilder(tmpDir);
 
         TablesawKpiCalculator kpiCalculator = new KpiCalculatorBuilder(tmpDir)
-                .withTrips(tripsBuilder
-                        .withTripWithStartLocationAndType("Bobby", "1", "home",
-                                0.0, 0.0)
-                        .withTripWithStartLocationAndType("Bobbina", "1", "home",
-                                799.0, 0.0)
+                .withTrips(tripsTableBuilder.reset()
+                        .withTrip("Bobby",
+                                "1",
+                                new TripBuilder().withStartActivityType("home").withStartLocation(0.0, 0.0).build())
+                        .withTrip("Bobbina",
+                                "1",
+                                new TripBuilder().withStartActivityType("home").withStartLocation(799.0, 0.0).build())
                         .build())
-                .withLegs(tripsBuilder.getLegsBuilder().build())
+                .withLegs(tripsTableBuilder.getLegsBuilder().build())
                 .withTransitSchedule(new TransitScheduleBuilder()
                         .withTransitStopWithMode("RailStop", 0.0, 0.0, "rail")
                         .build())
@@ -223,16 +242,18 @@ public class TestTablesawAccessToMobilityWithLinearNormaliser {
 
     @Test
     public void twoAgentsWithDifferentRailAccess() {
-        TripsBuilder tripsBuilder = new TripsBuilder(tmpDir);
+        TripsTableBuilder tripsTableBuilder = new TripsTableBuilder(tmpDir);
 
         TablesawKpiCalculator kpiCalculator = new KpiCalculatorBuilder(tmpDir)
-                .withTrips(tripsBuilder
-                        .withTripWithStartLocationAndType("Bobby", "1", "home",
-                                0.0, 0.0)
-                        .withTripWithStartLocationAndType("Bobbina", "1", "home",
-                                801.0, 0.0)
+                .withTrips(tripsTableBuilder.reset()
+                        .withTrip("Bobby",
+                                "1",
+                                new TripBuilder().withStartActivityType("home").withStartLocation(0.0, 0.0).build())
+                        .withTrip("Bobbina",
+                                "1",
+                                new TripBuilder().withStartActivityType("home").withStartLocation(801.0, 0.0).build())
                         .build())
-                .withLegs(tripsBuilder.getLegsBuilder().build())
+                .withLegs(tripsTableBuilder.getLegsBuilder().build())
                 .withTransitSchedule(new TransitScheduleBuilder()
                         .withTransitStopWithMode("RailStop", 0.0, 0.0, "rail")
                         .build())
@@ -250,16 +271,26 @@ public class TestTablesawAccessToMobilityWithLinearNormaliser {
 
     @Test
     public void twoAgentsWithDifferentPTAccessButBothUsePT() {
-        TripsBuilder tripsBuilder = new TripsBuilder(tmpDir);
+        TripsTableBuilder tripsTableBuilder = new TripsTableBuilder(tmpDir);
 
         TablesawKpiCalculator kpiCalculator = new KpiCalculatorBuilder(tmpDir)
-                .withTrips(tripsBuilder
-                        .withPtTripWithStartLocationAndType("Bobby", "1", "home",
-                                0.0, 0.0, "rail", "A", "B")
-                        .withPtTripWithStartLocationAndType("Bobbina", "1", "home",
-                                801.0, 0.0, "bus", "A", "B")
+                .withTrips(tripsTableBuilder.reset()
+                        .withTrip("Bobby",
+                                "1",
+                                new TripBuilder()
+                                        .withStartActivityType("home")
+                                        .withStartLocation(0.0, 0.0)
+                                        .withLegs(Arrays.asList(new LegBuilder().ofSomePtType().withMode("rail").build()))
+                                        .build())
+                        .withTrip("Bobbina",
+                                "1",
+                                new TripBuilder()
+                                        .withStartActivityType("home")
+                                        .withStartLocation(801.0, 0.0)
+                                        .withLegs(Arrays.asList(new LegBuilder().ofSomePtType().withMode("bus").build()))
+                                        .build())
                         .build())
-                .withLegs(tripsBuilder.getLegsBuilder().build())
+                .withLegs(tripsTableBuilder.getLegsBuilder().build())
                 .withTransitSchedule(new TransitScheduleBuilder()
                         .withTransitStopWithMode("RailStop", 0.0, 0.0, "rail")
                         .withTransitStopWithMode("BusStop", 800.0, 0.0, "bus")
