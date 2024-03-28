@@ -8,12 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Scaling/Normalisation to values between `0` and `10` for metrics ([#69](https://github.com/arup-group/gelato/issues/69)): 
+- Normalisation to values between `0` and `10` for metrics ([#69](https://github.com/arup-group/gelato/issues/69)): 
 `Affordability`, `PT Wait Time`, `Occupancy`, `GHG`, `Travel Time`, `Access to Mobility services`, `Congestion`
 
 ### Fixed
 
-- GHG Emissions KPI results where under-reported, by exaggerating number of people in per capita calculations ([#73](https://github.com/arup-group/gelato/issues/73))
+- GHG Emissions KPI under-reporting bug ([#73](https://github.com/arup-group/gelato/issues/73))
 
 ### Changed
 
