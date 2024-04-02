@@ -10,10 +10,12 @@ In general the following outputs from a MATSim model are expected on top of the 
 - `output_households.xml.gz` (can be empty)
 - `output_facilities.xml.gz` (can be empty)
 - `output_vehicles.xml.gz`
-- `soutput_persons.csv.gz`
-- `soutput_legs.xml.gz`
-- `soutput_trips.xml.gz`
+- `output_persons.csv.gz`
+- `output_legs.xml.gz`
+- `output_trips.xml.gz`
 - `drt_vehicles.xml.gz` (for simulations with DRT mode)
+
+Please note, if you are using a simulation configuration that modifies the inherent structure of the above MATsim outputs, that will impact your KPI calculation. For example, if you have used the Eqasim Cutter extension ([link](https://github.com/eqasim-org/eqasim-java/blob/develop/docs/cutting.md)), this will increase the number of trips in your `output_trips.xml.gz` file and relabel some to an `outside` mode or activity. This will impact how the KPI is structured and calculated, and you will need to validate the outputs are as you intend.
 
 ## Affordability
 
