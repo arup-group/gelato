@@ -21,10 +21,8 @@ public class TestTablesawAccessToMobilityWithLinearNormaliser {
     @Rule
     public TemporaryFolder tmpDir = new TemporaryFolder();
 
-    @Test
-    public void singleAgentHasAccessOnlyToBus() {
+    private TablesawKpiCalculator singleAgentHasAccessOnlyToBusAndDoesntUseIt() {
         TripsTableBuilder tripsTableBuilder = new TripsTableBuilder(tmpDir);
-
         TablesawKpiCalculator kpiCalculator = new KpiCalculatorBuilder(tmpDir)
                 .withTrips(tripsTableBuilder
                         .withTrip("Bobby",
@@ -36,6 +34,13 @@ public class TestTablesawAccessToMobilityWithLinearNormaliser {
                         .withTransitStopWithMode("BusStop", 400.0, 0.0, "bus")
                         .build())
                 .build();
+        return kpiCalculator;
+    }
+
+    @Test
+    public void singleAgentWithBusAccessIs100percBusAccessible() {
+        TablesawKpiCalculator kpiCalculator = singleAgentHasAccessOnlyToBusAndDoesntUseIt();
+
         Map<String, Map<String, Double>> outputKpi = kpiCalculator.writeAccessToMobilityServicesKpi(
                 Path.of(tmpDir.getRoot().getAbsolutePath()),
                 linearNormaliser
@@ -45,10 +50,32 @@ public class TestTablesawAccessToMobilityWithLinearNormaliser {
         assertThat(outputKpi.get("busKpi").get("normalised")).isEqualTo(100.0 * equivalentScalingFactor)
                 .as("Bus KPI output is expected to be 100%, " +
                         "because there is only one agent and they have access to a bus stop.");
+    }
+
+    @Test
+    public void singleAgentWithBusAccessIsNotRailAccessible() {
+        TablesawKpiCalculator kpiCalculator = singleAgentHasAccessOnlyToBusAndDoesntUseIt();
+
+        Map<String, Map<String, Double>> outputKpi = kpiCalculator.writeAccessToMobilityServicesKpi(
+                Path.of(tmpDir.getRoot().getAbsolutePath()),
+                linearNormaliser
+        );
+
         assertThat(outputKpi.get("railKpi").get("actual")).isEqualTo(0.0);
         assertThat(outputKpi.get("railKpi").get("normalised")).isEqualTo(0.0 * equivalentScalingFactor)
                 .as("Rail KPI output is expected to be 0%, " +
                         "because there is only one agent and they don't have access to rail.");
+    }
+
+    @Test
+    public void singleAgentWithBusAccessDidNotUsePT() {
+        TablesawKpiCalculator kpiCalculator = singleAgentHasAccessOnlyToBusAndDoesntUseIt();
+
+        Map<String, Map<String, Double>> outputKpi = kpiCalculator.writeAccessToMobilityServicesKpi(
+                Path.of(tmpDir.getRoot().getAbsolutePath()),
+                linearNormaliser
+        );
+
         assertThat(outputKpi.get("usedPtKpi").get("actual")).isEqualTo(0.0);
         assertThat(outputKpi.get("usedPtKpi").get("normalised")).isEqualTo(0.0 * equivalentScalingFactor)
                 .as("Used PT KPI output is expected to be 0%, " +
@@ -84,10 +111,8 @@ public class TestTablesawAccessToMobilityWithLinearNormaliser {
                         "because there is only one agent and they have access to a bus stop.");
     }
 
-    @Test
-    public void singleAgentHasAccessToRail() {
+    private TablesawKpiCalculator singleAgentHasAccessToRailAndDoesntUseIt() {
         TripsTableBuilder tripsTableBuilder = new TripsTableBuilder(tmpDir);
-
         TablesawKpiCalculator kpiCalculator = new KpiCalculatorBuilder(tmpDir)
                 .withTrips(tripsTableBuilder
                         .withTrip("Bobby",
@@ -99,6 +124,13 @@ public class TestTablesawAccessToMobilityWithLinearNormaliser {
                         .withTransitStopWithMode("RailStop", 800.0, 0.0, "rail")
                         .build())
                 .build();
+        return kpiCalculator;
+    }
+
+    @Test
+    public void singleAgentWithRailAccessIsNotBusAccessible() {
+        TablesawKpiCalculator kpiCalculator = singleAgentHasAccessToRailAndDoesntUseIt();
+
         Map<String, Map<String, Double>> outputKpi = kpiCalculator.writeAccessToMobilityServicesKpi(
                 Path.of(tmpDir.getRoot().getAbsolutePath()),
                 linearNormaliser
@@ -108,20 +140,38 @@ public class TestTablesawAccessToMobilityWithLinearNormaliser {
         assertThat(outputKpi.get("busKpi").get("normalised")).isEqualTo(0.0 * equivalentScalingFactor)
                 .as("Bus KPI output is expected to be 0%, " +
                         "because there is only one agent and they don't have access to a bus stop.");
+    }
+
+    @Test
+    public void singleAgentWithRailAccessIs100percRailAccessible() {
+        TablesawKpiCalculator kpiCalculator = singleAgentHasAccessToRailAndDoesntUseIt();
+
+        Map<String, Map<String, Double>> outputKpi = kpiCalculator.writeAccessToMobilityServicesKpi(
+                Path.of(tmpDir.getRoot().getAbsolutePath()),
+                linearNormaliser
+        );
         assertThat(outputKpi.get("railKpi").get("actual")).isEqualTo(100.0);
         assertThat(outputKpi.get("railKpi").get("normalised")).isEqualTo(100.0 * equivalentScalingFactor)
                 .as("Rail KPI output is expected to be 100%, " +
                         "because there is only one agent and they have access to rail.");
+    }
+
+    @Test
+    public void singleAgentWithRailAccessDidNotUsePT() {
+        TablesawKpiCalculator kpiCalculator = singleAgentHasAccessToRailAndDoesntUseIt();
+
+        Map<String, Map<String, Double>> outputKpi = kpiCalculator.writeAccessToMobilityServicesKpi(
+                Path.of(tmpDir.getRoot().getAbsolutePath()),
+                linearNormaliser
+        );
         assertThat(outputKpi.get("usedPtKpi").get("actual")).isEqualTo(0.0);
         assertThat(outputKpi.get("usedPtKpi").get("normalised")).isEqualTo(0.0 * equivalentScalingFactor)
                 .as("Used PT KPI output is expected to be 0%, " +
                         "because there is only one agent and they didn't use PT");
     }
 
-    @Test
-    public void singleAgentHasAccessToRailAndUsesPT() {
+    private TablesawKpiCalculator singleAgentHasAccessToRailAndUsesIt() {
         TripsTableBuilder tripsTableBuilder = new TripsTableBuilder(tmpDir);
-
         TablesawKpiCalculator kpiCalculator = new KpiCalculatorBuilder(tmpDir)
                 .withTrips(tripsTableBuilder.reset()
                         .withTrip("Bobby",
@@ -137,6 +187,13 @@ public class TestTablesawAccessToMobilityWithLinearNormaliser {
                         .withTransitStopWithMode("RailStop", 800.0, 0.0, "rail")
                         .build())
                 .build();
+        return kpiCalculator;
+    }
+
+    @Test
+    public void singleAgentWhoUsesRailIs100percRailAccessible() {
+        TablesawKpiCalculator kpiCalculator = singleAgentHasAccessToRailAndUsesIt();
+
         Map<String, Map<String, Double>> outputKpi = kpiCalculator.writeAccessToMobilityServicesKpi(
                 Path.of(tmpDir.getRoot().getAbsolutePath()),
                 linearNormaliser
@@ -146,6 +203,17 @@ public class TestTablesawAccessToMobilityWithLinearNormaliser {
         assertThat(outputKpi.get("railKpi").get("normalised")).isEqualTo(100.0 * equivalentScalingFactor)
                 .as("Rail KPI output is expected to be 100%, " +
                         "because there is only one agent and they have access to rail.");
+    }
+
+    @Test
+    public void singleAgentWhoUsesRailResultsIn100percUtilisedPT() {
+        TablesawKpiCalculator kpiCalculator = singleAgentHasAccessToRailAndUsesIt();
+
+        Map<String, Map<String, Double>> outputKpi = kpiCalculator.writeAccessToMobilityServicesKpi(
+                Path.of(tmpDir.getRoot().getAbsolutePath()),
+                linearNormaliser
+        );
+
         assertThat(outputKpi.get("usedPtKpi").get("actual")).isEqualTo(100.0);
         assertThat(outputKpi.get("usedPtKpi").get("normalised")).isEqualTo(100.0 * equivalentScalingFactor)
                 .as("Used PT KPI output is expected to be 100%, " +
@@ -269,8 +337,7 @@ public class TestTablesawAccessToMobilityWithLinearNormaliser {
                         "because one agent has access to rail and the other doesn't.");
     }
 
-    @Test
-    public void twoAgentsWithDifferentPTAccessButBothUsePT() {
+    private TablesawKpiCalculator twoAgentsWithDifferentPTAccessButBothUsePT() {
         TripsTableBuilder tripsTableBuilder = new TripsTableBuilder(tmpDir);
 
         TablesawKpiCalculator kpiCalculator = new KpiCalculatorBuilder(tmpDir)
@@ -296,6 +363,13 @@ public class TestTablesawAccessToMobilityWithLinearNormaliser {
                         .withTransitStopWithMode("BusStop", 800.0, 0.0, "bus")
                         .build())
                 .build();
+        return kpiCalculator;
+    }
+
+    @Test
+    public void twoAgentsWithPTAccessAndUseItAre50percBusAccessible() {
+        TablesawKpiCalculator kpiCalculator = twoAgentsWithDifferentPTAccessButBothUsePT();
+
         Map<String, Map<String, Double>> outputKpi = kpiCalculator.writeAccessToMobilityServicesKpi(
                 Path.of(tmpDir.getRoot().getAbsolutePath()),
                 linearNormaliser
@@ -305,10 +379,30 @@ public class TestTablesawAccessToMobilityWithLinearNormaliser {
         assertThat(outputKpi.get("busKpi").get("normalised")).isEqualTo(50.0 * equivalentScalingFactor)
                 .as("Bus KPI output is expected to be 50%, " +
                         "because one agent has access to bus and the other doesn't.");
+    }
+
+    @Test
+    public void twoAgentsWithPTAccessAndUseItAre50percRailAccessible() {
+        TablesawKpiCalculator kpiCalculator = twoAgentsWithDifferentPTAccessButBothUsePT();
+
+        Map<String, Map<String, Double>> outputKpi = kpiCalculator.writeAccessToMobilityServicesKpi(
+                Path.of(tmpDir.getRoot().getAbsolutePath()),
+                linearNormaliser
+        );
         assertThat(outputKpi.get("railKpi").get("actual")).isEqualTo(50.0);
         assertThat(outputKpi.get("railKpi").get("normalised")).isEqualTo(50.0 * equivalentScalingFactor)
                 .as("Rail KPI output is expected to be 50%, " +
                         "because one agent has access to rail and the other doesn't.");
+    }
+
+    @Test
+    public void twoAgentsWithPTAccessAndUseItResultIn100percUtilisedPT() {
+        TablesawKpiCalculator kpiCalculator = twoAgentsWithDifferentPTAccessButBothUsePT();
+
+        Map<String, Map<String, Double>> outputKpi = kpiCalculator.writeAccessToMobilityServicesKpi(
+                Path.of(tmpDir.getRoot().getAbsolutePath()),
+                linearNormaliser
+        );
         assertThat(outputKpi.get("usedPtKpi").get("actual")).isEqualTo(100.0);
         assertThat(outputKpi.get("usedPtKpi").get("normalised")).isEqualTo(100.0 * equivalentScalingFactor)
                 .as("Used KPI output is expected to be 100%, " +
