@@ -40,8 +40,6 @@ public class TripBuilder {
         }
     }
 
-    public TripBuilder() {}
-
     public TripBuilder withStartLocation(double startX, double startY) {
         trip.setStartActivity(trip.startActivity.getType(), trip.startActivity.getLinkId().toString(), new Coord(startX, startY));
         return this;

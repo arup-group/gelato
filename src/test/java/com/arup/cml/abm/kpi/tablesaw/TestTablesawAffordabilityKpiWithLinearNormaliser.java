@@ -154,6 +154,32 @@ public class TestTablesawAffordabilityKpiWithLinearNormaliser {
                         "all travel to the low income group is expected to be 1.33, and 0.133 after scaling.");
     }
 
+    @Test
+    public void noIncomeOrNonIncomeSubpopGivesNoResult() {
+        String bobby = "Bobby";
+        String bobbySubpop = "default";
+        Integer bobbyTripLength = 10;
 
+        TablesawKpiCalculator kpiCalculator = new KpiCalculatorBuilder(tmpDir)
+                .withLegs(new LegsTableBuilder(tmpDir).reset()
+                        .withLeg(bobby, "bobby_1", new LegBuilder().withDistance(bobbyTripLength).withMode("car").build())
+                        .build())
+                .withPersons(new PersonsBuilder(tmpDir)
+                        .withPersonWithMissingIncome(bobby, bobbySubpop)
+                        .build())
+                .withScoring(new ScoringConfigBuilder()
+                        .withMonetaryCosts(bobbySubpop, "car", 1.0, 1.0)
+                        .build())
+                .build();
+        Map<String, Double> outputKpi = kpiCalculator.writeAffordabilityKpi(
+                Path.of(tmpDir.getRoot().getAbsolutePath()),
+                linearNormaliser
+        );
+
+        assertThat(outputKpi.get("actual")).isEqualTo(-1);
+        assertThat(outputKpi.get("normalised")).isEqualTo(-1)
+                .as("No income data and no income aware subpopulations are not able to produce " +
+                        "a meaningful result");
+    }
 }
 
