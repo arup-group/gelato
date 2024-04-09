@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] -
+
+### Added
+
+- Normalisation to values between `0` and `10` for metrics ([#69](https://github.com/arup-group/gelato/issues/69)): 
+`Affordability`, `PT Wait Time`, `Occupancy`, `GHG`, `Travel Time`, `Access to Mobility services`, `Congestion`
+
+### Fixed
+
+- GHG Emissions KPI under-reporting bug ([#73](https://github.com/arup-group/gelato/issues/73))
+
+### Changed
+
+-
 
 ## [0.0.3-alpha] - 2024-03-07
 

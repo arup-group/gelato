@@ -1,6 +1,7 @@
 package com.arup.cml.abm.kpi.matsim.run;
 
 import com.arup.cml.abm.kpi.KpiCalculator;
+import com.arup.cml.abm.kpi.LinearNormaliser;
 import com.arup.cml.abm.kpi.data.MoneyLog;
 import com.arup.cml.abm.kpi.domain.NetworkLinkLog;
 import com.arup.cml.abm.kpi.matsim.MatsimUtils;
@@ -92,17 +93,20 @@ public class MatsimKpiGenerator implements Runnable {
                 CompressionType.gzip
         );
 
-        kpiCalculator.writeAffordabilityKpi(outputDir);
-        kpiCalculator.writePtWaitTimeKpi(outputDir);
+        double leftIntervalBound = 0.0;
+        double rightIntervalBound = 10.0;
+        double secondsInAMinute = 60.0;
+        kpiCalculator.writeAffordabilityKpi(outputDir, new LinearNormaliser(leftIntervalBound, rightIntervalBound, 1.25, 1));
+        kpiCalculator.writePtWaitTimeKpi(outputDir, new LinearNormaliser(leftIntervalBound, rightIntervalBound, 15 * secondsInAMinute, 5 * secondsInAMinute));
         kpiCalculator.writeModalSplitKpi(outputDir);
-        kpiCalculator.writeOccupancyRateKpi(outputDir);
+        kpiCalculator.writeOccupancyRateKpi(outputDir, new LinearNormaliser(leftIntervalBound, rightIntervalBound, 0.2, 0.6));
         kpiCalculator.writeVehicleKMKpi(outputDir);
         kpiCalculator.writePassengerKMKpi(outputDir);
         kpiCalculator.writeSpeedKpi(outputDir);
-        kpiCalculator.writeGHGKpi(outputDir);
-        kpiCalculator.writeAccessToMobilityServicesKpi(outputDir);
-        kpiCalculator.writeCongestionKpi(outputDir);
-        kpiCalculator.writeTravelTimeKpi(outputDir);
+        kpiCalculator.writeGHGKpi(outputDir, new LinearNormaliser(leftIntervalBound, rightIntervalBound, 8.87, 0.0));
+        kpiCalculator.writeAccessToMobilityServicesKpi(outputDir, new LinearNormaliser(leftIntervalBound, rightIntervalBound, 0.0, 100.0));
+        kpiCalculator.writeCongestionKpi(outputDir, new LinearNormaliser(leftIntervalBound, rightIntervalBound, 3.0, 1.25));
+        kpiCalculator.writeTravelTimeKpi(outputDir, new LinearNormaliser(leftIntervalBound, rightIntervalBound, 90.0, 10.0));
         kpiCalculator.writeMobilitySpaceUsageKpi(outputDir);
         MemoryObserver.stop();
     }

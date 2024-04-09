@@ -3,15 +3,16 @@ package com.arup.cml.abm.kpi;
 import tech.tablesaw.api.Table;
 
 import java.nio.file.Path;
+import java.util.Map;
 
 public interface KpiCalculator {
-    double writeAffordabilityKpi(Path outputDirectory);
+    Map<String, Double> writeAffordabilityKpi(Path outputDirectory, Normaliser normaliser);
 
-    void writePtWaitTimeKpi(Path outputDirectory);
+    Map<String, Double> writePtWaitTimeKpi(Path outputDirectory, Normaliser normaliser);
 
     void writeModalSplitKpi(Path outputDirectory);
 
-    void writeOccupancyRateKpi(Path outputDirectory);
+    Map<String, Double> writeOccupancyRateKpi(Path outputDirectory, Normaliser normaliser);
 
     double writeVehicleKMKpi(Path outputDirectory);
 
@@ -19,13 +20,13 @@ public interface KpiCalculator {
 
     void writeSpeedKpi(Path outputDirectory);
 
-    double writeGHGKpi(Path outputDirectory);
+    Map<String, Double> writeGHGKpi(Path outputDirectory, Normaliser normaliser);
 
-    double writeTravelTimeKpi(Path outputDirectory);
+    Map<String, Double> writeTravelTimeKpi(Path outputDirectory, Normaliser normaliser);
 
-    Table writeAccessToMobilityServicesKpi(Path outputDirectory);
+    Map<String, Map<String, Double>> writeAccessToMobilityServicesKpi(Path outputDirectory, Normaliser normaliser);
 
-    Table writeCongestionKpi(Path directory);
+    Table writeCongestionKpi(Path directory, Normaliser normaliser);
 
     double writeMobilitySpaceUsageKpi(Path outputDirectory);
 }

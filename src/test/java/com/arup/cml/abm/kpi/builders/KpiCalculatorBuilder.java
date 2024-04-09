@@ -25,12 +25,12 @@ public class KpiCalculatorBuilder {
     MoneyLog moneyLog = new MoneyLog();
     String persons;
     ActivityFacilities facilities = new FacilitiesBuilder().build();
-    ScoringConfigGroup scoring = new ScoringConfigGroup();
+    ScoringConfigGroup scoring = new ScoringConfigBuilder().build();
 
     public KpiCalculatorBuilder(TemporaryFolder tmpDir) {
         this.tmpDir = tmpDir;
-        this.legs = new LegsBuilder(tmpDir).build();
-        this.trips = new TripsBuilder(tmpDir).build();
+        this.legs = new LegsTableBuilder(tmpDir).build();
+        this.trips = new TripsTableBuilder(tmpDir).build();
         this.persons = new PersonsBuilder(tmpDir).build();
     }
 
@@ -71,6 +71,11 @@ public class KpiCalculatorBuilder {
 
     public KpiCalculatorBuilder withFacilities(ActivityFacilities facilities) {
         this.facilities = facilities;
+        return this;
+    }
+
+    public KpiCalculatorBuilder withScoring(ScoringConfigGroup scoring) {
+        this.scoring = scoring;
         return this;
     }
 
