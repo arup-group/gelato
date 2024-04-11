@@ -30,6 +30,8 @@ public class MatsimUtils {
     public static final double DEFAULT_CAR_EMISSIONS_FACTOR = 0.222;
     public static final String DEFAULT_BUS_FUEL_TYPE = "cng";
     public static final double DEFAULT_BUS_EMISSIONS_FACTOR = 1.372;
+    public static final String DEFAULT_DRT_FUEL_TYPE = "ev";
+    public static final double DEFAULT_DRT_EMISSIONS_FACTOR = 0.076;
     private Path matsimOutputDir;
     private Config matsimConfig;
     private Scenario matsimScenario;
@@ -252,6 +254,7 @@ public class MatsimUtils {
             switch (vehicleType.getNetworkMode()) {
                 case "car" -> setDefaultsForEngineInformationIfNotAvailable(vehicleType, DEFAULT_CAR_FUEL_TYPE, DEFAULT_CAR_EMISSIONS_FACTOR);
                 case "bus" -> setDefaultsForEngineInformationIfNotAvailable(vehicleType, DEFAULT_BUS_FUEL_TYPE, DEFAULT_BUS_EMISSIONS_FACTOR);
+                case "drt" -> setDefaultsForEngineInformationIfNotAvailable(vehicleType, DEFAULT_DRT_FUEL_TYPE, DEFAULT_DRT_EMISSIONS_FACTOR);
             }
         });
         return vehicles;

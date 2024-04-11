@@ -10,10 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Normalisation to values between `0` and `10` for metrics ([#69](https://github.com/arup-group/gelato/issues/69)): 
 `Affordability`, `PT Wait Time`, `Occupancy`, `GHG`, `Travel Time`, `Access to Mobility services`, `Congestion`
+- EV emissions factors for DRT [#81](https://github.com/arup-group/gelato/issues/81)
 
 ### Fixed
 
 - GHG Emissions KPI under-reporting bug ([#73](https://github.com/arup-group/gelato/issues/73))
+- Added default values for DRT (previously assumed as zero) [#81](https://github.com/arup-group/gelato/issues/81)
 
 ### Changed
 

@@ -72,15 +72,19 @@ way:
 </vehicleType>
 ```
 
-Otherwise, the factors will default to `"fuelType"="petrol"` and `"emissionsFactor"=0.222` for personal agent's cars and
+Otherwise, the factors will default to `"fuelType"="petrol"` and `"emissionsFactor"=0.222` for personal agent's cars, `"fuelType"="ev"` and `"emissionsFactor"=0.076` for
 drt vehicles, and `"fuelType"="cng"` and `"emissionsFactor"=1.372` for buses. 
 Other PT vehicles are not defaulted and do not contribute to emission calculations.
 
-We recommend setting fuel types and emission factors for LGVs and HGVs, otherwise they may will regarded as personal cars.
-The defaults we use are:
+We recommend setting fuel types and emission factors for LGVs and HGVs, otherwise they will not have an emissions estimate.
+The defaults we suggest are:
 
 - LGV: `"fuelType"="petrol"`, `"emissionsFactor"=0.317`
 - HGV: `"fuelType"="diesel"`, `"emissionsFactor"=0.761`
+
+The above values are all based on the European Environmental Agency guidebook. 
+Car, LGV, HGV, and Buses emissions factors are derived from Tables 3-12 and 3-15 from their [guidebook](https://www.eea.europa.eu/publications/emep-eea-guidebook-2023/part-b-sectoral-guidance-chapters/1-energy/1-a-combustion/1-a-3-b-i/view)
+EV emissions factors for cars are from page 32 of their [report](https://www.eea.europa.eu/publications/electric-vehicles-from-life-cycle) estimating life cycle emissions.
 
 # Access to Mobility Services
 
