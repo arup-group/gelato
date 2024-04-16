@@ -4,7 +4,7 @@
   <groupId>com.arup.cml</groupId>
   <artifactId>gelato</artifactId>
   <name>Gelato</name>
-  <version>0.0.3-alpha</version>
+  <version>0.0.4-alpha</version>
   <description>A command-line post-processing tool to turn MATSim ABM outputs into KPI metrics</description>
   <inceptionYear>2023</inceptionYear>
   <licenses>
