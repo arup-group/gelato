@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] -
+## [0.0.4-alpha] - 2024-04-16
 
 ### Added
 
@@ -17,9 +17,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GHG Emissions KPI under-reporting bug ([#73](https://github.com/arup-group/gelato/issues/73))
 - Added default values for DRT (previously assumed as zero) [#81](https://github.com/arup-group/gelato/issues/81)
 
-### Changed
-
--
 
 ## [0.0.3-alpha] - 2024-03-07
 
@@ -49,6 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - transit stops now include mode of transport using the stop ([#62](https://github.com/arup-group/gelato/issues/62))
   - vehicles get fuel types and emission factors ([#60](https://github.com/arup-group/gelato/issues/60))
   - trips and legs have an additional column reporting monetary cost of the trip or leg ([#59](https://github.com/arup-group/gelato/issues/59))
+
 
 ## [0.0.2-alpha] - 2024-02-21
 
