@@ -27,7 +27,7 @@ public class TestTablesawVehicleKmKpi {
                         .withNetworkLinkWithLength("someLink", "A", "B", metreLength)
                         .build())
                 .withVehicles(new VehiclesBuilder()
-                        .withVehicle("someCar", "car", "car")
+                        .withVehicle("someCar", "car")
                         .build())
                 .withLinkLog(new LinkLogBuilder()
                         .withEntry("someCar", "someLink", (9 * 60 * 60), (9 * 60 * 60) + 25)

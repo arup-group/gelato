@@ -11,6 +11,11 @@ public class LinkLogBuilder {
         return this;
     }
 
+    public LinkLogBuilder withOccupant(String vehicleID, String personID) {
+        linkLog.personBoardsVehicle(vehicleID, personID);
+        return this;
+    }
+
     public LinkLog build() {
         return this.linkLog;
     }

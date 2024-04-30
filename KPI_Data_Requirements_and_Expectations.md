@@ -10,10 +10,12 @@ In general the following outputs from a MATSim model are expected on top of the 
 - `output_households.xml.gz` (can be empty)
 - `output_facilities.xml.gz` (can be empty)
 - `output_vehicles.xml.gz`
-- `soutput_persons.csv.gz`
-- `soutput_legs.xml.gz`
-- `soutput_trips.xml.gz`
+- `output_persons.csv.gz`
+- `output_legs.xml.gz`
+- `output_trips.xml.gz`
 - `drt_vehicles.xml.gz` (for simulations with DRT mode)
+
+Please note, if you are using a simulation configuration that modifies the inherent structure of the above MATsim outputs, that will impact your KPI calculation. For example, if you have used the Eqasim Cutter extension ([link](https://github.com/eqasim-org/eqasim-java/blob/develop/docs/cutting.md)), this will increase the number of trips in your `output_trips.xml.gz` file and relabel some to an `outside` mode or activity. This will impact how the KPI is structured and calculated, and you will need to validate the outputs are as you intend.
 
 ## Affordability
 
@@ -70,15 +72,19 @@ way:
 </vehicleType>
 ```
 
-Otherwise, the factors will default to `"fuelType"="petrol"` and `"emissionsFactor"=0.222` for personal agent's cars and
+Otherwise, the factors will default to `"fuelType"="petrol"` and `"emissionsFactor"=0.222` for personal agent's cars, `"fuelType"="ev"` and `"emissionsFactor"=0.076` for
 drt vehicles, and `"fuelType"="cng"` and `"emissionsFactor"=1.372` for buses. 
 Other PT vehicles are not defaulted and do not contribute to emission calculations.
 
-We recommend setting fuel types and emission factors for LGVs and HGVs, otherwise they may will regarded as personal cars.
-The defaults we use are:
+We recommend setting fuel types and emission factors for LGVs and HGVs, otherwise they will not have an emissions estimate.
+The defaults we suggest are:
 
 - LGV: `"fuelType"="petrol"`, `"emissionsFactor"=0.317`
 - HGV: `"fuelType"="diesel"`, `"emissionsFactor"=0.761`
+
+The above values are all based on the European Environmental Agency guidebook. 
+Car, LGV, HGV, and Buses emissions factors are derived from Tables 3-12 and 3-15 from their [guidebook](https://www.eea.europa.eu/publications/emep-eea-guidebook-2023/part-b-sectoral-guidance-chapters/1-energy/1-a-combustion/1-a-3-b-i/view)
+EV emissions factors for cars are from page 32 of their [report](https://www.eea.europa.eu/publications/electric-vehicles-from-life-cycle) estimating life cycle emissions.
 
 # Access to Mobility Services
 
