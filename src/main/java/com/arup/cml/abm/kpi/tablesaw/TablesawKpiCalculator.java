@@ -64,17 +64,17 @@ public class TablesawKpiCalculator implements KpiCalculator {
     }
 
     public TablesawKpiCalculator(Network network,
-                                 TransitSchedule schedule,
-                                 Vehicles vehicles,
-                                 NetworkLinkLog linkLog,
-                                 InputStream personInputStream,
-                                 MoneyLog moneyLog,
-                                 ScoringConfigGroup scoring,
-                                 ActivityFacilities facilities,
-                                 InputStream legsInputStream,
-                                 InputStream tripsInputStream,
-                                 Path outputDirectory,
-                                 CompressionType compressionType) {
+            TransitSchedule schedule,
+            Vehicles vehicles,
+            NetworkLinkLog linkLog,
+            InputStream personInputStream,
+            MoneyLog moneyLog,
+            ScoringConfigGroup scoring,
+            ActivityFacilities facilities,
+            InputStream legsInputStream,
+            InputStream tripsInputStream,
+            Path outputDirectory,
+            CompressionType compressionType) {
         this.compressionType = compressionType;
         createPeopleTables(personInputStream, scoring);
         this.legs = readLegs(legsInputStream, personModeScores, moneyLog);
@@ -149,15 +149,11 @@ public class TablesawKpiCalculator implements KpiCalculator {
                     start_facility_id.append(
                             String.format("%s_%s",
                                     row.getString("start_activity_type"),
-                                    row.getString("start_link")
-                            )
-                    );
+                                    row.getString("start_link")));
                     end_facility_id.append(
                             String.format("%s_%s",
                                     row.getString("end_activity_type"),
-                                    row.getString("end_link")
-                            )
-                    );
+                                    row.getString("end_link")));
                 }
             });
             trips.addColumns(start_facility_id, end_facility_id);
@@ -181,11 +177,13 @@ public class TablesawKpiCalculator implements KpiCalculator {
                 .selectColumns("person", "income", "subpopulation", "monetaryCostOfTravel")
                 .setName("Monetary Travel Costs");
 
-        // we decide which income column we should use, and what name is given to as the low income bracket
+        // we decide which income column we should use, and what name is given to as the
+        // low income bracket
         String incomeColumnName = null;
         String lowIncomeName = null;
         if (table.column("income").countMissing() != table.column("income").size()) {
-            // numeric income values present, so we assign income percentiles and use this new column
+            // numeric income values present, so we assign income percentiles and use this
+            // new column
             double perc_25 = table.doubleColumn("income").percentile(25.0);
             double perc_50 = table.doubleColumn("income").percentile(50.0);
             double perc_75 = table.doubleColumn("income").percentile(75.0);
@@ -242,7 +240,8 @@ public class TablesawKpiCalculator implements KpiCalculator {
                 table.column("person").size();
         overallRow.doubleColumn("mean_daily_monetary_cost").append(overallAverageCost);
         intermediate.append(overallRow);
-        this.writeTableCompressed(intermediate, String.format("%s/intermediate-affordability.csv", outputDirectory), this.compressionType);
+        this.writeTableCompressed(intermediate, String.format("%s/intermediate-affordability.csv", outputDirectory),
+                this.compressionType);
 
         if (lowIncomeName != null) {
             // average daily cost for agents in the low income bracket
@@ -282,8 +281,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
         // pull out legs with PT stops information
         Table table = legs.where(
                 legs.column("access_stop_id").isNotMissing()
-                        .or(legs.stringColumn("mode").isEqualTo("drt"))
-        );
+                        .or(legs.stringColumn("mode").isEqualTo("drt")));
 
         // convert H:M:S format to seconds
         IntColumn wait_time_seconds = IntColumn.create("wait_time_seconds");
@@ -297,17 +295,16 @@ public class TablesawKpiCalculator implements KpiCalculator {
         table.column("dep_time")
                 .forEach(time -> hour.append(
                         // MATSim departure times look like "09:03:04" - grab the hour value
-                        Integer.parseInt(time.toString().split(":")[0])
-                ));
+                        Integer.parseInt(time.toString().split(":")[0])));
         table.addColumns(hour);
 
         // ***** proposed intermediate output - average by mode, stop id and hour
-        Table intermediate =
-                table
-                        .summarize("wait_time_seconds", mean)
-                        .by("mode", "access_stop_id", "hour")
-                        .setName("Average wait time at stops by mode");
-        this.writeTableCompressed(intermediate, String.format("%s/intermediate-pt-wait-time.csv", outputDirectory), this.compressionType);
+        Table intermediate = table
+                .summarize("wait_time_seconds", mean)
+                .by("mode", "access_stop_id", "hour")
+                .setName("Average wait time at stops by mode");
+        this.writeTableCompressed(intermediate, String.format("%s/intermediate-pt-wait-time.csv", outputDirectory),
+                this.compressionType);
 
         // kpi output
         double kpi =
@@ -352,24 +349,23 @@ public class TablesawKpiCalculator implements KpiCalculator {
         long numberOfVehicles = table.selectColumns("vehicleID").dropDuplicateRows().stream().count();
 
         // average by vehicle
-        Table averageOccupancyPerVehicle =
-                table
-                        .summarize("numberOfPeople", "capacity", mean)
-                        .by("vehicleID")
-                        .setName("Occupancy Rate");
+        Table averageOccupancyPerVehicle = table
+                .summarize("numberOfPeople", "capacity", mean)
+                .by("vehicleID")
+                .setName("Occupancy Rate");
         averageOccupancyPerVehicle.addColumns(
                 averageOccupancyPerVehicle
                         .doubleColumn("Mean [numberOfPeople]")
-                        .divide(averageOccupancyPerVehicle.doubleColumn("Mean [capacity]"))
-        );
+                        .divide(averageOccupancyPerVehicle.doubleColumn("Mean [capacity]")));
         Table intermediate = Table.create(
                 averageOccupancyPerVehicle.stringColumn("vehicleID"),
                 averageOccupancyPerVehicle.doubleColumn("Mean [numberOfPeople]"),
                 averageOccupancyPerVehicle.doubleColumn("Mean [capacity]").setName("capacity"),
                 round(averageOccupancyPerVehicle.doubleColumn("Mean [numberOfPeople] / Mean [capacity]"), 2)
-                        .setName("Average occupancy rate")
-        ).setName("Occupancy Rate");
-        this.writeTableCompressed(intermediate, String.format("%s/intermediate-occupancy-rate.csv", outputDirectory), this.compressionType);
+                        .setName("Average occupancy rate"))
+                .setName("Occupancy Rate");
+        this.writeTableCompressed(intermediate, String.format("%s/intermediate-occupancy-rate.csv", outputDirectory),
+                this.compressionType);
 
         double kpi = averageOccupancyPerVehicle.doubleColumn("Mean [numberOfPeople] / Mean [capacity]").sum();
         kpi = kpi / numberOfVehicles;
@@ -400,18 +396,19 @@ public class TablesawKpiCalculator implements KpiCalculator {
                 table
                         .doubleColumn("Sum [length]")
                         .divide(1000)
-                        .setName("distance_km")
-        );
+                        .setName("distance_km"));
 
         Table intermediate = table
                 .joinOn("vehicleID")
                 .inner(vehicles.selectColumns("vehicleID", "mode"));
         intermediate.setName("Vehicle KM per vehicle");
-        this.writeTableCompressed(intermediate, String.format("%s/intermediate-vehicle-km.csv", outputDirectory), this.compressionType);
+        this.writeTableCompressed(intermediate, String.format("%s/intermediate-vehicle-km.csv", outputDirectory),
+                this.compressionType);
 
         double kpi = round(table.doubleColumn("distance_km").sum(), 2);
         LOGGER.info("Vehicle KM KPI {}", kpi);
-        writeContentToFile(String.format("%s/kpi-vehicle-km.csv", outputDirectory), String.valueOf(kpi), this.compressionType);
+        writeContentToFile(String.format("%s/kpi-vehicle-km.csv", outputDirectory), String.valueOf(kpi),
+                this.compressionType);
         return kpi;
     }
 
@@ -427,13 +424,14 @@ public class TablesawKpiCalculator implements KpiCalculator {
         intermediate.addColumns(
                 intermediate.doubleColumn("traveled_distance")
                         .divide(1000)
-                        .setName("traveled_distance_km")
-        );
-        this.writeTableCompressed(intermediate, String.format("%s/intermediate-passenger-km.csv", outputDirectory), this.compressionType);
+                        .setName("traveled_distance_km"));
+        this.writeTableCompressed(intermediate, String.format("%s/intermediate-passenger-km.csv", outputDirectory),
+                this.compressionType);
 
         double kpi = round(trips.numberColumn("traveled_distance").divide(1000).sum(), 2);
         LOGGER.info("Passenger KM KPI: {} km", kpi);
-        writeContentToFile(String.format("%s/kpi-passenger-km.csv", outputDirectory), String.valueOf(kpi), this.compressionType);
+        writeContentToFile(String.format("%s/kpi-passenger-km.csv", outputDirectory), String.valueOf(kpi),
+                this.compressionType);
     }
 
     @Override
@@ -442,17 +440,15 @@ public class TablesawKpiCalculator implements KpiCalculator {
         networkLinks = sanitiseInfiniteColumnValuesInTable(networkLinks, networkLinks.doubleColumn("length"));
 
         // add length of links to log
-        Table table =
-                linkLogTable
-                        .joinOn("linkID")
-                        .inner(networkLinks.selectColumns("linkID", "length"));
+        Table table = linkLogTable
+                .joinOn("linkID")
+                .inner(networkLinks.selectColumns("linkID", "length"));
 
         // compute time travelled
         table.addColumns(
                 table.doubleColumn("endTime")
                         .subtract(table.doubleColumn("startTime"))
-                        .setName("travelTime")
-        );
+                        .setName("travelTime"));
 
         // compute speed
         table.addColumns(
@@ -460,21 +456,19 @@ public class TablesawKpiCalculator implements KpiCalculator {
                         .divide(1000)
                         .divide(
                                 table.doubleColumn("travelTime")
-                                        .divide(60 * 60)
-                        )
-                        .setName("travelSpeedKMPH")
-        );
+                                        .divide(60 * 60))
+                        .setName("travelSpeedKMPH"));
 
         // put in hour bins
         IntColumn hour = IntColumn.create("hour");
         table.doubleColumn("endTime")
                 .forEach(time -> hour.append(
-                        (int) Math.floor(time / (60 * 60))
-                ));
+                        (int) Math.floor(time / (60 * 60))));
         table.addColumns(hour);
 
         // average travelSpeedKMPH by link (rows) and hour (columns)
-        // TODO is it possible to order columns? atm sorted with integers as strings, not a timeline
+        // TODO is it possible to order columns? atm sorted with integers as strings,
+        // not a timeline
         // TODO geojson output
         // TODO missing data results in empty result
         Table kpi = table
@@ -533,12 +527,12 @@ public class TablesawKpiCalculator implements KpiCalculator {
                         (int) Math.round(Time.parseTime(time) / 60)));
         trips.addColumns(trav_time_minutes);
 
-        Table intermediate =
-                trips
-                        .summarize("trav_time_minutes", mean)
-                        .by("end_activity_type")
-                        .setName("Travel Time by trip purpose");
-        this.writeTableCompressed(intermediate, String.format("%s/intermediate-travel-time.csv", outputDirectory), this.compressionType);
+        Table intermediate = trips
+                .summarize("trav_time_minutes", mean)
+                .by("end_activity_type")
+                .setName("Travel Time by trip purpose");
+        this.writeTableCompressed(intermediate, String.format("%s/intermediate-travel-time.csv", outputDirectory),
+                this.compressionType);
 
         double kpi = trips.intColumn("trav_time_minutes").mean();
 
@@ -585,19 +579,15 @@ public class TablesawKpiCalculator implements KpiCalculator {
                 table,
                 scheduleStops.where(scheduleStops.stringColumn("mode").isEqualTo("bus")),
                 400.0,
-                "bus_access_400m"
-        );
+                "bus_access_400m");
         LOGGER.info("Checking access to rail and subway stops");
         table = addPTAccessColumnWithinDistance(
                 table,
                 scheduleStops.where(
                         scheduleStops.stringColumn("mode").isEqualTo("rail").or(
-                                scheduleStops.stringColumn("mode").isEqualTo("subway")
-                        )
-                ),
+                                scheduleStops.stringColumn("mode").isEqualTo("subway"))),
                 800.0,
-                "rail_access_800m"
-        );
+                "rail_access_800m");
         LOGGER.info("Writing intermediate output");
         this.writeTableCompressed(
                 table,
@@ -655,7 +645,8 @@ public class TablesawKpiCalculator implements KpiCalculator {
         table.addColumns(
                 BooleanColumn.create(columnName,
                         Collections.nCopies(table.column("person").size(), false)));
-        // to collect people with access, we remove them from table to not process them again
+        // to collect people with access, we remove them from table to not process them
+        // again
         Table trueTable = table.emptyCopy();
 
         LOGGER.info("Iterating over {} PT stops to calculate person distances from each", stops.rowCount());
@@ -668,12 +659,10 @@ public class TablesawKpiCalculator implements KpiCalculator {
             table.addColumns(
                     table.doubleColumn("x").subtract(x).power(2)
                             .add(table.doubleColumn("y").subtract(y).power(2))
-                            .setName("circleCalc")
-            );
+                            .setName("circleCalc"));
             table.booleanColumn(columnName).set(
                     table.doubleColumn("circleCalc").isLessThanOrEqualTo(Math.pow(distance, 2)),
-                    true
-            );
+                    true);
             table.removeColumns("circleCalc");
             trueTable.append(table.where(table.booleanColumn(columnName).isTrue()));
             table = table.dropWhere(table.booleanColumn(columnName).isTrue());
@@ -687,12 +676,10 @@ public class TablesawKpiCalculator implements KpiCalculator {
         LOGGER.info("Writing Congestion KPIs to {}", outputDirectory);
 
         // compute travel time on links
-        Table table =
-                linkLogTable.addColumns(
-                        linkLogTable.doubleColumn("endTime")
-                                .subtract(linkLogTable.doubleColumn("startTime"))
-                                .setName("travelTime")
-                );
+        Table table = linkLogTable.addColumns(
+                linkLogTable.doubleColumn("endTime")
+                        .subtract(linkLogTable.doubleColumn("startTime"))
+                        .setName("travelTime"));
 
         // compute free flow time on links (length / freespeed)
         Table sanitisedNetworkLinks = sanitiseInfiniteColumnValuesInTable(
@@ -700,36 +687,32 @@ public class TablesawKpiCalculator implements KpiCalculator {
         sanitisedNetworkLinks.addColumns(
                 sanitisedNetworkLinks.doubleColumn("length")
                         .divide(sanitisedNetworkLinks.doubleColumn("freespeed"))
-                        .setName("freeFlowTime")
-        );
+                        .setName("freeFlowTime"));
 
         // add freeflow time to link log
-        table =
-                table
-                        .joinOn("linkID")
-                        .inner(sanitisedNetworkLinks.selectColumns("linkID", "freeFlowTime"));
+        table = table
+                .joinOn("linkID")
+                .inner(sanitisedNetworkLinks.selectColumns("linkID", "freeFlowTime"));
 
         // compute delay ratio
         table.addColumns(
                 table.doubleColumn("travelTime")
                         .divide(table.doubleColumn("freeFlowTime"))
-                        .setName("delayRatio")
-        );
+                        .setName("delayRatio"));
 
         // put in hour bins
         IntColumn hour = IntColumn.create("hour");
         table.doubleColumn("endTime")
                 .forEach(time -> hour.append(
-                        (int) Math.floor(time / (60 * 60))
-                ));
+                        (int) Math.floor(time / (60 * 60))));
         table.addColumns(hour);
 
         // intermediate output data
-        Table intermediate =
-                table
-                        .summarize("delayRatio", mean)
-                        .by("linkID", "mode", "hour");
-        this.writeTableCompressed(intermediate, String.format("%s/intermediate-congestion.csv", outputDirectory), this.compressionType);
+        Table intermediate = table
+                .summarize("delayRatio", mean)
+                .by("linkID", "mode", "hour");
+        this.writeTableCompressed(intermediate, String.format("%s/intermediate-congestion.csv", outputDirectory),
+                this.compressionType);
 
         // kpi output
         Table kpi =
@@ -789,8 +772,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
         intermediate.addColumns(
                 intermediate.numberColumn("max_occupancy")
                         .multiply(11.5)
-                        .setName("parking_space_demand")
-        );
+                        .setName("parking_space_demand"));
         this.writeTableCompressed(intermediate,
                 String.format("%s/intermediate-mobility-space-usage.csv", outputDirectory),
                 this.compressionType);
@@ -808,8 +790,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
                 kpi.numberColumn("parking_space_demand")
                         .multiply(kpi.numberColumn("total_trips")
                                 .divide(kpi.numberColumn("total_trips").sum()))
-                        .setName("weighted_demand")
-        );
+                        .setName("weighted_demand"));
         LOGGER.debug("Finished adding weighted_demand column to the KPI table");
         this.writeTableCompressed(intermediate,
                 String.format("%s/kpi-mobility-space-usage-per-activity-type.csv", outputDirectory),
@@ -834,7 +815,8 @@ public class TablesawKpiCalculator implements KpiCalculator {
                 if (aDouble.isNaN()) {
                     roundedColumn.appendMissing();
                 } else {
-                    roundedColumn.append(Math.round(aDouble * Math.pow(10.0, decimalPoints)) / Math.pow(10.0, decimalPoints));
+                    roundedColumn.append(
+                            Math.round(aDouble * Math.pow(10.0, decimalPoints)) / Math.pow(10.0, decimalPoints));
                 }
             }
         });
@@ -882,8 +864,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
                         linkIDColumn,
                         xColumn,
                         yColumn,
-                        activityTypeColumn
-                );
+                        activityTypeColumn);
     }
 
     private Table createFacilitiesTableFromTrips(Table trips) {
@@ -915,8 +896,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
                         linkIDColumn,
                         xColumn,
                         yColumn,
-                        activityTypeColumn
-                );
+                        activityTypeColumn);
         table = table.dropDuplicateRows();
         LOGGER.info("Finished creating Facilities Table from trips table");
         return table;
@@ -964,8 +944,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
                 .inner(personModeScores
                         .selectColumns("person", "score_mode", "monetaryDistanceRate", "dailyMonetaryConstant"));
         legs = legs.where(
-                legs.stringColumn("mode").isEqualTo(legs.stringColumn("score_mode"))
-        );
+                legs.stringColumn("mode").isEqualTo(legs.stringColumn("score_mode")));
         personModeScores.column("score_mode").setName("mode");
 
         LOGGER.debug("Computing monetary cost for each leg from scoring params");
@@ -992,16 +971,20 @@ public class TablesawKpiCalculator implements KpiCalculator {
         DoubleColumn arr_time_seconds = dep_time_seconds.add(trav_time_seconds).setName("arr_time_seconds");
         legs.addColumns(dep_time_seconds, arr_time_seconds);
         LOGGER.info("Iterating over the money log");
-        for (String person : moneyLog.getMoneyLogData().keySet()) {
-            for (Map.Entry<Double, Double> costEntry : moneyLog.getMoneyLogData(person).entrySet()) {
+        DoubleColumn monetaryCostOfTravelColumn = legs.doubleColumn("monetaryCostOfTravel");
+        DoubleColumn departureTimeColumn = legs.doubleColumn("dep_time_seconds");
+        DoubleColumn arrivalTimeColumn = legs.doubleColumn("arr_time_seconds");
+        StringColumn personColumn = legs.stringColumn("person");
+        for (Map.Entry<String, Map<Double, Double>> entry : moneyLog.getMoneyLogData().entrySet()) {
+            String person = entry.getKey();
+            for (Map.Entry<Double, Double> costEntry : entry.getValue().entrySet()) {
                 Double time = costEntry.getKey();
                 Double cost = costEntry.getValue();
-                legs.doubleColumn("monetaryCostOfTravel").set(
-                        legs.stringColumn("person").isEqualTo(person)
-                                .and(legs.doubleColumn("dep_time_seconds").isLessThan(time)
-                                        .and(legs.doubleColumn("arr_time_seconds").isGreaterThanOrEqualTo(time))),
-                        legs.doubleColumn("monetaryCostOfTravel").add(cost)
-                );
+                monetaryCostOfTravelColumn.set(
+                        personColumn.isEqualTo(person)
+                                .and(departureTimeColumn.isLessThan(time)
+                                        .and(arrivalTimeColumn.isGreaterThanOrEqualTo(time))),
+                        monetaryCostOfTravelColumn.add(cost));
             }
         }
         LOGGER.debug("Finished iterating over the money log");
@@ -1042,8 +1025,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
                         StringColumn.create("start_time"),
                         StringColumn.create("end_time"),
                         StringColumn.create("access_trip_id"),
-                        StringColumn.create("egress_trip_id")
-                );
+                        StringColumn.create("egress_trip_id"));
 
         StringColumn uniquePersons = trips.stringColumn("person").unique();
         LOGGER.info("About to iterate over {} unique persons in a trips table with {} rows",
@@ -1074,7 +1056,8 @@ public class TablesawKpiCalculator implements KpiCalculator {
                     personActivities.stringColumn("access_trip_id").appendMissing();
                 } else {
                     Row previousTrip = personTrips.row(i - 1);
-                    personActivities.stringColumn("access_mode").append(previousTrip.getString("longest_distance_mode"));
+                    personActivities.stringColumn("access_mode")
+                            .append(previousTrip.getString("longest_distance_mode"));
                     personActivities.stringColumn("access_trip_id").append(previousTrip.getString("trip_id"));
                     int arrivalTime = (int) (Time.parseTime(previousTrip.getString("dep_time"))
                             + Time.parseTime(previousTrip.getString("trav_time")));
@@ -1108,8 +1091,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
     }
 
     private String integerToStringDate(int time) {
-        DateTimeFormatter formatter =
-                DateTimeFormatter.ofPattern("HH:mm:ss").withZone(ZoneId.of("UTC"));
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss").withZone(ZoneId.of("UTC"));
         Instant instant = Instant.ofEpochMilli((long) (time * 1000));
         return formatter.format(instant);
     }
@@ -1122,7 +1104,8 @@ public class TablesawKpiCalculator implements KpiCalculator {
         columnMapping.put("income", ColumnType.DOUBLE);
 
         LOGGER.info("Reading persons file into a Table");
-        personModeScores = readCSVInputStream(personInputStream, columnMapping).setName("Person Mode Scoring Parameters");
+        personModeScores = readCSVInputStream(personInputStream, columnMapping)
+                .setName("Person Mode Scoring Parameters");
         LOGGER.info("Created a persons table with {} rows", personModeScores.rowCount());
 
         if (!personModeScores.columnNames().contains("income")) {
@@ -1162,9 +1145,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
                                 personColumn,
                                 modeColumn,
                                 monetaryDistanceRateColumn,
-                                dailyMonetaryConstantColumn
-                        )
-                );
+                                dailyMonetaryConstantColumn));
         LOGGER.info("Finished populating all person-related tables");
     }
 
@@ -1212,14 +1193,12 @@ public class TablesawKpiCalculator implements KpiCalculator {
                         freespeedColumn,
                         capacityColumn,
                         lengthColumn,
-                        lanesColumn
-                );
+                        lanesColumn);
 
         networkLinkModes = Table.create("Network Link Modes")
                 .addColumns(
                         StringColumn.create("linkID", modesLinkIDColumn),
-                        StringColumn.create("mode", modesColumn)
-                );
+                        StringColumn.create("mode", modesColumn));
         LOGGER.info("Finished creating Network Link Tables");
     }
 
@@ -1253,8 +1232,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
                         yColumn,
                         nameColumn,
                         linkIdColumn,
-                        isBlockingColumn
-                );
+                        isBlockingColumn);
 
         StringColumn lineIDColumn = StringColumn.create("transitLineID");
         StringColumn routeIDColumn = StringColumn.create("routeID");
@@ -1278,16 +1256,14 @@ public class TablesawKpiCalculator implements KpiCalculator {
         });
         Table tmpStopModeTable = Table.create("Stop Modes").addColumns(
                 stopIDModeColumn,
-                modeModeColumn
-        ).dropDuplicateRows();
+                modeModeColumn).dropDuplicateRows();
         scheduleStops = scheduleStops.joinOn("stopID").inner(tmpStopModeTable);
 
         scheduleRoutes = Table.create("Schedule Routes")
                 .addColumns(
                         lineIDColumn,
                         routeIDColumn,
-                        modeColumn
-                );
+                        modeColumn);
         LOGGER.info("Finished creating Transit Tables");
     }
 
@@ -1305,10 +1281,11 @@ public class TablesawKpiCalculator implements KpiCalculator {
             vehicleIDColumn.append(id.toString());
             modeColumn.append(vehicle.getType().getNetworkMode());
             capacityColumn.append(
-                    vehicle.getType().getCapacity().getSeats() + vehicle.getType().getCapacity().getStandingRoom()
-            );
-            appendAttributeValueOrMissing(vehicle.getType().getEngineInformation().getAttributes(), "fuelType", fuelTypeColumn);
-            appendAttributeValueOrMissing(vehicle.getType().getEngineInformation().getAttributes(), "emissionsFactor", emissionsFactorColumn);
+                    vehicle.getType().getCapacity().getSeats() + vehicle.getType().getCapacity().getStandingRoom());
+            appendAttributeValueOrMissing(vehicle.getType().getEngineInformation().getAttributes(), "fuelType",
+                    fuelTypeColumn);
+            appendAttributeValueOrMissing(vehicle.getType().getEngineInformation().getAttributes(), "emissionsFactor",
+                    emissionsFactorColumn);
             appendAttributeValueOrMissing(vehicle.getAttributes(), "PTLineID", ptLineIDColumn);
             appendAttributeValueOrMissing(vehicle.getAttributes(), "PTRouteID", ptRouteIDColumn);
         });
@@ -1321,8 +1298,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
                         fuelTypeColumn,
                         emissionsFactorColumn,
                         ptLineIDColumn,
-                        ptRouteIDColumn
-                );
+                        ptRouteIDColumn);
         LOGGER.info("Finished creating Vehicle Table");
     }
 
@@ -1334,7 +1310,6 @@ public class TablesawKpiCalculator implements KpiCalculator {
             column.appendMissing();
         }
     }
-
 
     private void createLinkLogTables(NetworkLinkLog networkLinkLog) {
         LOGGER.info("Creating Link Log Table");
@@ -1349,8 +1324,8 @@ public class TablesawKpiCalculator implements KpiCalculator {
             int rowsAfterCleaning = linkLogTable.rowCount();
             if (rowsAfterCleaning != rowsBeforeCleaning) {
                 LOGGER.warn("{} missing 'endTime' data points were encountered - some vehicles " +
-                                "were stuck and did not complete their journey. These Link Log entries were " +
-                                "deleted.",
+                        "were stuck and did not complete their journey. These Link Log entries were " +
+                        "deleted.",
                         rowsBeforeCleaning - rowsAfterCleaning);
             }
         } else if (networkLinkLog instanceof LinkLog) {
@@ -1391,11 +1366,10 @@ public class TablesawKpiCalculator implements KpiCalculator {
                             modeColumn,
                             startTimeColumn,
                             endTimeColumn,
-                            numberOfPeopleColumn
-                    );
+                            numberOfPeopleColumn);
             if (openLinkLogEntryCount > 0) {
                 LOGGER.warn("{} missing `endTime` data points were encountered - some vehicles " +
-                                "were stuck and did not complete their journey. These Link Log entries will be deleted.",
+                        "were stuck and did not complete their journey. These Link Log entries will be deleted.",
                         openLinkLogEntryCount);
                 linkLogTable = linkLogTable.where(linkLogTable.doubleColumn("endTime").isNotEqualTo(-1));
             }
@@ -1412,8 +1386,7 @@ public class TablesawKpiCalculator implements KpiCalculator {
             vehicleOccupancyTable = Table.create("Vehicle Occupancy")
                     .addColumns(
                             linkLogIndexColumn,
-                            agentIDColumn
-                    );
+                            agentIDColumn);
         }
 
         fixVehicleModesInLinkLog();
@@ -1427,9 +1400,8 @@ public class TablesawKpiCalculator implements KpiCalculator {
                 .leftOuter(vehicles.selectColumns("vehicleID", "mode"));
         int mismatchedModes = linkLogTable.where(
                 linkLogTable.stringColumn("initialMode")
-                        .isNotEqualTo(linkLogTable.stringColumn("mode")
-                        )
-        ).stringColumn("vehicleID").countUnique();
+                        .isNotEqualTo(linkLogTable.stringColumn("mode")))
+                .stringColumn("vehicleID").countUnique();
         if (mismatchedModes > 0) {
             LOGGER.warn(String.format(
                     "There are %d vehicles that have different modes to the ones found in the Link Log. " +
@@ -1439,7 +1411,6 @@ public class TablesawKpiCalculator implements KpiCalculator {
         linkLogTable.removeColumns("initialMode");
         LOGGER.info("Finished fixing vehicles modes in link log table");
     }
-
 
     public Table readCSVInputStream(InputStream inputStream, Map<String, ColumnType> columnMapping) {
         LOGGER.info("Reading CSV input stream into a table");
@@ -1491,17 +1462,28 @@ public class TablesawKpiCalculator implements KpiCalculator {
         }
 
         this.writeTableCompressed(legs, String.format("%s/supporting-data-legs.csv", outputDir), this.compressionType);
-        this.writeTableCompressed(trips, String.format("%s/supporting-data-trips.csv", outputDir), this.compressionType);
-        this.writeTableCompressed(activityFacilities, String.format("%s/supporting-data-activity-facilities.csv", outputDir), this.compressionType);
-        this.writeTableCompressed(activities, String.format("%s/supporting-data-activities.csv", outputDir), this.compressionType);
-        this.writeTableCompressed(personModeScores, String.format("%s/supporting-data-person-mode-score-parameters.csv", outputDir), this.compressionType);
-        this.writeTableCompressed(linkLogTable, String.format("%s/supporting-data-linkLog.csv", outputDir), this.compressionType);
-        this.writeTableCompressed(vehicleOccupancyTable, String.format("%s/supporting-data-vehicleOccupancy.csv", outputDir), this.compressionType);
-        this.writeTableCompressed(networkLinks, String.format("%s/supporting-data-networkLinks.csv", outputDir), this.compressionType);
-        this.writeTableCompressed(networkLinkModes, String.format("%s/supporting-data-networkLinkModes.csv", outputDir), this.compressionType);
-        this.writeTableCompressed(scheduleStops, String.format("%s/supporting-data-scheduleStops.csv", outputDir), this.compressionType);
-        this.writeTableCompressed(scheduleRoutes, String.format("%s/supporting-data-scheduleRoutes.csv", outputDir), this.compressionType);
-        this.writeTableCompressed(vehicles, String.format("%s/supporting-data-vehicles.csv", outputDir), this.compressionType);
+        this.writeTableCompressed(trips, String.format("%s/supporting-data-trips.csv", outputDir),
+                this.compressionType);
+        this.writeTableCompressed(activityFacilities,
+                String.format("%s/supporting-data-activity-facilities.csv", outputDir), this.compressionType);
+        this.writeTableCompressed(activities, String.format("%s/supporting-data-activities.csv", outputDir),
+                this.compressionType);
+        this.writeTableCompressed(personModeScores,
+                String.format("%s/supporting-data-person-mode-score-parameters.csv", outputDir), this.compressionType);
+        this.writeTableCompressed(linkLogTable, String.format("%s/supporting-data-linkLog.csv", outputDir),
+                this.compressionType);
+        this.writeTableCompressed(vehicleOccupancyTable,
+                String.format("%s/supporting-data-vehicleOccupancy.csv", outputDir), this.compressionType);
+        this.writeTableCompressed(networkLinks, String.format("%s/supporting-data-networkLinks.csv", outputDir),
+                this.compressionType);
+        this.writeTableCompressed(networkLinkModes, String.format("%s/supporting-data-networkLinkModes.csv", outputDir),
+                this.compressionType);
+        this.writeTableCompressed(scheduleStops, String.format("%s/supporting-data-scheduleStops.csv", outputDir),
+                this.compressionType);
+        this.writeTableCompressed(scheduleRoutes, String.format("%s/supporting-data-scheduleRoutes.csv", outputDir),
+                this.compressionType);
+        this.writeTableCompressed(vehicles, String.format("%s/supporting-data-vehicles.csv", outputDir),
+                this.compressionType);
         LOGGER.info("Finished writing supporting data files");
     }
 
