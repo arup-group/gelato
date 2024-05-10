@@ -327,8 +327,15 @@ gelato \
 -o /gelato-out
 ```
 
+You will sometimes want to set more than one JVM parameter. You do this by making a space-separated list
+inside the `JVM_OPTS` value string, for example:
+
+```shell
+-e JVM_OPTS="-Xmx100G -XX:+UseParallelGC -XX:+HeapDumpOnOutOfMemoryError -XX:+PrintFlagsFinal"
+```
+
 (The `-XX:+PrintFlagsFinal` param does not modify memory configuration, but instructs the JVM to dump all of
-its settings to the console on startup. That can be handy when you want to confirm that the memory settings
+its settings to the console on startup. That can be handy when you want to confirm at runtime that the memory settings
 are as you expect.)
 
 
