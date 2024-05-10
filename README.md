@@ -328,7 +328,7 @@ gelato \
 ```
 
 You will sometimes want to set more than one JVM parameter. You do this by making a space-separated list
-inside the JVM_OPTS value string, for example:
+inside the `JVM_OPTS` value string, for example:
 
 ```shell
 -e JVM_OPTS="-Xmx100G -XX:+UseParallelGC -XX:+HeapDumpOnOutOfMemoryError -XX:+PrintFlagsFinal"
