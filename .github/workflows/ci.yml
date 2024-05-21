@@ -62,6 +62,6 @@ jobs:
     uses: arup-group/actions-city-modelling-lab/.github/workflows/slack-notify.yml@main
     secrets: inherit
     with:
-      result: needs.deploy.maven-verify.result
+      result: ${{needs.deploy.result}}
       channel: city-modelling-feeds
-      message: CI action
+      message: CI build
