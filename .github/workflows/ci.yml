@@ -57,7 +57,7 @@ jobs:
         aws s3 cp app.zip s3://$AWS_S3_CODE_BUCKET/$repo_slug.zip
 
   slack-notify-ci:
-  needs: deploy
+  needs: Verify
   if: always()
   uses: arup-group/actions-city-modelling-lab/.github/workflows/slack-notify.yml@main
   secrets: inherit
