@@ -20,6 +20,7 @@ jobs:
 
     - name: Verify with Maven
       run: mvn -B verify --file pom.xml
+      id: maven-verify
 
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v4
@@ -55,25 +56,12 @@ jobs:
         echo $repo_slug
         aws s3 cp app.zip s3://$AWS_S3_CODE_BUCKET/$repo_slug.zip
 
-    - name: Send build success notification
-      if: success()
-      uses: rtCamp/action-slack-notify@v2.2.0
-      env:
-        SLACK_MESSAGE: ${{ github.repository }} build ${{ github.run_number }} launched by ${{ github.actor }} has succeeded
-        SLACK_TITLE: Build Success
-        SLACK_CHANNEL: city-modelling-feeds
-        SLACK_USERNAME: GitHub Build Bot
-        SLACK_ICON: https://slack-files2.s3-us-west-2.amazonaws.com/avatars/2017-12-19/288981919427_f45f04edd92902a96859_512.png
-        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-
-    - name: Send build failure notification
-      if: failure()
-      uses: rtCamp/action-slack-notify@v2.2.0
-      env:
-        SLACK_COLOR: '#FF0000'
-        SLACK_MESSAGE: ${{ github.repository }} build ${{ github.run_number }} launched by ${{ github.actor }} has failed
-        SLACK_TITLE: Build Failure!
-        SLACK_CHANNEL: city-modelling-feeds
-        SLACK_USERNAME: GitHub Build Bot
-        SLACK_ICON: https://slack-files2.s3-us-west-2.amazonaws.com/avatars/2017-12-19/288981919427_f45f04edd92902a96859_512.png
-        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+  slack-notify-ci:
+    needs: deploy
+    if: always()
+    uses: arup-group/actions-city-modelling-lab/.github/workflows/slack-notify.yml@main
+    secrets: inherit
+    with:
+      result: ${{needs.deploy.result}}
+      channel: city-modelling-feeds
+      message: CI build
