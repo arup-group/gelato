@@ -3,9 +3,11 @@ name: CI-Build
 on: [push]
 
 jobs:
-  deploy:
+  verify:
     name: Verify
     runs-on: ubuntu-latest
+    outputs:
+      image-tag: ${{ steps.make-image-tags.outputs.IMAGE_TAG }}
 
     steps:
     - name: Checkout
@@ -22,46 +24,33 @@ jobs:
       run: mvn -B verify --file pom.xml
       id: maven-verify
 
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v4
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: eu-west-1
-
-    - name: Send code to S3
-      env:
-        AWS_S3_CODE_BUCKET: ${{ secrets.AWS_S3_CODE_BUCKET }}
+    - name: Make image tags
+      id: make-image-tags
       run: |
-        echo $GITHUB_REPOSITORY
-        echo $GITHUB_SHA
-        echo $GITHUB_SHA > release
-        if test "$GITHUB_REF" = "refs/heads/main"; then
-          echo "Branch is main - no need to make a release name..."
-          branch="main"
-        else
-          echo "Making a release name for non-main branch..."
-          branch=`echo $GITHUB_REF | awk -F '/' '{print $3}'`
-          release_name=`echo $GITHUB_ACTOR-$branch`
-          echo "Release name: $release_name"
-          echo $release_name > release_name
-        fi
         artifact=`grep "<artifactId" pom.xml | head -n 1 | awk -F"<artifactId>" '{print $2}' | awk -F "</artifactId" '{print $1}'`
         version=`grep "<version" pom.xml | head -n 1 | awk -F"<version>" '{print $2}' | awk -F "</version" '{print $1}'`
         version_tag=$artifact-$version-$branch-$GITHUB_SHA
         echo "Image version tag: $version_tag"
-        echo $version_tag > image_tags
-        zip -r app.zip . --exclude=*target*
-        repo_slug=`echo $GITHUB_REPOSITORY | awk -F '/' '{print $2}'`
-        echo $repo_slug
-        aws s3 cp app.zip s3://$AWS_S3_CODE_BUCKET/$repo_slug.zip
+        echo "IMAGE_TAG=$version_tag" >> "$GITHUB_OUTPUT"
+
+    - name: Remove target dir
+      run: |
+        rm -rf target
+
+  aws-upload:
+    needs: verify
+    if: needs.verify.result == 'success'
+    uses: arup-group/actions-city-modelling-lab/.github/workflows/aws-upload.yml@add-input-param-to-s3-upload-action
+    secrets: inherit
+    with:
+      image-tag: ${{ needs.verify.outputs.image-tag }}
 
   slack-notify-ci:
-    needs: deploy
+    needs: verify
     if: always()
     uses: arup-group/actions-city-modelling-lab/.github/workflows/slack-notify.yml@main
     secrets: inherit
     with:
-      result: ${{needs.deploy.result}}
+      result: ${{ needs.verify.result }}
       channel: city-modelling-feeds
       message: CI build
