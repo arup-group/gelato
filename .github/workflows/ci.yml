@@ -40,7 +40,7 @@ jobs:
   aws-upload:
     needs: verify
     if: needs.verify.result == 'success'
-    uses: arup-group/actions-city-modelling-lab/.github/workflows/aws-upload.yml@add-input-param-to-s3-upload-action
+    uses: arup-group/actions-city-modelling-lab/.github/workflows/aws-upload.yml@main
     secrets: inherit
     with:
       image-tag: ${{ needs.verify.outputs.image-tag }}
