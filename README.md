@@ -156,8 +156,7 @@ files in the directory you specified via `-o`, giving you something like this:
 -rw-r--r--@  1 mickyfitz  staff    12M  5 Mar 16:04 supporting-data-vehicles.csv.gz
 ```
 
-For a short explanation of the content and meaning of these files, see [the KPI section](#the-kpis). For a more
-comprehensive description, see [insert blog post link here]().
+For a short explanation of the content and meaning of these files, see [the KPI section](#the-kpis).
 
 ## A word about memory
 Gelato is a memory-hungry application. The bigger the model outputs you feed it in
