@@ -343,11 +343,11 @@ are as you expect.)
 
 ## Methodology
 Much of the work that led to the creation of Gelato involved defining
-[a framework of useful KPIs (link to blog post here)]() that can be calculated using data available from a MATSim
+a framework of useful KPIs that can be calculated using data available from a MATSim
 simulation. The KPIs are grouped together under "themes", strongly influenced by the
 [World Business Council for Sustainable Development](https://www.wbcsd.org/) dimensions of
 [sustainable mobility](https://docs.wbcsd.org/2015/03/Mobility_indicators.pdf) and the three pillars of
-sustainable development. The themes that we use to describe our KPIs are outlined in column "KPI Theme".
+sustainable development. The themes that we use to describe our KPIs are outlined in column "KPI Theme", below.
 
 | WBCSD Dimension of Sustainable Mobility | Sustainable Development Pillar | KPI Theme                     |
 |-----------------------------------------|--------------------------------|-------------------------------|
@@ -356,7 +356,8 @@ sustainable development. The themes that we use to describe our KPIs are outline
 | "Economic Success"                      | "Economic"                     | "Economic"                    |
 | "Mobility System Performance"           | --                             | "Mobility System Performance" |
 
-Spanning across all themes, a fourth dimension, "Mobility System Performance" is effectively a separate, unifying layer, whereby improvements in mobility system performance can lead to better outcomes across any or all of the other themes. 
+Spanning across all themes, a fourth dimension, "Mobility System Performance" is effectively a separate, unifying layer,
+whereby improvements in mobility system performance can lead to better outcomes across any or all of the other themes.
 
 Some KPIs do not fall directly under a specific theme, but are parameters
 for generating other KPIs. They are marked as `Parameter` in the table
