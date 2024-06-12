@@ -10,7 +10,8 @@
 <p>
 
 Gelato is a [MATSim](https://github.com/matsim-org/matsim-libs/tree/master#readme)-flavoured reference implementation
-of a Sustainability transport Key Performance Indicators (KPI) framework. Gelato exists to provide a runnable application with which to better
+of a Sustainability transport Key Performance Indicators (KPI) framework. Gelato turns MATSim outputs into transport sustainability KPI metrics.
+Gelato exists to provide a runnable application with which to better
 understand and explore the framework, and as such, should be regarded as a by-product of the framework rather
 than a work in its own right.
 
